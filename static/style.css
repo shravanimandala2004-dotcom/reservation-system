@@ -1,0 +1,125 @@
+/* Background: Ruckus-style grey-to-black gradient */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to bottom, #333333, #000000);
+    color: white;
+    min-height: 100vh;
+}
+
+/* Main container on each page */
+.container {
+    width: 90%;
+    max-width: 600px;
+    margin: 60px auto;
+    background-color: rgba(20, 20, 20, 0.9);
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 0 20px #f57c00;
+    text-align: center;
+}
+
+/* Logo on each page */
+.logo {
+    width: 150px;
+    margin-bottom: 20px;
+}
+
+/* Heading styling */
+h1 {
+    color: #f57c00;
+    margin-bottom: 30px;
+}
+
+/* Input fields (text, password, number) */
+input[type="text"],
+input[type="password"],
+input[type="number"],
+select {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 6px;
+    border: none;
+    box-sizing: border-box;
+    font-size: 16px;
+    background-color: #2a2a2a;
+    color: white;
+}
+
+/* Button styling */
+button {
+    padding: 12px 20px;
+    background-color: #f57c00;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    margin-top: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #ff9800;
+}
+
+/* Table styling for inventory */
+table {
+    width: 100%;
+    margin-top: 30px;
+    border-collapse: collapse;
+    color: white;
+}
+
+th, td {
+    padding: 12px;
+    border: 1px solid #555;
+    text-align: center;
+}
+
+th {
+    background-color: #444;
+    color: #f57c00;
+}
+
+/* Link styles */
+a {
+    color: #f57c00;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Reserve page and general spacing */
+.reserve-section {
+    margin-top: 40px;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.status-indicator.available {
+    background-color: #4caf50; /* Green */
+}
+
+.status-indicator.not-available {
+    background-color: #f44336; /* Red */
+}
+
+.status-indicator.in-progress {
+    background-color: #ff9800; /* Orange */
+}
+
+
+
+

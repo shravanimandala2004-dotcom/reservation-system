@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sign Up - Resource Scheduler</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+            background-color: #1f1f1f;
+            padding: 30px;
+            border-radius: 8px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background-color: #2a2a2a;
+            color: white;
+            border: none;
+            border-radius: 6px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #ff9800;
+            color: black;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .link {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .link a {
+            color: #ff9800;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Logo -->
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Ruckus Logo" class="logo">
+
+        <h1 style="text-align:center;">Create Account</h1>
+
+        <form method="POST" action="/signup">
+         
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+
+            <label for="role" style="color:white;">Register as:</label>
+            <select name="role" required>
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+            </select>
+
+            <button type="submit">Sign Up</button>
+
+            <div class="link">
+                Already have an account? <a href="/">Log in</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
+
+
+
+

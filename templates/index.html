@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login - Resource Scheduler</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Logo -->
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Ruckus Logo" class="logo">
+
+        <!-- Heading -->
+        <h1>Resource Scheduler</h1>
+
+        <!-- Login Form -->
+        <form id="loginForm" action="/login" method="POST">
+            <!-- Role Selection -->
+            <select name="role" id="role" required>
+               
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+            </select>
+
+            <!-- Username and Password (optional for future) -->
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+
+            <button type="submit">Login</button>
+            <div class="link">
+                Don’t have an account? <a href="/signup">Sign up here</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- JavaScript to handle login -->
+    
+</body>
+</html>
+
+
+
+

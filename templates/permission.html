@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Permission Settings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+    <h2>Admin Permission Settings</h2>
+
+    <form method="POST">
+        <label>Max Reservations per User:</label>
+        <input type="number" name="max_reservations" value="{{ settings.max_reservations }}" required><br><br>
+
+        <label>Max Reservation Duration (Days):</label>
+        <input type="number" name="max_days" value="{{ settings.max_days }}" required><br><br>
+
+        <button type="submit">Save Settings</button>
+    </form>
+</div>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Inventory</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
+        <h1>Resource Inventory</h1>
+
+        <!-- Search Box -->
+<div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search resource..." onkeyup="filterTable()" style="padding: 10px; width: 100%; border-radius: 5px;">
+    </div>
+
+
+        <!-- Inventory Table -->
+        <table id="inventoryTable">
+            <thead>
+                <tr>
+                 <th>Resource Name</th>
+                <th>AP Count</th>
+                <th>Status</th>
+                 {% if role == 'admin' %}
+                <th>Actions</th>
+                 {% endif %}
+
+                </tr>
+            </thead>
+            <tbody>
+    {% for resource in resources %}
+    <tr data-id="{{ resource.id }}">
+
+        <td>{{ resource.name }}</td>
+        <td>{{ resource.ap_count }}</td>
+        <td>
+    <span class="status-indicator {{ resource.status | lower | replace(' ', '-') }}"></span>
+    {{ resource.status }}
+</td>
+
+        <td>
+            {% if role == 'admin' %}
+                <a href="{{ resource.link }}" target="_blank"><button>Open</button></a>
+                <a href="/delete_resource/{{ resource.id }}"><button>Delete</button></a>
+                <button onclick="openEditModal({{resource.id}},'{{resource.name}}', {{ resource.ap_count }},'{{ resource.status }}')">Edit</button>
+                {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+
+        </table>
+
+       {% if role == 'admin' %}
+<div style="margin-top: 20px;">
+    <form method="POST" action="/inventory">
+         <input type="hidden" name="action_type" id="action_type" value="add">
+        <input type="text" name="resource_name" placeholder="Resource Name" required>
+        <input type="number" name="ap_count" placeholder="AP Count" required>
+        <input type="text" name="status" placeholder="Status (e.g. Available)" required>
+        <input type="url" name="link" placeholder="Resource Link">
+        <input type="hidden" name="resource_id" id="resource_id">
+        <button type="submit">Add Resource</button>
+    </form>
+</div>
+{% endif %}
+
+      <div style="margin-top: 30px;">
+    <a href="/" style="margin-right: 20px;">⬅ Back to Home</a>
+    <a href="/reserve" style="
+        display: inline-block;
+        padding: 10px 20px;
+        background-color:  #f57c00;
+        color: black;
+        border-radius: 5px;
+        text-decoration: none;
+        font-weight: bold;
+    ">
+        Next: Reserve Resource
+    </a>
+</div>
+    </div>
+
+    <script>
+
+        // Simulated role for demo: change to "user" or "admin"
+        const userRole = "admin"; // Change this to "user" to test user-only view
+
+        // Hide admin-only features if user
+        window.onload = function() {
+            if (userRole !== "admin") {
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+            }
+        };
+
+        function addResource() {
+            const name = document.getElementById("resourceName").value;
+            const ap = document.getElementById("apCount").value;
+            const status = document.getElementById("status").value;
+
+            if (name && ap && status) {
+                const table = document.getElementById("inventoryTable").getElementsByTagName('tbody')[0];
+                const row = table.insertRow();
+                row.innerHTML = `
+                    <td>${name}</td>
+                    <td>${ap}</td>
+                    <td>${status}</td>
+                    <td class="admin-only">
+                        <button onclick="editRow(this)">Edit</button>
+                        <button onclick="deleteRow(this)">Delete</button>
+                    </td>
+                `;
+                document.getElementById("resourceName").value = '';
+                document.getElementById("apCount").value = '';
+                document.getElementById("status").value = '';
+            } else {
+                alert("Please fill all fields");
+            }
+        }
+
+        function deleteRow(btn) {
+            const row = btn.parentElement.parentElement;
+            row.remove();
+        }
+
+       function editRow(btn) {
+    const row = btn.parentElement.parentElement;
+    const cols = row.getElementsByTagName("td");
+
+    const name = cols[0].innerText;
+    const ap = cols[1].innerText;
+    const status = cols[2].innerText;
+
+    // Set form values
+    document.querySelector("input[name='resource_name']").value = name;
+    document.querySelector("input[name='ap_count']").value = ap;
+    document.querySelector("input[name='status']").value = status;
+
+    // Set action type to edit
+    document.getElementById("action_type").value = "edit";
+
+    // Store resource ID (you'll need to add a data-id in your <tr> or <button>)
+    document.getElementById("resource_id").value = row.getAttribute("data-id");
+}
+
+
+        function filterTable() {
+    const input = document.getElementById("searchInput");
+    const filter = input.value.toLowerCase();
+    const rows = document.querySelectorAll("#inventoryTable tbody tr");
+
+    rows.forEach(row => {
+        const resourceName = row.cells[0].innerText.toLowerCase();  // first column
+        if (resourceName.includes(filter)) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
+}
+function openEditModal(id, name, ap, status) {
+    document.getElementById('edit_id').value = id;
+    document.getElementById('edit_name').value = name;
+    document.getElementById('edit_ap').value = ap;
+    document.getElementById('edit_status').value = status;
+    document.getElementById('editModal').style.display = 'block';
+}
+
+    </script>
+    <!-- Edit Modal -->
+<div id="editModal" style="display:none; position:fixed; top:20%; left:35%; background:#333; color:white; padding:20px; border-radius:8px; box-shadow: 0 0 10px black;">
+    <h3>Edit Resource</h3>
+    <form id="editForm" method="POST" action="/edit_resource">
+        <input type="hidden" id="edit_id" name="id">
+        <input type="text" id="edit_name" name="name" placeholder="Resource Name" required>
+        <input type="number" id="edit_ap" name="ap_count" placeholder="AP Count" required>
+        <input type="text" id="edit_status" name="status" placeholder="Status" required>
+        <button type="submit">Save Changes</button>
+        <button type="button" onclick="document.getElementById('editModal').style.display='none'">Cancel</button>
+    </form>
+</div>
+
+</body>
+</html>
