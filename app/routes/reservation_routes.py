@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from datetime import datetime, timedelta
 from app.utils.db import get_db_connection
-from app.utils.email import send_email
+from .notification_routes import notify_user
 
 reservation_bp = Blueprint('reservation', __name__)
 
@@ -48,6 +48,13 @@ def reserve():
             INSERT INTO reservations (user_id, resource_id, start_datetime, end_datetime)
             VALUES (%s, %s, %s, %s)
         """, (user_id, resource_id, start_dt, end_dt))
+
+        notify_user(
+            to_email=session.get('username'),
+            subject="Reservation Confirmed",
+            email_body=f"Your reservation for resource ID {resource_id} from {start_dt} to {end_dt} has been confirmed.",
+        )
+
         conn.commit()
         conn.close()
         return redirect(url_for('reservation.reserve'))
@@ -91,6 +98,11 @@ def delete_reservation(id):
     if reservation:
         cursor.execute("DELETE FROM reservations WHERE id = %s", (id,))
         conn.commit()
+        notify_user(
+            to_email=session.get('username'),
+            subject="Reservation Cancelled",
+            email_body=f"Your reservation ID {id} has been cancelled.",
+        )
 
     conn.close()
     return redirect(url_for('reservation.reserve'))

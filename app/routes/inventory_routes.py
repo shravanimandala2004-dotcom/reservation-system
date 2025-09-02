@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from app.utils.db import get_db_connection
-from app.utils.email import send_email
 from .notification_routes import notify_user, get_emails_by_resource
 
 inventory_bp = Blueprint('inventory', __name__)
@@ -26,10 +25,12 @@ def inventory():
             
             emails = get_emails_by_resource(resource_id)
             for email in emails:
-                send_email(
-                    email,
-                    f"Resource Updated: {name}",
-                    f"The resource '{name}' has been updated.\nAPs: {ap_count}\nStatus: {status}"
+                subject=f"Resource Updated: {name}"
+                body=f"The resource '{name}' has been updated.\nAPs: {ap_count}\nStatus: {status}"
+                notify_user(
+                    to_email=email,
+                    subject=subject,
+                    email_body=body,
                 )
 
         else:  # Add new resource
@@ -47,24 +48,22 @@ def inventory():
                 Link: {link}
                 Action: ADDED
                 """
-                send_email(session.get('username'), subject, body)
+                notify_user(
+                    to_email=session.get('username'),
+                    subject=subject,
+                    email_body=body,
+                )
  
 
             # Optional: Send to all users if needed
             cursor.execute("SELECT username FROM users")
             all_users = cursor.fetchall()
             for user in all_users:
-                send_email(
-                    user['username'],
-                    f"New Resource Added: {name}",
-                    f"A new resource '{name}' with {ap_count} APs is now available."
-                )
                 notify_user(
                     to_email=user['username'],
                     subject=f"New Resource Added: {name}",
                     email_body=f"A new resource '{name}' with {ap_count} APs is now available.",
-                    browser_message=f"Resource '{name}' added successfully!" if user['username'] == session.get('username') else None
-                )
+               )
 
 
     # Display inventory
@@ -86,15 +85,16 @@ def delete_resource(id):
         if resource:
             # Get all user emails for this resource
             emails = get_emails_by_resource(id)
-
+            print(emails) 
             # Notify each user
             for email in emails:
-                send_email(
-                    email,
-                    f"Resource Deleted: {resource['name']}",
-                    f"The resource '{resource['name']}' with {resource['ap_count']} APs has been deleted."
+                notify_user(
+                    to_email=email,
+                    subject=f"Resource Deleted: {resource['name']}",
+                    email_body=f"The resource '{resource['name']}' with {resource['ap_count']} APs has been deleted.",
                 )
 
+            cursor.execute("DELETE FROM reservations WHERE resource_id = %s", (id,))
             cursor.execute("DELETE FROM resources WHERE id = %s", (id,))
             conn.commit()
         conn.close()
@@ -126,15 +126,19 @@ def edit_resource():
         Status: {status}
         Action: EDITED
         """
-        send_email(session.get('username'), subject, body)
+        notify_user(
+            to_email=session.get('username'),
+            subject=subject,
+            email_body=body,
+        )
 
     # Send notification to all users who reserved this resource
     emails = get_emails_by_resource(resource_id)
     for email in emails:
-        send_email(
-            email,
-            f"Resource Updated: {name}",
-            f"The resource '{name}' has been updated.\nAPs: {ap_count}\nStatus: {status}"
+        notify_user(
+            to_email=email,
+            subject=f"Resource Updated: {name}",
+            email_body=f"The resource '{name}' has been updated.\nAPs: {ap_count}\nStatus: {status}",
         )
 
     conn.close()

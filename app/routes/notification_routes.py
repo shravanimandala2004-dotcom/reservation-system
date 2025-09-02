@@ -1,8 +1,9 @@
-from flask import flash
 import os
 from ..utils.db import get_db_connection
-from ..utils.email import send_email
 from dotenv import load_dotenv
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # Load environment variables from .env file
 load_dotenv()
@@ -11,23 +12,33 @@ load_dotenv()
 EMAIL_ADDRESS = os.environ.get('EMAIL_ADDRESS')
 EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
 
-def notify_user(to_email, subject, email_body, browser_message=None):
-    """
-    Sends both an email and flashes a browser notification (if provided).
-    """
+def notify_user(to_email, subject, email_body):
     # Send Email
-    send_email(to_email, subject, email_body)
+    if not to_email or '@' not in to_email:
+        return
 
-    # Flash browser notification
-    if browser_message:
-        flash(browser_message, 'notification')
+    msg = MIMEMultipart()
+    msg['From'] = EMAIL_ADDRESS
+    msg['To'] = to_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(email_body, 'plain'))
+
+    try:
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+            server.send_message(msg)
+    except Exception as e:
+        print(f"Email failed to send to {to_email}: {e}")
+
 
 def get_emails_by_resource(resource_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT DISTINCT user_id FROM reservations WHERE resource_id = %s
-    """, (resource_id,))
-    emails = [row[0] for row in cursor.fetchall()]  # user_id is email
+        SELECT DISTINCT u.username
+        FROM reservations r
+        JOIN users u ON r.user_id = u.id
+        WHERE r.resource_id = %s""", (resource_id,))
+    emails = [row[0] for row in cursor.fetchall()]  
     conn.close()
     return emails
