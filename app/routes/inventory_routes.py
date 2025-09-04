@@ -145,3 +145,15 @@ def edit_resource():
 
 
     return redirect(url_for('inventory.inventory'))
+
+@inventory_bp.route('/admin_page')
+def admin_page():
+    # Check if logged in
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    # Allow only admins
+    if session.get('role') != 'admin':
+        return "⛔ You are not authorized to view this page."
+
+    return render_template('admin_page.html')
