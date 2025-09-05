@@ -150,7 +150,7 @@ def edit_resource():
 def admin_page():
     # Check if logged in
     if 'user_id' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('inventory.login'))
 
     # Allow only admins
     if session.get('role') != 'admin':

@@ -47,7 +47,8 @@
                         <a href="{{ resource.link }}" target="_blank"><button>Open</button></a>
                         <a href="/delete_resource/{{ resource.id }}"><button>Delete</button></a>
                         <button
-                            onclick="openEditModal({{ resource.id }}, {{ resource.name | tojson }}, {{ resource.ap_count }}, {{ resource.status | tojson }})">Edit</button>
+                            onclick='openEditModal({{ resource.id }}, {{ resource.name | tojson }}, {{ resource.ap_count }}, {{ resource.status | tojson }})'>Edit
+                        </button>
                         {% endif %}
                     </td>
                 </tr>
@@ -69,9 +70,9 @@
             </form>
         </div>
         
-    <a href="{{ url_for('admin_page') }}">
-        <button>Go to Admin Page</button>
-    </a>
+        <a href="{{ url_for('inventory.admin_page') }}">
+            <button>Go to Admin Page</button>
+        </a>
 
 
         {% endif %}
