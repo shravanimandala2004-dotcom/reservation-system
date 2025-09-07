@@ -78,7 +78,8 @@ def reserve():
         'reserve.html',
         resources=resources,
         active_reservations=active_reservations,
-        active_count=len(active_reservations)
+        active_count=len(active_reservations),
+        role=session.get('role')
     )
 
 @reservation_bp.route('/delete_reservation/<int:id>')

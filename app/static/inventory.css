@@ -1,0 +1,274 @@
+/* Background: Ruckus-style grey-to-black gradient */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    /* background: linear-gradient(to bottom, #333333, #000000); */
+    color: white;
+    min-height: 100vh;
+    background-color: #1C1C1C;
+}
+
+/* Main container on each page */
+.container {
+    background-color: #1C1C1C;
+    text-align: center;
+    margin-left: 220px;
+    padding: 30px 40px;
+}
+
+/* Logo on each page */
+.logo {
+    width: 150px;
+    margin-bottom: 20px;
+}
+
+/* Heading styling */
+h1 {
+    color: #f57c00;
+    margin-bottom: 30px;
+}
+
+/* Table styling for inventory */
+table {
+    width: 100%;
+    margin-top: 30px;
+    border-collapse: separate;
+    border-spacing: 0;
+    color: white;
+    border: 1px solid rgb(243, 111, 33);
+    border-radius: 8px;
+}
+
+th,
+td {
+    padding: 12px;
+    /* border: 1px solid #9c5d26; */
+    text-align: center;
+}
+
+th {
+    background-color: rgb(243, 111, 33);
+    color: white;
+}
+
+tr {
+    background-color: #2A2A2A;
+}
+
+tr:hover {
+    background-color: rgba(243, 111, 33, 0.2);
+}
+
+table tr:nth-child(even) {
+    background-color: #333333;
+}
+
+table tr:nth-child(even):hover {
+    background-color: rgba(243, 111, 33, 0.2);
+}
+
+table tr:first-child th:first-child {
+    border-top-left-radius: 8px;
+}
+
+table tr:first-child th:last-child {
+    border-top-right-radius: 8px;
+}
+
+table tr:last-child td:first-child {
+    border-bottom-left-radius: 8px;
+}
+
+table tr:last-child td:last-child {
+    border-bottom-right-radius: 8px;
+}
+
+/* Input fields (text, password, number) */
+input[type="text"],
+input[type="password"],
+input[type="number"],
+select {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 6px;
+    border: none;
+    box-sizing: border-box;
+    font-size: 16px;
+    background-color: #2a2a2a;
+    color: white;
+}
+
+/* Button styling */
+button {
+    padding: 5px 10px;
+    background-color: #f57c00;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    margin-top: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin: 3px 5px;
+}
+
+button:hover {
+    background-color: #ff9800;
+}
+
+
+
+
+/* Reserve page and general spacing */
+.reserve-section {
+    margin-top: 40px;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.status-indicator.available {
+    background-color: #4caf50;
+    /* Green */
+}
+
+.status-indicator.not-available {
+    background-color: #f44336;
+    /* Red */
+}
+
+.status-indicator.in-progress {
+    background-color: #ff9800;
+    /* Orange */
+}
+
+
+/* Add Resource Form Styles */
+.add-resource-box {
+    background: #292929;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    /* padding: 0px 0px 10px 0px; */
+    margin-bottom: 28px;
+    max-width: 800%;
+}
+
+.collapsible-btn {
+    width: 100%;
+    background: #f57c00;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    /* font-size: 1.15rem; */
+    font-weight: 600;
+    padding: 5px 10px;
+    /* padding-left: 10px; */
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    outline: none;
+    margin: 0px;
+}
+
+.collapsible-btn:hover {
+    background: #ff9800;
+}
+
+.arrow {
+    /* font-size: 1em; */
+    transition: transform 0.2s;
+}
+
+.add-resource-form {
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: fadeIn 0.3s;
+    padding: 10px 20px
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.form-row {
+    display: flex;
+    gap: 14px;
+}
+
+.add-resource-form input[type="text"],
+.add-resource-form input[type="number"] {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    /* font-size: 1rem; */
+    background: #2a2a2a;
+    transition: border 0.2s;
+}
+
+.add-resource-form input[type="url"] {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background: #2a2a2a;
+    transition: border 0.2s;
+    margin: 10px 0px;
+}
+
+.add-resource-form input:focus {
+    border: 1.5px solid #f57c00;
+    outline: none;
+    background: #2a2a2a;
+}
+
+.submit-btn {
+    background: linear-gradient(90deg, #f57c00 60%, #ffb74d 100%);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    padding: 8px 12px;
+    cursor: pointer;
+    margin-top: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+    transition: background 0.2s;
+    width: max-content;
+    align-self: center;
+}
+
+.submit-btn:hover {
+    background: linear-gradient(90deg, #ff9800 60%, #ffe0b2 100%);
+    color: #333;
+}
+
+@media (max-width: 600px) {
+    .add-resource-box {
+        padding: 12px 6px 6px 6px;
+    }
+
+    .form-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+}

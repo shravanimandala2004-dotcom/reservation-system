@@ -1,153 +1,114 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Reserve Resource</title>
-  
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-      
 
-        .search-bar {
-            margin-bottom: 20px;
-        }
+    <link rel="stylesheet" href="{{ url_for('static', filename='reserve.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='sidebar.css') }}">
 
-        #start_datetime, #end_datetime {
-            padding: 10px;
-            width: 300px;
-            margin: 10px 20px 20px 0;
-            border-radius: 5px;
-            border: none;
-        }
-
-        label {
-            margin-right: 10px;
-            font-weight: bold;
-        }
-
-        .resource-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background-color: #2a2a2a;
-            border: 1px solid #444;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-
-        .resource-row span {
-            flex: 1;
-            font-size: 16px;
-        }
-
-        .resource-row button {
-            padding: 8px 14px;
-            background-color:  #f57c00;
-            border: none;
-            border-radius: 4px;
-            font-weight: bold;
-            color: black;
-            cursor: pointer;
-        }
-
-        .resource-row button:hover {
-            background-color:  #f57c00;
-        }
-
-        .reservation-list li {
-            margin: 10px 0;
-            line-height: 1.6;
-        }
-
-        .reservation-list a {
-            color: #4fc3f7;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .reservation-list a:hover {
-            text-decoration: underline;
-        }
-
-        button.back-btn {
-            margin-top: 30px;
-            padding: 10px 20px;
-            background-color: #616161;
-            border: none;
-            border-radius: 5px;
-            color: #f57c00;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        button.back-btn:hover {
-            background-color: #757575;
-        }
-    </style>
 </head>
+
 <body>
-<div class="container">
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
-    <h1>Reserve a Resource</h1>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
+        <nav>
+            <a href="{{ url_for('inventory.inventory') }}" {% if request.path.startswith('/inventory') %}class="active"
+                {% endif %}>Inventory</a>
+            <a href="{{url_for('reservation.reserve')}}" {% if request.path.startswith('/reserve') %}class="active" {%
+                endif %}>Reserve</a>
+            {% if role == 'admin' %}
+            <a href="{{ url_for('inventory.admin_page') }}" {% if request.path.startswith('/admin') %}class="active" {%
+                endif %}>Admin Page</a>
+            {% endif %}
+        </nav>
+        <div class="sidebar-logout-separator"></div>
+        <a href="{{ url_for('auth.login') }}" class="logout-btn">Logout</a>
+    </div>
+    <div class="container">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
+        <h1>Reserve a Resource</h1>
 
-    {% if active_count >= 2 %}
-        <p style="color: rgb(56, 170, 215);">⚠️ You have already reserved 2 active resources. Please wait until one ends.</p>
-    {% endif %}
+        {% if active_count >= 2 %}
+        <p style="color: rgb(56, 170, 215);">⚠️ You have already reserved 2 active resources. Please wait until one
+            ends.</p>
+        {% endif %}
 
-    <div class="search-bar">
-        <input type="text" id="searchInput" placeholder="Search resource..." onkeyup="filterResources()" style="padding: 10px; width: 100%; border-radius: 5px;">
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search resource..." onkeyup="filterResources()"
+                style="padding: 10px; width: 100%; border-radius: 5px;">
+        </div>
+
+        {% if active_count < 2 %} <form method="POST">
+            <div>
+                <label for="start_datetime">Start Date & Time:</label>
+                <input type="datetime-local" id="start_datetime" name="start_datetime" required>
+            </div>
+
+            <div>
+                <label for="end_datetime">End Date & Time:</label>
+                <input type="datetime-local" id="end_datetime" name="end_datetime" required>
+            </div>
+
+            {% for resource in resources %}
+            <div class="resource-row" data-name="{{ resource.name | lower }}">
+                <label class="custom-radio">
+                    <input type="radio" id="resource_{{ resource.id }}" name="resource_id" value="{{ resource.id }}">
+                    <span class="radio-mark"></span>
+                </label>
+                <span><strong>{{ resource.name }}</strong> | Status: {{ resource.status }} | APs: {{ resource.ap_count
+                    }}</span>
+            </div>
+            {% endfor %}
+            <button type="submit" class="reserve-btn" id="reserveBtn" disabled>Reserve</button>
+            </form>
+            {% endif %}
+
+            {% if active_reservations %}
+            <h3>Your Active Reservations</h3>
+            <ul class="reservation-list">
+                {% for r in active_reservations %}
+                <li>
+                    <strong>{{ r.resource_name }}</strong> reserved from
+                    {{ r.start_datetime }} to {{ r.end_datetime }}
+                    {% if r.link %}
+                    | <a href="{{ r.link }}" target="_blank">🔗 Open Resource</a>
+                    {% endif %}
+                    | <a href="/delete_reservation/{{ r.id }}"
+                        onclick="return confirm('Are you sure you want to cancel this reservation?');"
+                        style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a>
+                </li>
+                {% endfor %}
+
+            </ul>
+            {% endif %}
     </div>
 
-    {% if active_count < 2 %}
-    <form method="POST">
-        <div>
-            <label for="start_datetime">Start Date & Time:</label>
-            <input type="datetime-local" id="start_datetime" name="start_datetime" required>
-        </div>
-
-        <div>
-            <label for="end_datetime">End Date & Time:</label>
-            <input type="datetime-local" id="end_datetime" name="end_datetime" required>
-        </div>
-
-        {% for resource in resources %}
-            <div class="resource-row" data-name="{{ resource.name | lower }}">
-                <span><strong>{{ resource.name }}</strong> | Status: {{ resource.status }} | APs: {{ resource.ap_count }}</span>
-                <button type="submit" name="resource_id" value="{{ resource.id }}">Reserve</button>
-            </div>
-        {% endfor %}
-    </form>
-    {% endif %}
-
-    {% if active_reservations %}
-        <h3>Your Active Reservations</h3>
-        <ul class="reservation-list">
-            {% for r in active_reservations %}
-    <li>
-        <strong>{{ r.resource_name }}</strong> reserved from 
-        {{ r.start_datetime }} to {{ r.end_datetime }}
-        {% if r.link %}
-            | <a href="{{ r.link }}" target="_blank">🔗 Open Resource</a>
-        {% endif %}
-        | <a href="/delete_reservation/{{ r.id }}" onclick="return confirm('Are you sure you want to cancel this reservation?');" style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a>
-    </li>
-{% endfor %}
-
-        </ul>
-    {% endif %}
-
-    <a href="/inventory"><button class="back-btn">⬅ Back to Inventory</button></a>
-</div>
-
-<script>
-    function filterResources() {
-        const input = document.getElementById("searchInput").value.toLowerCase();
-        document.querySelectorAll('.resource-row').forEach(row => {
-            const name = row.dataset.name;
-            row.style.display = name.includes(input) ? 'flex' : 'none';
+    <script>
+        function filterResources() {
+            const input = document.getElementById("searchInput").value.toLowerCase();
+            document.querySelectorAll('.resource-row').forEach(row => {
+                const name = row.dataset.name;
+                row.style.display = name.includes(input) ? 'flex' : 'none';
+            });
+        }
+        // Enable reserve button only if a resource is selected
+        document.addEventListener('DOMContentLoaded', function () {
+            const radios = document.querySelectorAll('input[name="resource_id"]');
+            const reserveBtn = document.getElementById('reserveBtn');
+            radios.forEach(radio => {
+                radio.addEventListener('change', function () {
+                    reserveBtn.disabled = false;
+                });
+            });
+            // If none selected, keep disabled
+            if (reserveBtn) {
+                reserveBtn.disabled = !Array.from(radios).some(r => r.checked);
+            }
         });
-    }
-</script>
+    </script>
 </body>
+
 </html>

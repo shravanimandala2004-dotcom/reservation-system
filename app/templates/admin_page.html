@@ -1,10 +1,29 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Admin Dashboard</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/admin_page.css">
+    <link rel="stylesheet" href="/static/sidebar.css">
 </head>
+
 <body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
+        <nav>
+            <a href="{{ url_for('inventory.inventory') }}" {% if request.path.startswith('/inventory') %}class="active"
+                {% endif %}>Inventory</a>
+            <a href="{{url_for('reservation.reserve')}}" {% if request.path.startswith('/reserve') %}class="active" {%
+                endif %}>Reserve</a>
+            {% if role == 'admin' %}
+            <a href="{{ url_for('inventory.admin_page') }}" {% if request.path.startswith('/admin') %}class="active" {%
+                endif %}>Admin Page</a>
+            {% endif %}
+        </nav>
+        <div class="sidebar-logout-separator"></div>
+        <a href="{{ url_for('auth.login') }}" class="logout-btn">Logout</a>
+    </div>
     <div class="container">
         <img src="/static/logo.png" alt="Logo" class="logo">
         <h1>Admin Dashboard</h1>
@@ -20,15 +39,12 @@
                 <input type="number" id="max_resources" name="max_resources" value="1" min="1" max="10" required>
             </div>
 
-            <button type="submit" style="padding: 10px 20px; background: #f57c00; color: white; border: none; border-radius: 5px;">
+            <button type="submit"
+                style="padding: 10px 20px; background: #f57c00; color: white; border: none; border-radius: 5px;">
                 Save Settings
             </button>
         </form>
-
-        <div style="margin-top: 30px;">
-            <a href="/inventory">⬅ Back to Inventory</a>
-        </div>
     </div>
 </body>
-</html>
 
+</html>

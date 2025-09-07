@@ -156,4 +156,4 @@ def admin_page():
     if session.get('role') != 'admin':
         return "⛔ You are not authorized to view this page."
 
-    return render_template('admin_page.html')
+    return render_template('admin_page.html', role=session.get('role'))
