@@ -39,31 +39,34 @@ def inventory():
             conn.commit()
 
 
-            if session.get('role') == 'admin':
-                subject = "Resource Added"
-                body = f"""
-                Resource Name: {name}
-                AP Count: {ap_count}
-                Status: {status}
-                Link: {link}
-                Action: ADDED
-                """
+            # Notify all admins
+            cursor.execute("SELECT username FROM users WHERE role = 'admin'")
+            admin_users = cursor.fetchall()
+            subject = "Resource Added"
+            body = f"""
+            Resource Name: {name}
+            AP Count: {ap_count}
+            Status: {status}
+            Link: {link}
+            Action: ADDED
+            """
+            for admin in admin_users:
                 notify_user(
-                    to_email=session.get('username'),
+                    to_email=admin['username'],
                     subject=subject,
                     email_body=body,
                 )
  
 
             # Optional: Send to all users if needed
-            cursor.execute("SELECT username FROM users")
-            all_users = cursor.fetchall()
-            for user in all_users:
-                notify_user(
-                    to_email=user['username'],
-                    subject=f"New Resource Added: {name}",
-                    email_body=f"A new resource '{name}' with {ap_count} APs is now available.",
-               )
+            # cursor.execute("SELECT username FROM users")
+            # all_users = cursor.fetchall()
+            # for user in all_users:
+            #     notify_user(
+            #         to_email=user['username'],
+            #         subject=f"New Resource Added: {name}",
+            #         email_body=f"A new resource '{name}' with {ap_count} APs is now available.",
+            #    )
 
 
     # Display inventory
