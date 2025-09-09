@@ -15,12 +15,10 @@ def permission():
         max_reservations = request.form['max_reservations']
         max_days = request.form['max_days']
 
-        cursor.execute("UPDATE permissions SET max_reservations=%s, max_days=%s WHERE id=1",
+        cursor.execute("UPDATE permissions SET max_reservations=%s, max_days=%s",
                        (max_reservations, max_days))
         conn.commit()
 
-    cursor.execute("SELECT * FROM permissions WHERE id=1")
-    settings = cursor.fetchone()
     conn.close()
 
-    return render_template('permission.html', settings=settings)
+    return redirect(url_for('inventory.admin_page'))

@@ -22,6 +22,8 @@
             {% if role == 'admin' %}
             <a href="{{ url_for('inventory.admin_page') }}" {% if request.path.startswith('/admin') %}class="active" {%
                 endif %}>Admin Page</a>
+            <a href="{{ url_for('details.details') }}" {% if request.path.startswith('/details') %}class="active" {%
+                endif %}>Details</a>
             {% endif %}
         </nav>
         <div class="sidebar-logout-separator"></div>

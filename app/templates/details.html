@@ -2,10 +2,30 @@
 <html>
 <head>
     <title>User & Admin Details</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='details.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='sidebar.css') }}">
 
 </head>
 <body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
+        <nav>
+            <a href="{{ url_for('inventory.inventory') }}" {% if request.path.startswith('/inventory') %}class="active"
+                {% endif %}>Inventory</a>
+            <a href="{{url_for('reservation.reserve')}}" {% if request.path.startswith('/reserve') %}class="active" {%
+                endif %}>Reserve</a>
+            {% if role == 'admin' %}
+            <a href="{{ url_for('inventory.admin_page') }}" {% if request.path.startswith('/admin') %}class="active" {%
+                endif %}>Admin Page</a>
+            <a href="{{ url_for('details.details') }}" {% if request.path.startswith('/details') %}class="active" {%
+                endif %}>Details</a>
+            {% endif %}
+        </nav>
+        <div class="sidebar-logout-separator"></div>
+        <a href="{{ url_for('auth.login') }}" class="logout-btn">Logout</a>
+    </div>
+    <div class="container">
     <h1>User & Admin Details</h1>
     <table border="1" cellpadding="8">
         <thead>
@@ -43,6 +63,7 @@
     <button style="background-color: #f57c00; color: white; margin-bottom: 10px;">ADD</button>
 </a>
 {% endif %}
+</div>
 
 </body>
 </html>

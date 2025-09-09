@@ -158,5 +158,18 @@ def admin_page():
     # Allow only admins
     if session.get('role') != 'admin':
         return "⛔ You are not authorized to view this page."
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    # Fetch current settings for display
+    cursor.execute("SELECT max_reservations, max_days FROM permissions ")
+    # settings = {row['key_name']: row['value'] for row in cursor.fetchall()}
+    settings=cursor.fetchone()
+    conn.close()
+    print("settings:", settings)
 
-    return render_template('admin_page.html', role=session.get('role'))
+    return render_template(
+        'admin_page.html',
+        role=session.get('role'),
+        settings=settings
+    )

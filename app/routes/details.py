@@ -16,7 +16,7 @@ def details():
     print("users u:",users)
     conn.close()
 
-    return render_template('details.html', users=users)
+    return render_template('details.html', users=users , role=session.get('role'))
 
 @details_bp.route('/add_user', methods=['GET', 'POST'])
 def add_user():
@@ -97,7 +97,7 @@ def edit_user(user_id):
         # ✅ GET request → fetch user details
         cursor.execute("SELECT id, username, role FROM users WHERE id=%s", (user_id,))
         user = cursor.fetchone()
-        return render_template('edit_user.html', user=user)
+        return render_template('edit_user.html', user=user, role=session.get('role'))
 
     finally:
         cursor.close()   # ✅ always close cursor

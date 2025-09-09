@@ -22,7 +22,7 @@ def signup():
                            ( username, password, role))
             conn.commit()
             conn.close()
-            return redirect(url_for('index'))
+            return redirect(url_for('details.details'))
         except Exception as e:
             return f"Signup failed: {str(e)}"
     
