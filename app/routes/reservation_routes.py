@@ -2,13 +2,14 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from datetime import datetime, timedelta
 from app.utils.db import get_db_connection
 from .notification_routes import notify_user
+from .permission_routes import get_setting
 
 reservation_bp = Blueprint('reservation', __name__)
 
 @reservation_bp.route('/reserve', methods=['GET', 'POST'])
 def reserve():
     if 'user_id' not in session:
-        return redirect(url_for('index'))
+        return redirect(url_for('auth.index'))
 
     user_id = session['user_id']
     conn = get_db_connection()
@@ -73,12 +74,17 @@ def reserve():
     """, (user_id,))
     active_reservations = cursor.fetchall()
 
+    max_reservations = get_setting('max_reservations', 2)
+    max_days = get_setting('max_days', 15)
+
     conn.close()
     return render_template(
         'reserve.html',
         resources=resources,
         active_reservations=active_reservations,
         active_count=len(active_reservations),
+        max_reservations=max_reservations,
+        max_days=max_days,
         role=session.get('role')
     )
 

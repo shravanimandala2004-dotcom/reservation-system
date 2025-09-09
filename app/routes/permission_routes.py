@@ -22,3 +22,11 @@ def permission():
     conn.close()
 
     return redirect(url_for('inventory.admin_page'))
+ 
+def get_setting(key, default):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM permissions")
+    row = cursor.fetchone()
+    conn.close()
+    return int(row[key]) if row else default

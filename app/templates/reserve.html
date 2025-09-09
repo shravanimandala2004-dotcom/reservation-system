@@ -33,8 +33,8 @@
         <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
         <h1>Reserve a Resource</h1>
 
-        {% if active_count >= 2 %}
-        <p style="color: rgb(56, 170, 215);">⚠️ You have already reserved 2 active resources. Please wait until one
+        {% if active_count >= max_reservations %}
+        <p style="color: rgb(56, 170, 215);">⚠️ You have already reserved {{max_reservations}} active resources. Please wait until one
             ends.</p>
         {% endif %}
 
@@ -43,7 +43,7 @@
                 style="padding: 10px; width: 100%; border-radius: 5px;">
         </div>
 
-        {% if active_count < 2 %} <form method="POST">
+        {% if active_count < max_reservations %} <form method="POST">
             <div>
                 <label for="start_datetime">Start Date & Time:</label>
                 <input type="datetime-local" id="start_datetime" name="start_datetime" required>
