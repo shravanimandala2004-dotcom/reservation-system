@@ -3,20 +3,61 @@
 
 <head>
     <title>Inventory</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='inventory.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='sidebar.css') }}">
 </head>
 
 <body>
-    <div class="container">
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
         <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
+        <nav>
+            <a href="{{ url_for('inventory.inventory') }}" {% if request.path.startswith('/inventory') %}class="active"
+                {% endif %}>Inventory</a>
+            <a href="{{url_for('reservation.reserve')}}" {% if request.path.startswith('/reserve') %}class="active" {%
+                endif %}>Reserve</a>
+            {% if role == 'admin' %}
+            <a href="{{ url_for('inventory.admin_page') }}" {% if request.path.startswith('/admin') %}class="active" {%
+                endif %}>Admin Page</a>
+            {% endif %}
+        </nav>
+        <div class="sidebar-logout-separator"></div>
+        <a href="{{ url_for('auth.login') }}" class="logout-btn">Logout</a>
+    </div>
+
+    <div class="container">
         <h1>Resource Inventory</h1>
+
+        {% if role == 'admin' %}
+        <!-- Collapsible Add Resource Form -->
+        <div class="add-resource-box">
+            <button id="toggleAddFormBtn" class="collapsible-btn">
+                <span style="vertical-align:middle;">+ Add Resource</span>
+                <span id="arrow" class="arrow">&#9660;</span>
+            </button>
+            <div id="addResourceForm" style="display:none;">
+                <form method="POST" action="/inventory" class="add-resource-form">
+                    <input type="hidden" name="action_type" id="action_type" value="add">
+                    <div class="form-row">
+                        <input type="text" name="resource_name" placeholder="Resource Name" required>
+                        <input type="number" name="ap_count" placeholder="AP Count" required>
+                    </div>
+                    <div class="form-row">
+                        <input type="text" name="status" placeholder="Status (e.g. Available)" required>
+                        <input type="url" name="link" placeholder="Resource Link">
+                    </div>
+                    <input type="hidden" name="resource_id" id="resource_id">
+                    <button type="submit" class="submit-btn">Add Resource</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Search Box -->
         <div class="search-bar">
             <input type="text" id="searchInput" placeholder="Search resource..." onkeyup="filterTable()"
                 style="padding: 10px; width: 100%; border-radius: 5px;">
         </div>
-
 
         <!-- Inventory Table -->
         <table id="inventoryTable">
@@ -28,82 +69,64 @@
                     {% if role == 'admin' %}
                     <th>Actions</th>
                     {% endif %}
-
                 </tr>
             </thead>
             <tbody>
                 {% for resource in resources %}
                 <tr data-id="{{ resource.id }}">
-
                     <td>{{ resource.name }}</td>
                     <td>{{ resource.ap_count }}</td>
                     <td>
                         <span class="status-indicator {{ resource.status | lower | replace(' ', '-') }}"></span>
                         {{ resource.status }}
                     </td>
-
+                    {% if role == 'admin' %}
                     <td>
-                        {% if role == 'admin' %}
+
                         <a href="{{ resource.link }}" target="_blank"><button>Open</button></a>
                         <a href="/delete_resource/{{ resource.id }}"><button>Delete</button></a>
                         <button
                             onclick='openEditModal({{ resource.id }}, {{ resource.name | tojson }}, {{ resource.ap_count }}, {{ resource.status | tojson }})'>Edit
                         </button>
-                        {% endif %}
+
                     </td>
+                    {% endif %}
                 </tr>
                 {% endfor %}
             </tbody>
-
         </table>
 
-        {% if role == 'admin' %}
-        <div style="margin-top: 20px;">
-            <form method="POST" action="/inventory">
-                <input type="hidden" name="action_type" id="action_type" value="add">
-                <input type="text" name="resource_name" placeholder="Resource Name" required>
-                <input type="number" name="ap_count" placeholder="AP Count" required>
-                <input type="text" name="status" placeholder="Status (e.g. Available)" required>
-                <input type="url" name="link" placeholder="Resource Link">
-                <input type="hidden" name="resource_id" id="resource_id">
-                <button type="submit">Add Resource</button>
-            </form>
-        </div>
-        
-        <a href="{{ url_for('inventory.admin_page') }}">
-            <button>Go to Admin Page</button>
-        </a>
-
-
-        {% endif %}
-
-        <div style="margin-top: 30px;">
-            <a href="/" style="margin-right: 20px;">⬅ Back to Home</a>
-            <a href="/reserve" style="
-        display: inline-block;
-        padding: 10px 20px;
-        background-color:  #f57c00;
-        color: black;
-        border-radius: 5px;
-        text-decoration: none;
-        font-weight: bold;
-    ">
-                Next: Reserve Resource
-            </a>
-        </div>
     </div>
 
+    <!-- Edit Modal -->
+    <div id="editModal"
+        style="display:none; position:fixed; top:20%; left:35%; background:#333; color:white; padding:20px; border-radius:8px; box-shadow: 0 0 10px black; z-index: 200;">
+        <h3>Edit Resource</h3>
+        <form id="editForm" method="POST" action="/edit_resource">
+            <input type="hidden" id="edit_id" name="id">
+            <input type="text" id="edit_name" name="name" placeholder="Resource Name" required>
+            <input type="number" id="edit_ap" name="ap_count" placeholder="AP Count" required>
+            <input type="text" id="edit_status" name="status" placeholder="Status" required>
+            <button type="submit">Save Changes</button>
+            <button type="button" onclick="document.getElementById('editModal').style.display='none'">Cancel</button>
+        </form>
+    </div>
+    {% if role == 'admin' %}
     <script>
-
-        // Simulated role for demo: change to "user" or "admin"
-        const userRole = "admin"; // Change this to "user" to test user-only view
-
-        // Hide admin-only features if user
-        window.onload = function () {
-            if (userRole !== "admin") {
-                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-            }
-        };
+        document.addEventListener("DOMContentLoaded", function () {
+            const btn = document.getElementById('toggleAddFormBtn');
+            const form = document.getElementById('addResourceForm');
+            const arrow = document.getElementById('arrow');
+            btn.onclick = function () {
+                if (form.style.display === 'none' || form.style.display === '') {
+                    form.style.display = 'block';
+                    arrow.style.transform = 'rotate(180deg)';
+                } else {
+                    form.style.display = 'none';
+                    arrow.style.transform = 'rotate(0deg)';
+                }
+            };
+        });
 
         function addResource() {
             const name = document.getElementById("resourceName").value;
@@ -155,6 +178,17 @@
             document.getElementById("resource_id").value = row.getAttribute("data-id");
         }
 
+        function openEditModal(id, name, ap, status) {
+            document.getElementById('edit_id').value = id;
+            document.getElementById('edit_name').value = name;
+            document.getElementById('edit_ap').value = ap;
+            document.getElementById('edit_status').value = status;
+            document.getElementById('editModal').style.display = 'block';
+        }
+    </script>
+    {% endif %}
+
+    <script>
 
         function filterTable() {
             const input = document.getElementById("searchInput");
@@ -170,50 +204,8 @@
                 }
             });
         }
-        function openEditModal(id, name, ap, status) {
-            document.getElementById('edit_id').value = id;
-            document.getElementById('edit_name').value = name;
-            document.getElementById('edit_ap').value = ap;
-            document.getElementById('edit_status').value = status;
-            document.getElementById('editModal').style.display = 'block';
-        }
 
     </script>
-    <!-- Edit Modal -->
-    <div id="editModal"
-        style="display:none; position:fixed; top:20%; left:35%; background:#333; color:white; padding:20px; border-radius:8px; box-shadow: 0 0 10px black;">
-        <h3>Edit Resource</h3>
-        <form id="editForm" method="POST" action="/edit_resource">
-            <input type="hidden" id="edit_id" name="id">
-            <input type="text" id="edit_name" name="name" placeholder="Resource Name" required>
-            <input type="number" id="edit_ap" name="ap_count" placeholder="AP Count" required>
-            <input type="text" id="edit_status" name="status" placeholder="Status" required>
-            <button type="submit">Save Changes</button>
-            <button type="button" onclick="document.getElementById('editModal').style.display='none'">Cancel</button>
-        </form>
-    </div>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            if (Notification.permission !== "granted") {
-                Notification.requestPermission();
-            }
-
-            const messages = {{ get_flashed_messages(category_filter = ['notification']) | tojson | safe
-        }};
-        if (Notification.permission === "granted") {
-            messages.forEach(msg => {
-                new Notification("📢 Notification", {
-                    body: msg
-                    //icon: "/static/icons/notify.png"  // optional
-                });
-            });
-        }
-    });
-    </script>
-
-
-
 </body>
 
 </html>
