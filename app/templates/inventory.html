@@ -10,7 +10,21 @@
     <div class="container">
         <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
         <h1>Resource Inventory</h1>
-
+{% if role == 'admin' %}
+<div style="margin-bottom: 20px;">
+    <a href="{{ url_for('details.details') }}" style="
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #f57c00;
+        color: white;
+        border-radius: 5px;
+        text-decoration: none;
+        font-weight: bold;
+    ">
+        Details
+    </a>
+</div>
+{% endif %}
         <!-- Search Box -->
         <div class="search-bar">
             <input type="text" id="searchInput" placeholder="Search resource..." onkeyup="filterTable()"
@@ -56,6 +70,7 @@
             </tbody>
 
         </table>
+
 
         {% if role == 'admin' %}
         <div style="margin-top: 20px;">

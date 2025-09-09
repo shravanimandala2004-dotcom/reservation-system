@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit User</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+<body>
+    <h1>Edit User</h1>
+    <form method="POST">
+        <label>Username (Email):</label>
+        <input type="text" name="username" value="{{ user.username }}" required><br><br>
+
+        <label>Role:</label>
+        <select name="role" required>
+            <option value="user" {% if user.role == 'user' %}selected{% endif %}>User</option>
+            <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+        </select><br>
+
+           <label for="password">New Password (leave blank if unchanged):</label>
+    <input type="password" id="password" name="password">
+
+        <button type="submit">Save Changes</button>
+    </form>
+
+    <br>
+    <a href="{{ url_for('details.details') }}">⬅ Back</a>
+</body>
+</html>

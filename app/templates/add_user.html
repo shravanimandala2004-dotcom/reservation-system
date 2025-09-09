@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add User/Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Add User/Admin</h1>
+    <form method="POST">
+        <label>Username (Email):</label>
+        <input type="email" name="username" required><br><br>
+
+        <label>Role:</label>
+        <select name="role" required>
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+        </select><br><br>
+
+        <label>Password:</label>
+        <input type="password" name="password" required><br><br>
+
+        <button type="submit">Add User/Admin</button>
+    </form>
+    <br>
+    <a href="{{ url_for('details.details') }}">⬅ Back</a>
+</body>
+</html>
