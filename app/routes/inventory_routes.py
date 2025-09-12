@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from app.utils.db import get_db_connection
 from .notification_routes import notify_user, get_emails_by_resource
+from flask import jsonify
 
 inventory_bp = Blueprint('inventory', __name__)
 
@@ -68,12 +69,15 @@ def inventory():
             #         email_body=f"A new resource '{name}' with {ap_count} APs is now available.",
             #    )
 
+    # Fetch manufacturers
+    cursor.execute("SELECT distinct name from manufacturers")
+    manufacturers = [row['name'] for row in cursor.fetchall()]
 
     # Display inventory
     cursor.execute("SELECT * FROM resources")
     resources = cursor.fetchall()
     conn.close()
-    return render_template('inventory.html', resources=resources, role=session.get('role'))
+    return render_template('inventory.html', resources=resources, role=session.get('role'),manufacturers=manufacturers)
 
 @inventory_bp.route('/delete_resource/<int:id>')
 def delete_resource(id):
@@ -173,3 +177,15 @@ def admin_page():
         role=session.get('role'),
         settings=settings
     )
+
+
+@inventory_bp.route('/get_resources_by_manufacturer',methods=['GET'])
+def get_resources_by_manufacturer():
+    manufacturer = request.args.get('manufacturer')
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT r.* from resources as r join manufacturers as m on r.manufacturer_id=m.manufacturer_id where m.name=%s",(manufacturer,))
+    resources=cursor.fetchall()
+    print(resources)
+    conn.close()
+    return jsonify(resources)

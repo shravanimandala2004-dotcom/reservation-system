@@ -10,7 +10,7 @@
 <body>
     <!-- Sidebar Navigation -->
     <div class="sidebar">
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
+        <img src="{{ url_for('static', filename='RUCKUS-Networks-Logos-artwork_white-orange.png') }}" alt="Logo" class="logo">
         <nav>
             <a href="{{ url_for('inventory.inventory') }}" {% if request.path.startswith('/inventory') %}class="active"
                 {% endif %}>Inventory</a>
@@ -60,6 +60,14 @@
             <input type="text" id="searchInput" placeholder="Search resource..." onkeyup="filterTable()"
                 style="padding: 10px; width: 100%; border-radius: 5px;">
         </div>
+
+        <!-- Manufacturer dropdown -->
+        <select id="manufacturer" onchange="getResourcesByManufacturer()">
+            <option value="">Select manufacturer</option>
+            {% for m in manufacturers%}
+            <option value="{{m}}">{{m}}</option>
+            {% endfor %}
+        </select>
 
         <!-- Inventory Table -->
         <table id="inventoryTable">
@@ -205,6 +213,53 @@
                     row.style.display = "none";
                 }
             });
+        }
+
+        function getResourcesByManufacturer() {
+            const select = document.getElementById("manufacturer");
+            const manufacturer = select.value;
+            const table = document.getElementById("inventoryTable");
+            table.innerHTML="";
+            fetch(`/get_resources_by_manufacturer?manufacturer=${manufacturer}`)
+                .then(response => response.json())
+                .then(data => {
+                    let tableHTML = `
+                    <thead>
+                        <tr>
+                            <th>Resource Name</th>
+                            <th>AP Count</th>
+                            <th>Status</th>
+                            {% if role == 'admin' %}
+                            <th>Actions</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                    `;
+                    data.forEach(resource => {
+                        tableHTML += `
+                        <tr data-id="${resource.id}">
+                            <td>${resource.name}</td>
+                            <td>${resource.ap_count}</td>
+                            <td>
+                                <span class="status-indicator ${resource.status.toLowerCase().replace(/ /g, '-')}"></span>
+                                ${resource.status}
+                            </td>
+                            {% if role == 'admin' %}
+                            <td>
+                                <a href="${resource.link}" target="_blank"><button>Open</button></a>
+                                <a href="/delete_resource/${resource.id}"><button>Delete</button></a>
+                                <button onclick='openEditModal(${resource.id}, ${JSON.stringify(resource.name)}, ${resource.ap_count}, ${JSON.stringify(resource.status)})'>Edit</button>
+                            </td>
+                            {% endif %}
+                            
+                        </tr>
+                        `;
+                    });
+                    tableHTML += `</tbody>`;
+                    table.innerHTML = tableHTML;
+                })
+                .catch(error => console.error('Error fetching resources:', error));
         }
 
     </script>
