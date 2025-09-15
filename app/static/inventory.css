@@ -272,3 +272,57 @@ button:hover {
         gap: 8px;
     }
 }
+
+/* controller card styles  */
+.controller-cards {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.controller-card {
+    padding: 10px 20px;
+    background-color: #f57c00;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.controller-card:hover {
+    background-color: #e0e0e0;
+    color:black
+}
+
+.controller-card.disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.controller-card.selected {
+    background-color: #4caf50; /* Green to indicate selection */
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.6);
+    border: 2px solid #388e3c;
+}
+
+
+.custom-radio input[type="radio"] {
+  display: none; /* Hide default radio button */
+}
+
+.radio-icon {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-image: url('icons8-checkbox-50.png'); /* or .png */
+  background-size: cover;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.custom-radio input[type="radio"]:checked + .radio-icon {
+  background-image: url('icons8-checkbox-50 (1).png'); /* or .png */
+}
+

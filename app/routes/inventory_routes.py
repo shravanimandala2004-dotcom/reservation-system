@@ -74,10 +74,10 @@ def inventory():
     manufacturers = [row['name'] for row in cursor.fetchall()]
 
     # Display inventory
-    cursor.execute("SELECT * FROM resources")
-    resources = cursor.fetchall()
+    # cursor.execute("SELECT * FROM resources")
+    # resources = cursor.fetchall()
     conn.close()
-    return render_template('inventory.html', resources=resources, role=session.get('role'),manufacturers=manufacturers)
+    return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers)
 
 @inventory_bp.route('/delete_resource/<int:id>')
 def delete_resource(id):
@@ -186,6 +186,22 @@ def get_resources_by_manufacturer():
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT r.* from resources as r join manufacturers as m on r.manufacturer_id=m.manufacturer_id where m.name=%s",(manufacturer,))
     resources=cursor.fetchall()
-    print(resources)
+    cursor.execute("Select c.* from controllers c join manufacturers m on c.manufacturer_id=m.manufacturer_id where m.name=%s",(manufacturer,))
+    controllers=cursor.fetchall()
     conn.close()
-    return jsonify(resources)
+    return jsonify(resources,controllers)
+
+@inventory_bp.route('/get_controllers_by_resource')
+def get_controllers_by_resource():
+    resource_id = request.args.get('resource_id')
+    query = """
+        SELECT c.controller_id, c.name
+        FROM controllers c
+        JOIN resource_controller_map rcm ON c.controller_id = rcm.controller_id
+        WHERE rcm.resource_id = %s
+    """
+    conn = get_db_connection()
+    cursor= conn.cursor(dictionary=True)
+    cursor.execute(query, (resource_id,))
+    controllers = cursor.fetchall()
+    return jsonify(controllers)

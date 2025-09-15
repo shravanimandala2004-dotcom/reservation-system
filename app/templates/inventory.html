@@ -10,7 +10,8 @@
 <body>
     <!-- Sidebar Navigation -->
     <div class="sidebar">
-        <img src="{{ url_for('static', filename='RUCKUS-Networks-Logos-artwork_white-orange.png') }}" alt="Logo" class="logo">
+        <img src="{{ url_for('static', filename='RUCKUS-Networks-Logos-artwork_white-orange.png') }}" alt="Logo"
+            class="logo">
         <nav>
             <a href="{{ url_for('inventory.inventory') }}" {% if request.path.startswith('/inventory') %}class="active"
                 {% endif %}>Inventory</a>
@@ -69,10 +70,13 @@
             {% endfor %}
         </select>
 
+        <p id="noResourcesMsg" style="display:none; color: red; margin-top: 10px;">No resources found for the selected
+            manufacturer.</p>
         <!-- Inventory Table -->
         <table id="inventoryTable">
             <thead>
                 <tr>
+                    <th></th>
                     <th>Resource Name</th>
                     <th>AP Count</th>
                     <th>Status</th>
@@ -84,6 +88,11 @@
             <tbody>
                 {% for resource in resources %}
                 <tr data-id="{{ resource.id }}">
+                    <td><label class="custom-radio">
+                            <input type="radio" name="resource" onchange="fetchControllers({{resource.id}})">
+                            <span class="radio-icon"></span>
+                        </label>
+                    </td>
                     <td>{{ resource.name }}</td>
                     <td>{{ resource.ap_count }}</td>
                     <td>
@@ -105,6 +114,11 @@
                 {% endfor %}
             </tbody>
         </table>
+
+        <h2>Controllers</h2>
+        <div class="controller-cards"></div>
+
+        <button id="reserveBtn" onclick="reserveSelection()">Reserve</button>
 
     </div>
 
@@ -218,14 +232,21 @@
         function getResourcesByManufacturer() {
             const select = document.getElementById("manufacturer");
             const manufacturer = select.value;
+
             const table = document.getElementById("inventoryTable");
-            table.innerHTML="";
-            fetch(`/get_resources_by_manufacturer?manufacturer=${manufacturer}`)
-                .then(response => response.json())
-                .then(data => {
-                    let tableHTML = `
+            const controllersDiv = document.querySelector(".controller-cards");
+            controllersDiv.innerHTML = ""
+            if (table)
+                table.innerHTML = "";
+            if (manufacturer === "") {
+                document.getElementById("noResourcesMsg").style.display = "block";
+                return;
+            }
+            document.getElementById("noResourcesMsg").style.display = "none";
+            let tableHTML = `
                     <thead>
                         <tr>
+                            <th></th>
                             <th>Resource Name</th>
                             <th>AP Count</th>
                             <th>Status</th>
@@ -236,9 +257,20 @@
                     </thead>
                     <tbody>
                     `;
-                    data.forEach(resource => {
+            table.innerHTML = tableHTML;
+
+            fetch(`/get_resources_by_manufacturer?manufacturer=${manufacturer}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+
+                    data[0].forEach(resource => {
                         tableHTML += `
                         <tr data-id="${resource.id}">
+                            <td><label class="custom-radio">
+                                <input type="radio" name="resource" onchange="fetchControllers(${resource.id})">
+                                <span class="radio-icon"></span>
+                                </label></td>
                             <td>${resource.name}</td>
                             <td>${resource.ap_count}</td>
                             <td>
@@ -258,9 +290,80 @@
                     });
                     tableHTML += `</tbody>`;
                     table.innerHTML = tableHTML;
+
+                    data[1].forEach(controller => {
+
+                        const card = document.createElement('div');
+                        card.className = 'controller-card';
+                        card.id = controller.name;
+                        card.textContent = controller.name;
+                        card.setAttribute('data-id', controller.controller_id);
+
+                        // Attach the selection handler
+                        card.onclick = () => selectController(card);
+
+                        controllersDiv.appendChild(card);
+
+                    })
                 })
                 .catch(error => console.error('Error fetching resources:', error));
         }
+
+        function selectController(card) {
+            // Toggle selection
+            const alreadySelected = card.classList.contains('selected');
+            document.querySelectorAll('.controller-card').forEach(c => c.classList.remove('selected'));
+            if (!alreadySelected) {
+                card.classList.add('selected');
+            }
+        }
+
+        function disableControllers() {
+            document.querySelectorAll('.controller-card').forEach(card => {
+                card.classList.add('disabled');
+            });
+        }
+
+        function enableControllers(id) {
+            document.getElementById(id).classList.remove('disabled');
+        }
+
+        function fetchControllers(resourceId) {
+            fetch(`/get_controllers_by_resource?resource_id=${resourceId}`)
+                .then(response => response.json())
+                .then(controllers => {
+                    disableControllers();
+
+                    controllers.forEach(controller => {
+                        enableControllers(controller.name);
+
+                    });
+                })
+                .catch(error => console.error('Error fetching controllers:', error));
+        }
+
+        function reserveSelection() {
+            const selectedResource = document.querySelector('input[name="resource"]:checked');
+            const selectedController = document.querySelector('.controller-card.selected');
+
+            if (!selectedResource && !selectedController) {
+                alert("Please select at least a controller or a resource.");
+                return;
+            }
+
+            if (selectedResource && !selectedController) {
+                alert("Please select a controller.");
+                return;
+            }
+
+            const resourceId = selectedResource ? selectedResource.closest('tr').getAttribute('data-id') : '';
+            const controllerId = selectedController ? selectedController.getAttribute('data-id') : '';
+            
+            // Redirect to reservation page with query parameters
+            window.location.href = `/reserve_page?resource_id=${resourceId}&controller_id=${controllerId}`;
+        }
+
+
 
     </script>
 </body>

@@ -88,6 +88,52 @@ def reserve():
         role=session.get('role')
     )
 
+@reservation_bp.route('/reserve_page')
+def reserve_page():
+    if 'user_id' not in session:
+        return redirect(url_for('auth.index'))
+
+    user_id = session['user_id']
+    resource_id = request.args.get('resource_id')
+    controller_id = request.args.get('controller_id')
+
+    resource = None
+    controller = None
+
+    conn=get_db_connection()
+    cursor=conn.cursor(dictionary=True)
+
+    if resource_id:
+        cursor.execute("SELECT * FROM resources WHERE id = %s", (resource_id,))
+        resource = cursor.fetchone()
+
+    if controller_id:
+        cursor.execute("SELECT * FROM controllers WHERE controller_id = %s", (controller_id,))
+        controller = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT r.*, res.name AS resource_name, res.link
+        FROM reservations r
+        JOIN resources res ON r.resource_id = res.id
+        WHERE r.user_id = %s AND r.end_datetime >= NOW()
+    """, (user_id,))
+    active_reservations = cursor.fetchall()
+
+    max_reservations = get_setting('max_reservations', 2)
+    max_days = get_setting('max_days', 15)
+
+    conn.close()
+
+    return render_template('reserve_page.html', 
+        resource=resource, 
+        controller=controller,
+        active_reservations=active_reservations,
+        active_count=len(active_reservations),
+        max_reservations=max_reservations,
+        max_days=max_days,
+        role=session.get('role'))
+
+
 @reservation_bp.route('/delete_reservation/<int:id>')
 def delete_reservation(id):
     if 'user_id' not in session:
