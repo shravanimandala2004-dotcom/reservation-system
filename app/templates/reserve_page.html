@@ -36,25 +36,26 @@
         <h1>Reservation Details</h1>
 
         {% if active_count >= max_reservations %}
-        <p style="color: rgb(56, 170, 215);">⚠️ You have already reserved {{max_reservations}} active resources. Please
-            wait until one
-            ends.</p>
-        {% else %}
+            <p style="color: rgb(56, 170, 215);">⚠️ You have already reserved {{max_reservations}} active resources. Please
+                wait until one
+                ends.</p>
+            {% else %}
 
-        {% if resource %}
-        <div class="section">
-            <h3>Resource</h3>
-            <p><strong>Name:</strong> {{ resource.name }}</p>
-            <p><strong>AP Count:</strong> {{ resource.ap_count }}</p>
-            <p><strong>Status:</strong> {{ resource.status }}</p>
-        </div>
-        {% endif %}
+            {% if resource %}
+            <div class="section">
+                <h3>Resource</h3>
+                <p><strong>Name:</strong> {{ resource.name }}</p>
+                <p><strong>AP Count:</strong> {{ resource.ap_count }}</p>
+                <p><strong>Status:</strong> {{ resource.status }}</p>
+            </div>
+            {% endif %}
 
-        {% if controller %}
-        <div class="section">
-            <h3>Controller</h3>
-            <p><strong>Name:</strong> {{ controller.name }}</p>
-        </div>
+            {% if controller %}
+            <div class="section">
+                <h3>Controller</h3>
+                <p><strong>Name:</strong> {{ controller.name }}</p>
+            </div>
+            {% endif %}
         {% endif %}
 
         {% if active_count < max_reservations %} 
