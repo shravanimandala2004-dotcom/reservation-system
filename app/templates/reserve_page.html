@@ -11,10 +11,6 @@
 </head>
 
 <body>
-
-
-
-
     <!-- Sidebar Navigation -->
     <div class="sidebar">
         <img src="{{ url_for('static', filename='RUCKUS-Networks-Logos-artwork_white-orange.png') }}" alt="Logo"
@@ -34,6 +30,7 @@
         <div class="sidebar-logout-separator"></div>
         <a href="{{ url_for('auth.login') }}" class="logout-btn">Logout</a>
     </div>
+
     <div class="container">
 
         <h1>Reservation Details</h1>
@@ -60,7 +57,10 @@
         </div>
         {% endif %}
 
-        {% if active_count < max_reservations %} <form method="POST">
+        {% if active_count < max_reservations %} 
+        <form method="POST">
+            <input type="hidden" name="resource_id" value="{{ resource.id }}">
+            <input type="hidden" name="controller_id" value="{{ controller.controller_id }}">
             <div>
                 <label for="start_datetime">Start Date & Time:</label>
                 <input type="datetime-local" id="start_datetime" name="start_datetime" required>
@@ -73,32 +73,27 @@
 
 
             <button type="submit" class="reserve-btn" id="reserveBtn" disabled>Confirm Reservation</button>
-            </form>
-            {% endif %}
+        </form>
+        {% endif %}
 
-            {% endif %}
+        {% if active_reservations %}
+        <h3>Your Active Reservations</h3>
+        <ul class="reservation-list">
+            {% for r in active_reservations %}
+            <li>
+                <strong>{{ r.resource_name }}</strong> reserved on <strong>{{r.controller_name}}</strong> reserved from
+                {{ r.start_datetime }} to {{ r.end_datetime }}
+                {% if r.link %}
+                | <a href="{{ r.link }}" target="_blank">🔗 Open Resource</a>
+                {% endif %}
+                | <a href="/delete_reservation/{{ r.id }}"
+                    onclick="return confirm('Are you sure you want to cancel this reservation?');"
+                    style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a>
+            </li>
+            {% endfor %}
 
-
-
-
-            {% if active_reservations %}
-            <h3>Your Active Reservations</h3>
-            <ul class="reservation-list">
-                {% for r in active_reservations %}
-                <li>
-                    <strong>{{ r.resource_name }}</strong> reserved from
-                    {{ r.start_datetime }} to {{ r.end_datetime }}
-                    {% if r.link %}
-                    | <a href="{{ r.link }}" target="_blank">🔗 Open Resource</a>
-                    {% endif %}
-                    | <a href="/delete_reservation/{{ r.id }}"
-                        onclick="return confirm('Are you sure you want to cancel this reservation?');"
-                        style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a>
-                </li>
-                {% endfor %}
-
-            </ul>
-            {% endif %}
+        </ul>
+        {% endif %}
     </div>
 
 
