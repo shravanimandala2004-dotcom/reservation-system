@@ -17,6 +17,7 @@ def inventory():
         ap_count = request.form['ap_count']
         status = request.form['status']
         link = request.form['link']
+        controllers=request.form.getlist('controllers_list')
         action_type = request.form.get('action_type', 'add')  # from form hidden field
 
         if action_type == 'edit':
@@ -40,6 +41,13 @@ def inventory():
             cursor.execute("INSERT INTO resources (manufacturer_id,name, ap_count, status, link) VALUES (%s,%s, %s, %s, %s)",
                            (manufacturer,name, ap_count, status, link))
             conn.commit()
+            print(controllers)
+            if len(controllers)!=0:
+                cursor.execute("Select id from resources where manufacturer_id=%s and name=%s and ap_count=%s and status=%s and link=%s",(manufacturer,name, ap_count, status, link))
+                resource_id=cursor.fetchone()['id']
+                for controller in controllers:
+                    cursor.execute("insert into resource_controller_map (controller_id,resource_id) values (%s,%s)",(controller,resource_id))
+                    conn.commit()
 
 
             # Notify all admins
@@ -233,6 +241,21 @@ def edit_resource():
 
 
     return redirect(url_for('inventory.inventory'))
+
+@inventory_bp.route('/get_controllers/<int:manufacturer_id>')
+def get_controllers_by_manufacturer(manufacturer_id):
+    if session.get('role') == 'admin':
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Get controllers by manufacturer
+        cursor.execute("SELECT * FROM controllers WHERE manufacturer_id = %s", (manufacturer_id,))
+        controllers = cursor.fetchall()
+        print(controllers)
+        cursor.close()
+        conn.close()
+        return jsonify({'controllers':controllers})
+
 
 @inventory_bp.route('/admin_page')
 def admin_page():
