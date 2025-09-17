@@ -16,12 +16,6 @@ body {
     padding: 30px 40px;
 }
 
-/* Logo on each page */
-.logo {
-    width: 150px;
-    margin-bottom: 20px;
-}
-
 /* Heading styling */
 h1 {
     color: #f57c00;
@@ -42,7 +36,6 @@ table {
 th,
 td {
     padding: 12px;
-    /* border: 1px solid #9c5d26; */
     text-align: center;
 }
 
@@ -83,6 +76,24 @@ table tr:last-child td:last-child {
     border-bottom-right-radius: 8px;
 }
 
+.custom-radio input[type="radio"] {
+  display: none;
+}
+
+.radio-icon {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-image: url('icons8-checkbox-50.png'); /* or .png */
+  background-size: cover;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.custom-radio input[type="radio"]:checked + .radio-icon {
+  background-image: url('icons8-checkbox-50 (1).png'); /* or .png */
+}
+
 /* Input fields (text, password, number) */
 input[type="text"],
 input[type="password"],
@@ -115,14 +126,6 @@ button {
 
 button:hover {
     background-color: #ff9800;
-}
-
-
-
-
-/* Reserve page and general spacing */
-.reserve-section {
-    margin-top: 40px;
 }
 
 .status-indicator {
@@ -185,7 +188,6 @@ button:hover {
 }
 
 .arrow {
-    /* font-size: 1em; */
     transition: transform 0.2s;
 }
 
@@ -222,7 +224,6 @@ button:hover {
     padding: 10px 12px;
     border: 1px solid #e0e0e0;
     border-radius: 6px;
-    /* font-size: 1rem; */
     background: #2a2a2a;
     transition: border 0.2s;
 }
@@ -274,6 +275,17 @@ button:hover {
     }
 }
 
+h2{
+    text-align: left;
+}
+
+.controller-section{
+    background-color: #1C1C1C;
+    padding: 10px 20px;
+    margin-top: 20px;
+    border-radius: 20px;
+}
+
 /* controller card styles  */
 .controller-cards {
     display: flex;
@@ -294,98 +306,10 @@ button:hover {
     margin: 10px 5px;
 }
 
-/* .controller-card:hover {
-    background-color: #F37021;
-    color: white;
-} */
-
-.controller-card.disabled {
-    /* background-color: #52575A; */
-    border: 1px solid #5b5959;
-    cursor: not-allowed;
-    pointer-events: none;
-}
-
-/* .controller-card.selected {
-    background-color: #4caf50; /* Green to indicate selection 
-    color: white;
-    font-weight: bold;
-    box-shadow: 0 0 10px rgba(76, 175, 80, 0.6);
-    border: 2px solid #388e3c;
-} */
-
-
-.custom-radio input[type="radio"] {
-  display: none; /* Hide default radio button */
-}
-
-.radio-icon {
-  display: inline-block;
-  width: 24px;
-  height: 24px;
-  background-image: url('icons8-checkbox-50.png'); /* or .png */
-  background-size: cover;
-  margin-right: 8px;
-  vertical-align: middle;
-}
-
-.custom-radio input[type="radio"]:checked + .radio-icon {
-  background-image: url('icons8-checkbox-50 (1).png'); /* or .png */
-}
-
-.reserve-controller-btn{
-    padding: 5px 10px;
-    background-color: #F37021;
-    color:white;
-    margin: 10px 0px 0px 0px;
-}
-
-.reserve-controller-btn:hover {
-    background-color: #ff9800;
-}
-
-.reserve-controller-btn:disabled {
-    background-color: grey;
-    cursor: not-allowed;
-}
-
-.selectedBtn {
-    background-color: #4caf50;
-    color:white;
-    
-}
-
-.selectedBtn:hover {
-    background-color: #45a049;
-    color:white;
-    
-}
-
-h2{
-    text-align: left;
-}
-
-p.available{
-    padding:2px;
-    margin: 15px 0px 0px 0px;
-    background-color: green;
-    border-radius: 10px;
-    font-size: 12px;
-}
-
-p.reserved{
-    padding:2px;
-    margin: 15px 0px 0px 0px;
-    background-color: red;
-    border-radius: 10px;
-    font-size: 12px;
-}
-
-.controller-section{
-    background-color: #1C1C1C;
-    padding: 10px 20px;
-    margin-top: 20px;
-    border-radius: 20px;
+.controller-header{
+    display: flex;
+    border-bottom: 1px solid grey;
+    padding-bottom: 8px;
 }
 
 .controller-checkbox input[type="radio"]{
@@ -394,30 +318,62 @@ p.reserved{
 
 .checkboxSpan {
   display: inline-block;
-  width: 15px;
-  height: 15px;
+  width: 20px;
+  height: 20px;
   background-image: url('icons8-checkbox-50.png'); /* or .png */
   background-size: cover;
   margin-right: 8px;
   vertical-align: middle;
+  pointer-events: auto;
+  cursor: pointer;
+
 }
 
 .controller-checkbox input[type="radio"]:checked + .checkboxSpan {
   background-image: url('icons8-checkbox-50 (1).png'); /* or .png */
 }
 
-
 /* Disabled state */
 .controller-checkbox input[type="radio"]:disabled + .checkboxSpan {
-    /* opacity: 0.5; /* visually indicate it's disabled 
-    cursor: not-allowed;
-    filter: grayscale(100%); */
     background-image: url('icons8-indeterminate-checkbox-48.png');
 }
 
+p.available{
+    padding: 2px 7px;
+    margin: 15px auto 0px auto;
+    background-color: green;
+    border-radius: 10px;
+    font-size: 12px;
+    width: fit-content;
+}
+
+p.reserved{
+    padding: 2px 7px;
+    margin: 15px auto 0px auto;
+    background-color: red;
+    border-radius: 10px;
+    font-size: 12px;
+    width: fit-content;
+}
+
+.cntr-btn{
+    padding: 3px 8px;
+    background-color: #F37021;
+    color: white;
+    margin: 17px 3px 0px 3px;
+    font-size: 14px;
+    border-radius: 5px;
+    width: 60px;
+}
+
+.cntr-btn:hover{
+    background-color: #ff9800;
+    cursor: pointer;
+}
 
 #reserveBtn{
     margin-top: 20px;
+    margin-bottom: 20px;
     padding: 10px 20px;
     border: 2px solid orange;
     background: none;
@@ -431,3 +387,24 @@ p.reserved{
     font-weight: bold;
     cursor: pointer;
 }
+
+/* edit controller modal  */
+.edit-controller-form{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: fadeIn 0.3s;
+    padding: 10px 20px
+}
+
+.edit-controller-form input[type="text"],
+.edit-controller-form select {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    /* font-size: 1rem; */
+    background: #2a2a2a;
+    transition: border 0.2s;
+}
+

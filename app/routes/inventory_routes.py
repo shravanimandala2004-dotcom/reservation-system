@@ -297,3 +297,72 @@ def get_controllers_by_resource():
     cursor.execute(query, (resource_id,))
     controllers = cursor.fetchall()
     return jsonify(controllers)
+
+
+@inventory_bp.route('/delete_controller/<int:id>')
+def delete_controller(id):
+    if session.get('role') == 'admin':
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Get controller details first
+        cursor.execute("SELECT * FROM controllers WHERE controller_id = %s", (id,))
+        controller = cursor.fetchone()
+
+        if controller:
+            # Notify all admins
+            cursor.execute("SELECT username FROM users WHERE role = 'admin'")
+            admin_users = cursor.fetchall()
+            subject = "Controller Deleted"
+            body = f"""
+            Controller Name: {controller['name']}
+            Action: DELETED
+            """
+            for admin in admin_users:
+                notify_user(
+                    to_email=admin['username'],
+                    subject=subject,
+                    email_body=body,
+                )
+
+            cursor.execute("DELETE FROM reservations WHERE controller_id = %s", (id,))
+            cursor.execute("DELETE FROM resource_controller_map WHERE controller_id = %s", (id,))
+            cursor.execute("DELETE FROM controllers WHERE controller_id = %s", (id,))
+            conn.commit()
+        conn.close()
+    return redirect(url_for('inventory.inventory'))
+
+@inventory_bp.route('/edit_controller', methods=['POST'])
+def edit_controller():
+    if session.get('role') != 'admin':
+        return "Unauthorized", 403
+
+    controller_id = request.form['id']
+    name = request.form['name']
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE controllers 
+        SET name = %s
+        WHERE controller_id = %s
+    """, (name, controller_id))
+    conn.commit()
+
+    # Notify all admins
+    cursor.execute("SELECT username FROM users WHERE role = 'admin'")
+    admin_users = cursor.fetchall()
+    subject = "Controller Edited"
+    body = f"""
+    Controller Name: {name}
+    Action: EDITED
+    """
+    for admin in admin_users:
+        notify_user(
+            to_email=admin[0],
+            subject=subject,
+            email_body=body,
+        )
+
+    conn.close()
+    return redirect(url_for('inventory.inventory'))
