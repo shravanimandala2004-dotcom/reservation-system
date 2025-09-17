@@ -42,15 +42,76 @@
                 <form method="POST" action="/inventory" class="add-resource-form">
                     <input type="hidden" name="action_type" id="action_type" value="add">
                     <div class="form-row">
+                        <select name="manufacturer" required>
+                            <option value="" disabled selected>Select Manufacturer</option>
+                            {% for m in manufacturers %}
+                            <option value="{{m.id}}">{{m.name}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-row">
                         <input type="text" name="resource_name" placeholder="Resource Name" required>
                         <input type="number" name="ap_count" placeholder="AP Count" required>
                     </div>
                     <div class="form-row">
-                        <input type="text" name="status" placeholder="Status (e.g. Available)" required>
+                        <select name="status" required>
+                            <option value="" disabled selected>Select Status</option>
+                            <option value="Available">Available</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Not Available">Not Available</option>
+                        </select>
                         <input type="url" name="link" placeholder="Resource Link">
                     </div>
                     <input type="hidden" name="resource_id" id="resource_id">
                     <button type="submit" class="submit-btn">Add Resource</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Collapsible Add Controller Form -->
+        <div class="add-resource-box">
+            <button id="toggleAddControllerBtn" class="collapsible-btn">
+                <span style="vertical-align:middle;">+ Add Controller</span>
+                <span id="controllerArrow" class="arrow">&#9660;</span>
+            </button>
+            <div id="addControllerForm" style="display:none;">
+                <form method="POST" class="add-resource-form" action="/inventory/add_controller">
+                    <input type="hidden" name="action_type" id="action_type" value="add">
+                    <div class="form-row">
+                        <select name="manufacturer" required>
+                            <option value="" disabled selected>Select Manufacturer</option>
+                            {% for m in manufacturers %}
+                            <option value="{{m.id}}">{{m.name}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <input type="text" name="controller_name" placeholder="Controller Name" required>
+                        <select name="status" required>
+                            <option value="" disabled selected>Select Status</option>
+                            <option value="Available">Available</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Not Available">Not Available</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="submit-btn">Add Controller</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Collapsible Add Manufacturer Form -->
+        <div class="add-resource-box">
+            <button id="toggleAddManufacturerBtn" class="collapsible-btn">
+                <span style="vertical-align:middle;">+ Add Manufacturer</span>
+                <span id="Manufacturer" class="arrow">&#9660;</span>
+            </button>
+            <div id="addManufacturerForm" style="display:none;">
+                <form method="POST" action="/inventory/add_manufacturer" class="add-resource-form">
+                    <input type="hidden" name="action_type" id="action_type" value="add">
+                    <div class="form-row">
+                        <input type="text" name="manufacturer_name" placeholder="Manufacturer Name" required>
+                    </div>
+                    <button type="submit" class="submit-btn">Add Manufacturer</button>
                 </form>
             </div>
         </div>
@@ -66,7 +127,7 @@
         <select id="manufacturer" onchange="getResourcesByManufacturer()">
             <option value="">Select manufacturer</option>
             {% for m in manufacturers%}
-            <option value="{{m}}">{{m}}</option>
+            <option value="{{m.name}}">{{m.name}}</option>
             {% endfor %}
         </select>
 
@@ -115,8 +176,10 @@
             </tbody>
         </table>
 
-        <h2>Controllers</h2>
-        <div class="controller-cards"></div>
+        <div class="controller-section">
+            <h2>Controllers</h2>
+            <div class="controller-cards"></div>
+        </div>
 
         <button id="reserveBtn" onclick="reserveSelection()">Reserve</button>
 
@@ -148,6 +211,32 @@
                 } else {
                     form.style.display = 'none';
                     arrow.style.transform = 'rotate(0deg)';
+                }
+            };
+
+            const controllerBtn = document.getElementById('toggleAddControllerBtn');
+            const controllerForm = document.getElementById('addControllerForm');
+            const controllerArrow = document.getElementById('controllerArrow');
+            controllerBtn.onclick = function () {
+                if (controllerForm.style.display === 'none' || controllerForm.style.display === '') {
+                    controllerForm.style.display = 'block';
+                    controllerArrow.style.transform = 'rotate(180deg)';
+                } else {
+                    controllerForm.style.display = 'none';
+                    controllerArrow.style.transform = 'rotate(0deg)';
+                }
+            };
+
+            const manufacturerBtn = document.getElementById('toggleAddManufacturerBtn');
+            const manufacturerForm = document.getElementById('addManufacturerForm');
+            const manufacturerArrow = document.getElementById('manufacturerArrow');
+            manufacturerBtn.onclick = function () {
+                if (manufacturerForm.style.display === 'none' || manufacturerForm.style.display === '') {
+                    manufacturerForm.style.display = 'block';
+                    manufacturerArrow.style.transform = 'rotate(180deg)';
+                } else {
+                    manufacturerForm.style.display = 'none';
+                    manufacturerArrow.style.transform = 'rotate(0deg)';
                 }
             };
         });
@@ -296,8 +385,63 @@
                         const card = document.createElement('div');
                         card.className = 'controller-card';
                         card.id = controller.name;
-                        card.textContent = controller.name;
+
+                        const header=document.createElement('div');
+                        header.className='controller-header'
+
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'radio';
+                        checkbox.name = 'controller';
+                        checkbox.value = controller.controller_id;
+                        checkboxSpan = document.createElement('span');
+                        checkboxSpan.className = 'checkboxSpan';
+
+                        const checkboxLabel = document.createElement('label');
+                        checkboxLabel.className = 'controller-checkbox';
+                        checkboxLabel.appendChild(checkbox);
+                        checkboxLabel.appendChild(checkboxSpan);
+
+                        const controllerName = document.createElement('span');
+                        controllerName.textContent = controller.name;
+
+                        // header.appendChild(checkbox);
+                        header.appendChild(checkboxLabel);
+                        header.appendChild(controllerName);
+                        // header.textContent = controller.name;
+                        card.appendChild(header);
                         card.setAttribute('data-id', controller.controller_id);
+
+                        // let reserveBtn = document.createElement('button');
+                        // reserveBtn.textContent = "Reserve";
+                        // reserveBtn.classList.add('reserve-controller-btn');
+
+                        const status=document.createElement('p');
+                        status.textContent=controller.reservation_status;
+                        const text=controller.reservation_status.toLowerCase()
+                        status.classList.add(text)
+                        card.appendChild(status);
+
+                        // Attach reserve button handler
+                        checkbox.onclick = (e) => {
+                            e.stopPropagation(); // Prevent card click event
+
+                            // Deselect all cards
+                            document.querySelectorAll('.controller-card').forEach(c => {
+                                c.classList.remove('selected');
+                            });
+
+                            // Select this card and disable its button
+                            // reserveBtn.classList.add('selectedBtn');
+                            card.classList.add('selected');
+                        };
+
+                        if (controller.reservation_status !== 'Available') {
+                            // reserveBtn.disabled = true;
+                            checkbox.disabled=true;
+                            card.classList.add('disabled');
+                        }
+
+                        // card.appendChild(reserveBtn);
 
                         // Attach the selection handler
                         card.onclick = () => selectController(card);
@@ -320,12 +464,22 @@
 
         function disableControllers() {
             document.querySelectorAll('.controller-card').forEach(card => {
+                // reserveBtn=card.querySelector('.reserve-controller-btn');
+                // reserveBtn.disabled=true;
+                // reserveBtn.classList.remove('selectedBtn');
+                let checkbox=card.querySelector('input[type="radio"]');
+                checkbox.checked=false;
+                checkbox.disabled=true;
+                card.classList.remove('selected');
                 card.classList.add('disabled');
             });
         }
 
         function enableControllers(id) {
+            status=document.getElementById(id).querySelector('p').textContent;
+            if (status !== 'Available') return;
             document.getElementById(id).classList.remove('disabled');
+            document.getElementById(id).querySelector('input[type="radio"]').disabled=false;
         }
 
         function fetchControllers(resourceId) {
@@ -358,7 +512,7 @@
 
             const resourceId = selectedResource ? selectedResource.closest('tr').getAttribute('data-id') : '';
             const controllerId = selectedController ? selectedController.getAttribute('data-id') : '';
-            
+
             // Redirect to reservation page with query parameters
             window.location.href = `/reserve_page?resource_id=${resourceId}&controller_id=${controllerId}`;
         }

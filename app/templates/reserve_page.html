@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='reserve_page.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='reserve.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='sidebar.css') }}">
     <title>Document</title>
 </head>
@@ -36,11 +35,11 @@
         <h1>Reservation Details</h1>
 
         {% if active_count >= max_reservations %}
-            <p style="color: rgb(56, 170, 215);">⚠️ You have already reserved {{max_reservations}} active resources. Please
-                wait until one
-                ends.</p>
-            {% else %}
-
+        <p style="color: rgb(56, 170, 215);">⚠️ You have already reserved {{max_reservations}} active resources. Please
+            wait until one
+            ends.</p>
+        {% else %}
+        <div class="details">
             {% if resource %}
             <div class="section">
                 <h3>Resource</h3>
@@ -56,35 +55,46 @@
                 <p><strong>Name:</strong> {{ controller.name }}</p>
             </div>
             {% endif %}
+        </div>
         {% endif %}
 
-        {% if active_count < max_reservations %} 
-        <form method="POST">
-            <input type="hidden" name="resource_id" value="{{ resource.id }}">
-            <input type="hidden" name="controller_id" value="{{ controller.controller_id }}">
-            <div>
-                <label for="start_datetime">Start Date & Time:</label>
-                <input type="datetime-local" id="start_datetime" name="start_datetime" required>
+        {% if active_count < max_reservations %} <div class="details">
+            <div class="section" style="width: 90%;">
+                <form method="POST">
+                    <input type="hidden" name="resource_id" value="{{ resource.id }}">
+                    <input type="hidden" name="controller_id" value="{{ controller.controller_id }}">
+                    <div>
+                        <label for="start_datetime">Start Date & Time:</label>
+                        <input type="datetime-local" id="start_datetime" name="start_datetime" required>
+                    </div>
+
+                    <div>
+                        <label for="end_datetime">End Date & Time:</label>
+                        <input type="datetime-local" id="end_datetime" name="end_datetime" required>
+                    </div>
+
+
+                    <button type="submit" class="reserve-btn" id="reserveBtn" disabled>Confirm Reservation</button>
+                </form>
             </div>
+    </div>
+    {% endif %}
+    </div>
 
-            <div>
-                <label for="end_datetime">End Date & Time:</label>
-                <input type="datetime-local" id="end_datetime" name="end_datetime" required>
-            </div>
-
-
-            <button type="submit" class="reserve-btn" id="reserveBtn" disabled>Confirm Reservation</button>
-        </form>
-        {% endif %}
-
+    <div class="container">
         {% if active_reservations %}
         <h3>Your Active Reservations</h3>
         <ul class="reservation-list">
             {% for r in active_reservations %}
             <li>
-                <strong>{{ r.resource_name }}</strong> reserved on <strong>{{r.controller_name}}</strong> reserved from
-                {{ r.start_datetime }} to {{ r.end_datetime }}
+                 {% if r.resource_name != None %}
+                <strong>{{ r.resource_name }}</strong> reserved on <strong>{{ r.controller_name }}</strong> from
+                {{ r.start_datetime_formatted}} to {{ r.end_datetime_formatted }}
+                {% else %}
+                <strong>{{ r.controller_name }}</strong> reserved from
+                {{ r.start_datetime_formatted }} to {{ r.end_datetime_formatted }}
                 {% if r.link %}
+                {% endif %}
                 | <a href="{{ r.link }}" target="_blank">🔗 Open Resource</a>
                 {% endif %}
                 | <a href="/delete_reservation/{{ r.id }}"

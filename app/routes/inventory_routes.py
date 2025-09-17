@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from app.utils.db import get_db_connection
 from .notification_routes import notify_user, get_emails_by_resource
 from flask import jsonify
+import mysql 
 
 inventory_bp = Blueprint('inventory', __name__)
 
@@ -11,6 +12,7 @@ def inventory():
     cursor = conn.cursor(dictionary=True)
 
     if request.method == 'POST' and session.get('role') == 'admin':
+        manufacturer = request.form['manufacturer']
         name = request.form['resource_name']
         ap_count = request.form['ap_count']
         status = request.form['status']
@@ -35,8 +37,8 @@ def inventory():
                 )
 
         else:  # Add new resource
-            cursor.execute("INSERT INTO resources (name, ap_count, status, link) VALUES (%s, %s, %s, %s)",
-                           (name, ap_count, status, link))
+            cursor.execute("INSERT INTO resources (manufacturer_id,name, ap_count, status, link) VALUES (%s,%s, %s, %s, %s)",
+                           (manufacturer,name, ap_count, status, link))
             conn.commit()
 
 
@@ -70,14 +72,93 @@ def inventory():
             #    )
 
     # Fetch manufacturers
-    cursor.execute("SELECT distinct name from manufacturers")
-    manufacturers = [row['name'] for row in cursor.fetchall()]
+    cursor.execute("SELECT distinct name,manufacturer_id as id from manufacturers")
+    manufacturers =  cursor.fetchall()
+    print("manufacturers:", manufacturers)
 
     # Display inventory
     # cursor.execute("SELECT * FROM resources")
     # resources = cursor.fetchall()
     conn.close()
     return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers)
+
+@inventory_bp.route('/inventory/add_controller', methods=['POST'])
+def add_controller():
+    if session.get('role') != 'admin':
+        return "Unauthorized", 403
+
+    manufacturer = request.form['manufacturer']
+    name = request.form['controller_name']
+    status= request.form['status']
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO controllers (manufacturer_id, name) VALUES (%s, %s)",
+                    (manufacturer, name))
+        conn.commit()
+
+        # Notify all admins
+        cursor.execute("SELECT username FROM users WHERE role = 'admin'")
+        admin_users = cursor.fetchall()
+        print("admin_users:", admin_users)
+        subject = "Controller Added"
+        body = f"""
+        Manufacturer ID: {manufacturer}
+        Controller Name: {name}
+        Action: ADDED
+        """
+        for admin in admin_users:
+            notify_user(
+                to_email=admin[0],
+                subject=subject,
+                email_body=body,
+            )
+    
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
+
+    finally:
+        cursor.close()
+        conn.close()
+    return redirect(url_for('inventory.inventory'))
+
+@inventory_bp.route('/inventory/add_manufacturer', methods=['POST'])
+def add_manufacturer():
+    if session.get('role') != 'admin':
+        return "Unauthorized", 403
+
+    name = request.form['manufacturer_name']
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO manufacturers (name) VALUES (%s)", (name,))
+        conn.commit()
+
+        # Notify all admins
+        cursor.execute("SELECT username FROM users WHERE role = 'admin'")
+        admin_users = cursor.fetchall()
+        subject = "Manufacturer Added"
+        body = f"""
+        Manufacturer Name: {name}
+        Action: ADDED
+        """
+        for admin in admin_users:
+            notify_user(
+                to_email=admin[0],
+                subject=subject,
+                email_body=body,
+            )
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
+    finally:
+        cursor.close()
+        conn.close()
+    return redirect(url_for('inventory.inventory'))
 
 @inventory_bp.route('/delete_resource/<int:id>')
 def delete_resource(id):
@@ -186,7 +267,18 @@ def get_resources_by_manufacturer():
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT r.* from resources as r join manufacturers as m on r.manufacturer_id=m.manufacturer_id where m.name=%s",(manufacturer,))
     resources=cursor.fetchall()
-    cursor.execute("Select c.* from controllers c join manufacturers m on c.manufacturer_id=m.manufacturer_id where m.name=%s",(manufacturer,))
+    cursor.execute("""
+        SELECT 
+            distinct c.*, 
+            CASE 
+                WHEN r.controller_id IS NOT NULL THEN 'Reserved'
+                ELSE 'Available'
+            END AS reservation_status
+        FROM controllers c
+        JOIN manufacturers m ON c.manufacturer_id = m.manufacturer_id
+        LEFT JOIN reservations r ON c.controller_id = r.controller_id
+        WHERE m.name = %s;""",(manufacturer,)
+        )
     controllers=cursor.fetchall()
     conn.close()
     return jsonify(resources,controllers)

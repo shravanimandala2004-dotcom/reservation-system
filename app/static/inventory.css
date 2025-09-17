@@ -2,15 +2,15 @@
 body {
     margin: 0;
     font-family: Arial, sans-serif;
-    /* background: linear-gradient(to bottom, #333333, #000000); */
+    background: linear-gradient(to bottom, #333333, #000000);
     color: white;
     min-height: 100vh;
-    background-color: #1C1C1C;
+    /* background-color: #1C1C1C; */
 }
 
 /* Main container on each page */
 .container {
-    background-color: #1C1C1C;
+    background: linear-gradient(to bottom, #333333, #000000);
     text-align: center;
     margin-left: 220px;
     padding: 30px 40px;
@@ -92,7 +92,7 @@ select {
     padding: 12px;
     margin: 10px 0;
     border-radius: 6px;
-    border: none;
+    border: 1px solid white;
     box-sizing: border-box;
     font-size: 16px;
     background-color: #2a2a2a;
@@ -216,7 +216,8 @@ button:hover {
 }
 
 .add-resource-form input[type="text"],
-.add-resource-form input[type="number"] {
+.add-resource-form input[type="number"],
+.add-resource-form select {
     flex: 1;
     padding: 10px 12px;
     border: 1px solid #e0e0e0;
@@ -281,31 +282,37 @@ button:hover {
 }
 
 .controller-card {
-    padding: 10px 20px;
-    background-color: #f57c00;
+    padding: 20px 20px;
+    border: 1px solid #5b5959;
+    /* background-color: #5b5959; */
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s;
+    color: rgb(255, 255, 255);
+    display: flex;
+    flex-direction: column;
+    margin: 10px 5px;
 }
 
-.controller-card:hover {
-    background-color: #e0e0e0;
-    color:black
-}
+/* .controller-card:hover {
+    background-color: #F37021;
+    color: white;
+} */
 
 .controller-card.disabled {
-    background-color: #ccc;
+    /* background-color: #52575A; */
+    border: 1px solid #5b5959;
     cursor: not-allowed;
     pointer-events: none;
 }
 
-.controller-card.selected {
-    background-color: #4caf50; /* Green to indicate selection */
+/* .controller-card.selected {
+    background-color: #4caf50; /* Green to indicate selection 
     color: white;
     font-weight: bold;
     box-shadow: 0 0 10px rgba(76, 175, 80, 0.6);
     border: 2px solid #388e3c;
-}
+} */
 
 
 .custom-radio input[type="radio"] {
@@ -326,3 +333,101 @@ button:hover {
   background-image: url('icons8-checkbox-50 (1).png'); /* or .png */
 }
 
+.reserve-controller-btn{
+    padding: 5px 10px;
+    background-color: #F37021;
+    color:white;
+    margin: 10px 0px 0px 0px;
+}
+
+.reserve-controller-btn:hover {
+    background-color: #ff9800;
+}
+
+.reserve-controller-btn:disabled {
+    background-color: grey;
+    cursor: not-allowed;
+}
+
+.selectedBtn {
+    background-color: #4caf50;
+    color:white;
+    
+}
+
+.selectedBtn:hover {
+    background-color: #45a049;
+    color:white;
+    
+}
+
+h2{
+    text-align: left;
+}
+
+p.available{
+    padding:2px;
+    margin: 15px 0px 0px 0px;
+    background-color: green;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+p.reserved{
+    padding:2px;
+    margin: 15px 0px 0px 0px;
+    background-color: red;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+.controller-section{
+    background-color: #1C1C1C;
+    padding: 10px 20px;
+    margin-top: 20px;
+    border-radius: 20px;
+}
+
+.controller-checkbox input[type="radio"]{
+    display: none;
+}
+
+.checkboxSpan {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  background-image: url('icons8-checkbox-50.png'); /* or .png */
+  background-size: cover;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.controller-checkbox input[type="radio"]:checked + .checkboxSpan {
+  background-image: url('icons8-checkbox-50 (1).png'); /* or .png */
+}
+
+
+/* Disabled state */
+.controller-checkbox input[type="radio"]:disabled + .checkboxSpan {
+    /* opacity: 0.5; /* visually indicate it's disabled 
+    cursor: not-allowed;
+    filter: grayscale(100%); */
+    background-image: url('icons8-indeterminate-checkbox-48.png');
+}
+
+
+#reserveBtn{
+    margin-top: 20px;
+    padding: 10px 20px;
+    border: 2px solid orange;
+    background: none;
+    color: orange;
+    font-weight: bold;
+}
+
+#reserveBtn:hover{
+    background-color: orange;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+}

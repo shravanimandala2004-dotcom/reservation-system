@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from app.utils.db import get_db_connection
 from .notification_routes import notify_user
 from .permission_routes import get_setting
+from datetime import datetime
 
 reservation_bp = Blueprint('reservation', __name__)
 
@@ -119,6 +120,10 @@ def reserve_page():
         WHERE r.user_id = %s AND r.end_datetime >= NOW()
     """, (user_id,))
     active_reservations = cursor.fetchall()
+    
+    for r in active_reservations:
+        r['start_datetime_formatted'] = r['start_datetime'].strftime("%b %d, %Y %H:%M")
+        r['end_datetime_formatted'] = r['end_datetime'].strftime("%b %d, %Y %H:%M")
 
     max_reservations = get_setting('max_reservations', 2)
     max_days = get_setting('max_days', 15)
