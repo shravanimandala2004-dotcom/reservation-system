@@ -242,19 +242,19 @@ def edit_resource():
 
     return redirect(url_for('inventory.inventory'))
 
-@inventory_bp.route('/get_controllers/<int:manufacturer_id>')
-def get_controllers_by_manufacturer(manufacturer_id):
-    if session.get('role') == 'admin':
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+# @inventory_bp.route('/get_controllers/<int:manufacturer_id>')
+# def get_controllers_by_manufacturer(manufacturer_id):
+#     if session.get('role') == 'admin':
+#         conn = get_db_connection()
+#         cursor = conn.cursor(dictionary=True)
 
-        # Get controllers by manufacturer
-        cursor.execute("SELECT * FROM controllers WHERE manufacturer_id = %s", (manufacturer_id,))
-        controllers = cursor.fetchall()
-        print(controllers)
-        cursor.close()
-        conn.close()
-        return jsonify({'controllers':controllers})
+#         # Get controllers by manufacturer
+#         cursor.execute("SELECT * FROM controllers WHERE manufacturer_id = %s", (manufacturer_id,))
+#         controllers = cursor.fetchall()
+#         print(controllers)
+#         cursor.close()
+#         conn.close()
+#         return jsonify({'controllers':controllers})
 
 
 @inventory_bp.route('/admin_page')
@@ -389,3 +389,78 @@ def edit_controller():
 
     conn.close()
     return redirect(url_for('inventory.inventory'))
+
+# new changes
+@inventory_bp.route('/get_ap_by_manufacturer',methods=['GET'])
+def get_ap_by_manufacturer():
+    manufacturer = request.args.get('manufacturer')
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT a.* from AP as a join manufacturers as m on a.manufacturer_id=m.manufacturer_id where m.name=%s",(manufacturer,))
+        ap=cursor.fetchall()
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
+
+    finally:
+        cursor.close()
+        conn.close()
+    return jsonify(ap)
+
+@inventory_bp.route('/get_controllers_by_manufacturer',methods=['GET'])
+def get_controllers_by_manufacturer():
+    manufacturer = request.args.get('manufacturer')
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT c.* from controllers as c join manufacturers as m on c.manufacturer_id=m.manufacturer_id where m.name=%s",(manufacturer,))
+        controllers=cursor.fetchall()
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
+
+    finally:
+        cursor.close()
+        conn.close()
+    return jsonify(controllers)
+
+@inventory_bp.route('/get_controllers_by_AP',methods=['GET'])
+def get_controllers_by_AP():
+    ap_id = request.args.get('ap_id')
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT c.* from controllers as c join ap_controller_map as acm on c.controller_id=acm.controller_id where acm.ap_id=%s",(ap_id,))
+        controllers=cursor.fetchall()
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
+
+    finally:
+        cursor.close()
+        conn.close()
+    return jsonify(controllers)
+
+@inventory_bp.route('/get_ap_status',methods=['GET'])
+def get_ap_status():
+    ap_id = request.args.get('ap_id')
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("select status from ap where ap_id=%s",(ap_id,))
+        ap=cursor.fetchone()
+        ap_id=ap['status']
+        
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
+
+    finally:
+        cursor.close()
+        conn.close()
+    return jsonify(ap_id)

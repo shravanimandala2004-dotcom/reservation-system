@@ -10,7 +10,7 @@ body {
 
 /* Main container on each page */
 .container {
-    background: linear-gradient(to bottom, #333333, #000000);
+    /* background: linear-gradient(to bottom, #333333, #000000); */
     text-align: center;
     margin-left: 220px;
     padding: 30px 40px;
@@ -98,6 +98,7 @@ table tr:last-child td:last-child {
 input[type="text"],
 input[type="password"],
 input[type="number"],
+input[type="datetime-local"],
 select {
     width: 100%;
     padding: 12px;
@@ -286,91 +287,6 @@ h2{
     border-radius: 20px;
 }
 
-/* controller card styles  */
-.controller-cards {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.controller-card {
-    padding: 20px 20px;
-    border: 1px solid #5b5959;
-    /* background-color: #5b5959; */
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    color: rgb(255, 255, 255);
-    display: flex;
-    flex-direction: column;
-    margin: 10px 5px;
-}
-
-.controller-header{
-    display: flex;
-    border-bottom: 1px solid grey;
-    padding-bottom: 8px;
-}
-
-.controller-checkbox input[type="radio"]{
-    display: none;
-}
-
-.checkboxSpan {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  background-image: url('icons8-checkbox-50.png'); /* or .png */
-  background-size: cover;
-  margin-right: 8px;
-  vertical-align: middle;
-  pointer-events: auto;
-  cursor: pointer;
-
-}
-
-.controller-checkbox input[type="radio"]:checked + .checkboxSpan {
-  background-image: url('icons8-checkbox-50 (1).png'); /* or .png */
-}
-
-/* Disabled state */
-.controller-checkbox input[type="radio"]:disabled + .checkboxSpan {
-    background-image: url('icons8-indeterminate-checkbox-48.png');
-}
-
-p.available{
-    padding: 2px 7px;
-    margin: 15px auto 0px auto;
-    background-color: green;
-    border-radius: 10px;
-    font-size: 12px;
-    width: fit-content;
-}
-
-p.reserved{
-    padding: 2px 7px;
-    margin: 15px auto 0px auto;
-    background-color: red;
-    border-radius: 10px;
-    font-size: 12px;
-    width: fit-content;
-}
-
-.cntr-btn{
-    padding: 3px 8px;
-    background-color: #F37021;
-    color: white;
-    margin: 17px 3px 0px 3px;
-    font-size: 14px;
-    border-radius: 5px;
-    width: 60px;
-}
-
-.cntr-btn:hover{
-    background-color: #ff9800;
-    cursor: pointer;
-}
-
 #reserveBtn{
     margin-top: 20px;
     margin-bottom: 20px;
@@ -408,3 +324,40 @@ p.reserved{
     transition: border 0.2s;
 }
 
+/* new changes */
+.drop-down-container{
+    display: flex;
+    flex-direction: row;
+    padding: 10px 0px;
+}
+
+.select-container{
+    display: flex;
+    flex-direction: column;
+    margin-right: 15px;
+}
+
+.select-container>label{
+    margin-left: 5px;
+    color: #F37021;
+    text-align: left;
+}
+
+.select-container input[type="datetime-local"]{
+    background-color: #2a2a2a;
+    color: white;
+    padding: 12px 10px;
+    border: 1px solid white;
+    border-radius: 5px;
+    margin-top: 11px;
+    font-size: 14px;
+}
+
+.reserveForm-container{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+.reserveForm-container label{
+    margin-right: 10px;
+}

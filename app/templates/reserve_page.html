@@ -39,23 +39,9 @@
             wait until one
             ends.</p>
         {% else %}
-        <div class="details">
-            {% if resource %}
-            <div class="section">
-                <h3>Resource</h3>
-                <p><strong>Name:</strong> {{ resource.name }}</p>
-                <p><strong>AP Count:</strong> {{ resource.ap_count }}</p>
-                <p><strong>Status:</strong> {{ resource.status }}</p>
-            </div>
-            {% endif %}
+        <table id="inventoryTable">
 
-            {% if controller %}
-            <div class="section">
-                <h3>Controller</h3>
-                <p><strong>Name:</strong> {{ controller.name }}</p>
-            </div>
-            {% endif %}
-        </div>
+        </table>
         {% endif %}
 
         {% if active_count < max_reservations %} <div class="details">
@@ -87,7 +73,7 @@
         <ul class="reservation-list">
             {% for r in active_reservations %}
             <li>
-                 {% if r.resource_name != None %}
+                {% if r.resource_name != None %}
                 <strong>{{ r.resource_name }}</strong> reserved on <strong>{{ r.controller_name }}</strong> from
                 {{ r.start_datetime_formatted}} to {{ r.end_datetime_formatted }}
                 {% else %}
@@ -145,6 +131,49 @@
         });
 
         endInput.addEventListener('input', validateDates);
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const table = document.getElementById("inventoryTable");
+            if (table)
+                table.innerHTML = "";
+
+            let tableHTML = `
+                    <thead>
+                        <tr>
+                            <th>Manufacturer</th>
+                            <th>AP</th>
+                            <th>Controller</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    `;
+            table.innerHTML = tableHTML;
+
+            fetch(`/get_ap_status?ap_id=${ap_id}`)
+                .then(response => response.json())
+                .then(data => {
+                    const status = data;
+                    tableHTML += `
+                            <tr>
+                                <td>${manufacturer}</td>
+                                <td>${ap}</td>
+                                <td>
+                                    ${controller}
+                                </td>
+                                <td id="status">
+                                    <span class="status-indicator ${status.toLowerCase().replace(/ /g, '-')}"></span>
+                                    ${status}
+                                </td>
+                            </tr>
+                            `;
+
+                    tableHTML += `</tbody>`;
+                    table.innerHTML = tableHTML;
+                })
+                .catch(error => console.error("Some error occurred:" + error))
+
+            });
     </script>
 
 

@@ -152,22 +152,22 @@ def handle_reservation():
     max_reservations = get_setting('max_reservations', 2)
     cursor.execute("""
         SELECT count(res.controller_id) as count
-        FROM reservations res
+        FROM ap_reservations res
         WHERE res.user_id = %s AND res.end_datetime >= NOW()
     """, (user_id,))
     active = cursor.fetchall()
     active_count = active[0]['count']
     
-    resource_id = request.form['resource_id']
+    ap_id = request.form['ap_id']
     controller_id = request.form['controller_id']
-    if(resource_id):
-        cursor.execute("SELECT * FROM resources WHERE id = %s", (resource_id,))
-    resource = cursor.fetchone()
+    if(ap_id):
+        cursor.execute("SELECT * FROM AP WHERE ap_id = %s", (ap_id,))
+    ap = cursor.fetchone()
 
     cursor.execute("SELECT * FROM controllers WHERE controller_id = %s", (controller_id,))
     controller = cursor.fetchone()
 
-    print("resource:",resource,"controller:",controller)
+    print("resource:",ap,"controller:",controller)
 
     start_dt = datetime.strptime(request.form['start_datetime'], '%Y-%m-%dT%H:%M')
     end_dt = datetime.strptime(request.form['end_datetime'], '%Y-%m-%dT%H:%M')
@@ -185,19 +185,19 @@ def handle_reservation():
         conn.close()
         return "⚠️ You already have 2 active reservations."
 
-    if resource_id:
+    if ap_id:
         cursor.execute("""
-            INSERT INTO reservations (user_id, resource_id, start_datetime, end_datetime,controller_id)
+            INSERT INTO ap_reservations (user_id, ap_id, start_datetime, end_datetime,controller_id)
             VALUES (%s, %s, %s, %s,%s)
-        """, (user_id, resource_id, start_dt, end_dt, controller_id))
+        """, (user_id, ap_id, start_dt, end_dt, controller_id))
         notify_user(
             to_email=session.get('username'),
             subject="Reservation Confirmed",
-            email_body=f"Your reservation for resource ID {resource['name']} and {controller['name']} from {start_dt} to {end_dt} has been confirmed.",
+            email_body=f"Your reservation for resource ID {ap['model_name']} and {controller['name']} from {start_dt} to {end_dt} has been confirmed.",
         )
     else:
         cursor.execute("""
-            INSERT INTO reservations (user_id, start_datetime, end_datetime,controller_id)
+            INSERT INTO ap_reservations (user_id, start_datetime, end_datetime,controller_id)
             VALUES (%s, %s, %s, %s)
         """, (user_id, start_dt, end_dt, controller_id))
         notify_user(
@@ -208,7 +208,7 @@ def handle_reservation():
 
     conn.commit()
     conn.close()
-    return redirect(url_for('reservation.reserve_page', resource_id=resource_id, controller_id=controller_id))
+    return redirect(url_for('reservation.reserve_page', resource_id=ap_id, controller_id=controller_id))
 
 
 @reservation_bp.route('/delete_reservation/<int:id>')
