@@ -13,13 +13,14 @@ body {
     /* background: linear-gradient(to bottom, #333333, #000000); */
     text-align: center;
     margin-left: 220px;
-    padding: 30px 40px;
+    /* padding: 30px 40px; */
 }
 
 /* Heading styling */
 h1 {
     color: #f57c00;
     margin-bottom: 30px;
+    margin-top: 40px;
 }
 
 /* Table styling for inventory */
@@ -360,4 +361,21 @@ h2{
 }
 .reserveForm-container label{
     margin-right: 10px;
+}
+
+.container-two{
+    padding: 0px 40px 30px 40px;
+    margin-top: 30px;
+}
+
+/* alert styles */
+.alert{
+    display: none;
+    color: white;
+    padding: 5px 20px;
+    background-color: #E12726;
+    text-align: left;
+    position: fixed;
+    top: 0;
+    width: -webkit-fill-available;
 }

@@ -4,6 +4,7 @@ from app.utils.db import get_db_connection
 from .notification_routes import notify_user
 from .permission_routes import get_setting
 from datetime import datetime
+from flask import jsonify
 
 reservation_bp = Blueprint('reservation', __name__)
 
@@ -158,8 +159,13 @@ def handle_reservation():
     active = cursor.fetchall()
     active_count = active[0]['count']
     
-    ap_id = request.form['ap_id']
-    controller_id = request.form['controller_id']
+    
+    data = request.get_json()
+    ap_id = data.get('ap_id')
+    controller_id = data.get('controller_id')
+    start_time = data.get('start_time')
+    end_time = data.get('end_time')
+
     if(ap_id):
         cursor.execute("SELECT * FROM AP WHERE ap_id = %s", (ap_id,))
     ap = cursor.fetchone()
@@ -169,21 +175,31 @@ def handle_reservation():
 
     print("resource:",ap,"controller:",controller)
 
-    start_dt = datetime.strptime(request.form['start_datetime'], '%Y-%m-%dT%H:%M')
-    end_dt = datetime.strptime(request.form['end_datetime'], '%Y-%m-%dT%H:%M')
+    start_dt = datetime.strptime(start_time, '%Y-%m-%dT%H:%M')
+    end_dt = datetime.strptime(end_time, '%Y-%m-%dT%H:%M')
     duration = end_dt - start_dt
 
     if duration <= timedelta(0):
-        conn.close()
-        return "⛔ End time must be after start time"
+        conn.close()        
+        return jsonify({
+            "status": "error",
+            "message": "⛔ End time must be after start time"
+        }), 400
+
 
     elif duration > timedelta(days=15):
         conn.close()
-        return "⛔ Reservation cannot be longer than 15 days"
+        return jsonify({
+            "status": "error",
+            "message": "⛔ Reservation cannot be longer than 15 days"
+        }), 400
 
     if active_count >= max_reservations:
         conn.close()
-        return "⚠️ You already have 2 active reservations."
+        return jsonify({
+            "status": "error",
+            "message": "⚠️ You already have 2 active reservations."
+        }), 400
 
     if ap_id:
         cursor.execute("""
