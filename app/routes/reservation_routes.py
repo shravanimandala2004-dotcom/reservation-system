@@ -114,9 +114,9 @@ def reserve_page():
         controller = cursor.fetchone()
 
     cursor.execute("""
-        SELECT r.*, res.name AS resource_name, res.link, c.name AS controller_name
-        FROM reservations r
-        LEFT JOIN resources res ON r.resource_id = res.id
+        SELECT r.*, res.model_name AS resource_name, c.name AS controller_name
+        FROM ap_reservations r
+        LEFT JOIN ap res ON r.ap_id = res.ap_id
         LEFT JOIN controllers c ON r.controller_id = c.controller_id
         WHERE r.user_id = %s AND r.end_datetime >= NOW()
     """, (user_id,))
@@ -252,3 +252,29 @@ def delete_reservation(id):
 
     conn.close()
     return redirect(url_for('reservation.reserve'))
+
+@reservation_bp.route('/cancel_reservation/<int:id>')
+def cancel_reservation(id):
+    if 'user_id' not in session:
+        return redirect(url_for('auth.index'))
+
+    user_id = session['user_id']
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Make sure the reservation belongs to the current user
+    cursor.execute("SELECT * FROM ap_reservations WHERE id = %s AND user_id = %s", (id, user_id))
+    reservation = cursor.fetchone()
+
+    if reservation:
+        cursor.execute("DELETE FROM ap_reservations WHERE id = %s", (id,))
+        conn.commit()
+        notify_user(
+            to_email=session.get('username'),
+            subject="Reservation Cancelled",
+            email_body=f"Your reservation ID {id} has been cancelled.",
+        )
+
+    conn.close()
+    return redirect(url_for('reservation.reserve_page'))

@@ -217,6 +217,14 @@ button:hover {
 .form-row {
     display: flex;
     gap: 14px;
+    justify-content: space-between;
+    border:1px solid black;
+    padding: 2px 5px;
+    border-radius: 5px;
+}
+
+.row-right{
+    display: flex;
 }
 
 .add-resource-form input[type="text"],
@@ -373,9 +381,37 @@ h2{
     display: none;
     color: white;
     padding: 5px 20px;
-    background-color: #E12726;
+    /* background-color: #E12726; */
     text-align: left;
     position: fixed;
     top: 0;
     width: -webkit-fill-available;
+}
+
+.success{
+    background-color: green;
+}
+
+.error{
+    background-color: #E12726;
+}
+
+/* radio styles */
+.radio-container{
+    display: flex;
+    flex-direction: column;
+    margin:0px 30px
+}
+
+.radio-container label{
+    margin-top:8px;
+}
+
+.edit-controllers-div{
+    margin:10px 0px;
+}
+
+.edit-controllers-div label{
+    margin-right: 20px;
+    margin-left:2px;
 }

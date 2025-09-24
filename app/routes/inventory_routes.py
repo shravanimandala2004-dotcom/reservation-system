@@ -90,14 +90,14 @@ def inventory():
     conn.close()
     return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers)
 
-@inventory_bp.route('/inventory/add_controller', methods=['POST'])
+@inventory_bp.route('/add_controller', methods=['POST'])
 def add_controller():
     if session.get('role') != 'admin':
         return "Unauthorized", 403
 
-    manufacturer = request.form['manufacturer']
-    name = request.form['controller_name']
-    status= request.form['status']
+    data=request.get_json()
+    manufacturer = data.get('manu_id')
+    name = data.get('controller_name')
 
     try:
         conn = get_db_connection()
@@ -106,22 +106,26 @@ def add_controller():
                     (manufacturer, name))
         conn.commit()
 
+        return jsonify({
+            "message": "Access Point successfully deleted",
+        }), 201
+
         # Notify all admins
-        cursor.execute("SELECT username FROM users WHERE role = 'admin'")
-        admin_users = cursor.fetchall()
-        print("admin_users:", admin_users)
-        subject = "Controller Added"
-        body = f"""
-        Manufacturer ID: {manufacturer}
-        Controller Name: {name}
-        Action: ADDED
-        """
-        for admin in admin_users:
-            notify_user(
-                to_email=admin[0],
-                subject=subject,
-                email_body=body,
-            )
+        # cursor.execute("SELECT username FROM users WHERE role = 'admin'")
+        # admin_users = cursor.fetchall()
+        # print("admin_users:", admin_users)
+        # subject = "Controller Added"
+        # body = f"""
+        # Manufacturer ID: {manufacturer}
+        # Controller Name: {name}
+        # Action: ADDED
+        # """
+        # for admin in admin_users:
+        #     notify_user(
+        #         to_email=admin[0],
+        #         subject=subject,
+        #         email_body=body,
+        #     )
     
     except mysql.connector.Error as err:
         conn.rollback()
@@ -131,34 +135,37 @@ def add_controller():
     finally:
         cursor.close()
         conn.close()
-    return redirect(url_for('inventory.inventory'))
 
 @inventory_bp.route('/inventory/add_manufacturer', methods=['POST'])
 def add_manufacturer():
     if session.get('role') != 'admin':
         return "Unauthorized", 403
 
-    name = request.form['manufacturer_name']
+    data=request.get_json()
+    name = data.get('manufacturer_name')
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("INSERT INTO manufacturers (name) VALUES (%s)", (name,))
         conn.commit()
+        cursor.execute("select * from manufacturers")
+        manufacturers=cursor.fetchall()
 
         # Notify all admins
-        cursor.execute("SELECT username FROM users WHERE role = 'admin'")
-        admin_users = cursor.fetchall()
-        subject = "Manufacturer Added"
-        body = f"""
-        Manufacturer Name: {name}
-        Action: ADDED
-        """
-        for admin in admin_users:
-            notify_user(
-                to_email=admin[0],
-                subject=subject,
-                email_body=body,
-            )
+        # cursor.execute("SELECT username FROM users WHERE role = 'admin'")
+        # admin_users = cursor.fetchall()
+        # subject = "Manufacturer Added"
+        # body = f"""
+        # Manufacturer Name: {name}
+        # Action: ADDED
+        # """
+        # for admin in admin_users:
+        #     notify_user(
+        #         to_email=admin[0],
+        #         subject=subject,
+        #         email_body=body,
+        #     )
+        return jsonify(manufacturers)
     except mysql.connector.Error as err:
         conn.rollback()
         print(f"Database error: {err}")
@@ -242,19 +249,20 @@ def edit_resource():
 
     return redirect(url_for('inventory.inventory'))
 
-# @inventory_bp.route('/get_controllers/<int:manufacturer_id>')
-# def get_controllers_by_manufacturer(manufacturer_id):
-#     if session.get('role') == 'admin':
-#         conn = get_db_connection()
-#         cursor = conn.cursor(dictionary=True)
+@inventory_bp.route('/get_controllers_by_manufacturer_id')
+def get_controllers_by_manufacturer_id():
+    if session.get('role') == 'admin':
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        manufacturer_id=request.args.get('manufacturer_id')
 
-#         # Get controllers by manufacturer
-#         cursor.execute("SELECT * FROM controllers WHERE manufacturer_id = %s", (manufacturer_id,))
-#         controllers = cursor.fetchall()
-#         print(controllers)
-#         cursor.close()
-#         conn.close()
-#         return jsonify({'controllers':controllers})
+        # Get controllers by manufacturer
+        cursor.execute("SELECT * FROM controllers WHERE manufacturer_id = %s", (manufacturer_id,))
+        controllers = cursor.fetchall()
+        print(controllers)
+        cursor.close()
+        conn.close()
+        return jsonify(controllers)
 
 
 @inventory_bp.route('/admin_page')
@@ -322,11 +330,14 @@ def get_controllers_by_resource():
     return jsonify(controllers)
 
 
-@inventory_bp.route('/delete_controller/<int:id>')
-def delete_controller(id):
+@inventory_bp.route('/delete_controller',methods=['POST'])
+def delete_controller():
     if session.get('role') == 'admin':
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
+
+        data=request.get_json()
+        id=data.get('controller_id')
 
         # Get controller details first
         cursor.execute("SELECT * FROM controllers WHERE controller_id = %s", (id,))
@@ -334,34 +345,40 @@ def delete_controller(id):
 
         if controller:
             # Notify all admins
-            cursor.execute("SELECT username FROM users WHERE role = 'admin'")
-            admin_users = cursor.fetchall()
-            subject = "Controller Deleted"
-            body = f"""
-            Controller Name: {controller['name']}
-            Action: DELETED
-            """
-            for admin in admin_users:
-                notify_user(
-                    to_email=admin['username'],
-                    subject=subject,
-                    email_body=body,
-                )
+            # cursor.execute("SELECT username FROM users WHERE role = 'admin'")
+            # admin_users = cursor.fetchall()
+            # subject = "Controller Deleted"
+            # body = f"""
+            # Controller Name: {controller['name']}
+            # Action: DELETED
+            # """
+            # for admin in admin_users:
+            #     notify_user(
+            #         to_email=admin['username'],
+            #         subject=subject,
+            #         email_body=body,
+            #     )
 
-            cursor.execute("DELETE FROM reservations WHERE controller_id = %s", (id,))
-            cursor.execute("DELETE FROM resource_controller_map WHERE controller_id = %s", (id,))
+            cursor.execute("DELETE FROM ap_reservations WHERE controller_id = %s", (id,))
+            cursor.execute("DELETE FROM ap_controller_map WHERE controller_id = %s", (id,))
             cursor.execute("DELETE FROM controllers WHERE controller_id = %s", (id,))
             conn.commit()
         conn.close()
-    return redirect(url_for('inventory.inventory'))
+        return jsonify({
+            "message": "Controller successfully deleted",
+        }), 201
+    return jsonify({
+            "message": "Some error occurred",
+        }), 500
 
 @inventory_bp.route('/edit_controller', methods=['POST'])
 def edit_controller():
     if session.get('role') != 'admin':
         return "Unauthorized", 403
 
-    controller_id = request.form['id']
-    name = request.form['name']
+    data=request.get_json()
+    controller_id = data.get('controller_id')
+    name = data.get('controller_name')
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -373,22 +390,25 @@ def edit_controller():
     conn.commit()
 
     # Notify all admins
-    cursor.execute("SELECT username FROM users WHERE role = 'admin'")
-    admin_users = cursor.fetchall()
-    subject = "Controller Edited"
-    body = f"""
-    Controller Name: {name}
-    Action: EDITED
-    """
-    for admin in admin_users:
-        notify_user(
-            to_email=admin[0],
-            subject=subject,
-            email_body=body,
-        )
+    # cursor.execute("SELECT username FROM users WHERE role = 'admin'")
+    # admin_users = cursor.fetchall()
+    # subject = "Controller Edited"
+    # body = f"""
+    # Controller Name: {name}
+    # Action: EDITED
+    # """
+    # for admin in admin_users:
+    #     notify_user(
+    #         to_email=admin[0],
+    #         subject=subject,
+    #         email_body=body,
+    #     )
 
     conn.close()
-    return redirect(url_for('inventory.inventory'))
+    return jsonify({
+            "message": "Controller successfully edited",
+        }), 201
+    # return redirect(url_for('inventory.inventory'))
 
 # new changes
 @inventory_bp.route('/get_ap_by_manufacturer',methods=['GET'])
@@ -454,6 +474,261 @@ def get_ap_status():
         cursor.execute("select status from ap where ap_id=%s",(ap_id,))
         ap=cursor.fetchone()
         ap_id=ap['status']
+        
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
+
+    finally:
+        cursor.close()
+        conn.close()
+    return jsonify(ap_id)
+
+@inventory_bp.route('/get_manufacturers',methods=['GET'])
+def get_manufacturers():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("select * from manufacturers")
+        manufacturers=cursor.fetchall()
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
+
+    finally:
+        cursor.close()
+        conn.close()
+    return jsonify(manufacturers)
+
+@inventory_bp.route('/get_ap',methods=['GET'])
+def get_ap():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("select * from ap ")
+        ap=cursor.fetchall()
+        
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
+
+    finally:
+        cursor.close()
+        conn.close()
+    return jsonify(ap)
+
+@inventory_bp.route('/get_controllers',methods=['GET'])
+def get_controllers():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("select * from controllers ")
+        controllers=cursor.fetchall()
+        
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
+
+    finally:
+        cursor.close()
+        conn.close()
+    return jsonify(controllers)
+
+@inventory_bp.route('/edit_manufacturer',methods=['POST'])
+def edit_manufacturer():
+    if session.get('role') != 'admin':
+        return "Unauthorized", 403
+    data=request.get_json()
+    id=data.get('id')
+    new_name=data.get('new_name')
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("update manufacturers set name=%s where manufacturer_id=%s",(new_name,id,))
+        conn.commit()
+        cursor.execute("select * from manufacturers")
+        manufacturers=cursor.fetchall()
+        return jsonify(manufacturers)
+        
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+@inventory_bp.route('/delete_manufacturer',methods=['POST'])
+def delete_manufacturer():
+    if session.get('role') != 'admin':
+        return "Unauthorized", 403
+    
+    data=request.get_json()
+    id=data.get('id')
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("delete from manufacturers where manufacturer_id=%s",(id,))
+        conn.commit()
+        cursor.execute("select * from manufacturers")
+        manufacturers=cursor.fetchall()
+        return jsonify(manufacturers)
+        
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+@inventory_bp.route('/add_ap',methods=['POST'])
+def add_ap():
+    if session.get('role') != 'admin':
+        return "Unauthorized", 403
+    
+    data=request.get_json()
+    manu_id=data.get('manu_id')
+    ap_name=data.get('ap_name')
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("insert into ap (manufacturer_id,model_name,status) values (%s,%s,'Available')",(manu_id,ap_name,))
+        conn.commit()
+        
+        # Get the last inserted ID
+        ap_id = cursor.lastrowid
+
+        # Optionally fetch the full row
+        cursor.execute("SELECT * FROM ap WHERE ap_id = %s", (ap_id,))
+        new_ap = cursor.fetchone()
+
+        return jsonify({
+            "message": "Access Point added successfully",
+            "ap": {
+                "id": new_ap['ap_id'],
+                "manufacturer_id": new_ap['manufacturer_id'],
+                "model_name": new_ap['model_name']
+            }
+        }), 201
+
+        
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+@inventory_bp.route('/edit_ap',methods=['POST'])
+def edit_ap():
+    if session.get('role') != 'admin':
+        return "Unauthorized", 403
+    
+    data=request.get_json()
+    ap_id=data.get('ap_id')
+    ap_name=data.get('ap_name')
+    checked_values=data.get('checkedValues')
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        if(ap_name!= ""):
+            cursor.execute("update AP set model_name=%s where ap_id=%s",(ap_name,ap_id,))
+            conn.commit()
+
+        cursor.execute("SELECT c.* from controllers as c join ap_controller_map as acm on c.controller_id=acm.controller_id where acm.ap_id=%s",(ap_id,))
+        controllers=cursor.fetchall()
+        controller_ids = [str(controller['controller_id']) for controller in controllers]
+        unattach = [cid for cid in controller_ids if cid not in checked_values]
+        attach =[cid for cid in checked_values if cid not in controller_ids]
+        # print(controller_ids,checked_values)
+        # print("unattach controllers:",unattach)
+        # print("attach controllers:",attach)
+        
+        if(len(unattach)>0):
+            placeholders = ','.join(['%s'] * len(unattach))
+            query = f"DELETE FROM ap_controller_map WHERE ap_id=%s AND controller_id IN ({placeholders})"
+            params = [ap_id] + unattach
+
+            cursor.execute(query,params)
+            conn.commit()
+
+        if(len(attach)>0):
+            values = [(ap_id, cid) for cid in attach]
+            query = "INSERT INTO ap_controller_map (ap_id, controller_id) VALUES (%s, %s)"
+            cursor.executemany(query, values)
+            conn.commit()
+
+        # Optionally fetch the full row
+        cursor.execute("SELECT * FROM ap WHERE ap_id = %s", (ap_id,))
+        new_ap = cursor.fetchone()
+
+        return jsonify({
+            "message": "Access Point added successfully",
+            "ap": {
+                "id": new_ap['ap_id'],
+                "manufacturer_id": new_ap['manufacturer_id'],
+                "model_name": new_ap['model_name']
+            }
+        }), 201
+
+        
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+@inventory_bp.route('/delete_ap',methods=['POST'])
+def delete_ap():
+    if session.get('role') != 'admin':
+        return "Unauthorized", 403
+    
+    data=request.get_json()
+    ap_id=data.get('ap_id')
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("delete from ap_controller_map where ap_id=%s",(ap_id,))
+        conn.commit()
+        cursor.execute("delete from AP where ap_id=%s",(ap_id,))
+        conn.commit()
+
+        return jsonify({
+            "message": "Access Point successfully deleted",
+        }), 201
+
+        
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+@inventory_bp.route('/change_ap_status',methods=['POST'])
+def change_ap_status():
+    ap_id = request.args.get('ap_id')
+    data=request.get_json()
+    status=data.get('status')
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("update ap set status=%s where ap_id=%s",(status,ap_id,))
+        conn.commit()
         
     except mysql.connector.Error as err:
         conn.rollback()

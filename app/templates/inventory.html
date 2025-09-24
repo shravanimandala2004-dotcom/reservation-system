@@ -15,8 +15,8 @@
         <nav>
             <a href="{{ url_for('inventory.inventory') }}" {% if request.path.startswith('/inventory') %}class="active"
                 {% endif %}>Inventory</a>
-            <a href="{{url_for('reservation.reserve')}}" {% if request.path.startswith('/reserve') %}class="active" {%
-                endif %}>Reserve</a>
+            <a href="{{url_for('reservation.reserve_page')}}" {% if request.path.startswith('/reserve') %}class="active" {%
+                endif %}>Reservations</a>
             {% if role == 'admin' %}
             <a href="{{ url_for('inventory.admin_page') }}" {% if request.path.startswith('/admin') %}class="active" {%
                 endif %}>Admin Page</a>
@@ -129,41 +129,97 @@
                     <span id="arrow" class="arrow">&#9660;</span>
                 </button>
                 <div id="addResourceForm" style="display:none;">
-                    <form method="POST" action="/inventory" class="add-resource-form">
+                    <form method="POST" class="add-resource-form" onsubmit="saveChanges(event)">
                         <input type="hidden" name="action_type" id="action_type" value="add">
                         <div class="form-row">
-                            <select name="manufacturer" required>
+                            <!-- <select name="manufacturer" required>
                                 <option value="" disabled selected>Select Manufacturer</option>
                                 {% for m in manufacturers %}
                                 <option value="{{m.id}}">{{m.name}}</option>
                                 {% endfor %}
-                            </select>
+                            </select> -->
+
+
+                            <div class="row-left">
+                                <input type="text" name="new_manufacturer" id="new_manufacturer"
+                                    placeholder="New Manufacturer/Vendor">
+                            </div>
+                            <div class="row-right">
+                                <div class="radio-container">
+                                    <label for="manu-add">Add</label>
+                                    <input type="radio" name="manu-action" value="add" id="manu-add" checked>
+                                </div>
+                                <div class="radio-container">
+                                    <label for="manu-edit">Edit</label>
+                                    <input type="radio" name="manu-action" value="edit" id="manu-edit">
+                                </div>
+                                <div class="radio-container">
+                                    <label for="manu-delete">Delete</label>
+                                    <input type="radio" name="manu-action" value="delete" id="manu-delete">
+                                </div>
+                            </div>
                         </div>
                         <div class="form-row">
-                            <input type="text" name="resource_name" placeholder="Resource Name" required>
-                            <input type="number" name="ap_count" placeholder="AP Count" required>
+                            <div class="row-left">
+                                <select name="ap_manufacturer">
+                                    <option value="">Select AP manufacturer</option>
+                                    {% for m in manufacturers %}
+                                    <option value="{{m.id}}">{{m.name}}</option>
+                                    {% endfor %}
+                                </select>
+                                <input type="text" name="new_ap" placeholder="New AP Name">
+                            </div>
+                            <div class="row-right">
+                                <div class="radio-container">
+                                    <label for="add">Add</label>
+                                    <input type="radio" name="action" value="add" id="add" checked>
+                                </div>
+                                <div class="radio-container">
+                                    <label for="edit">Edit</label>
+                                    <input type="radio" name="action" value="edit" id="edit">
+                                </div>
+                                <div class="radio-container">
+                                    <label for="delete">Delete</label>
+                                    <input type="radio" name="action" value="delete" id="delete">
+                                </div>
+                            </div>
                         </div>
                         <div class="form-row">
-                            <select name="status" required>
+                            <div class="row-left">
+                                <select name="select_controller_manu">
+                                    <option value="">Select controller manufacturer</option>
+                                    {% for m in manufacturers %}
+                                    <option value="{{m.id}}">{{m.name}}</option>
+                                    {% endfor %}
+                                </select>
+                                <input type="text" name="new_controller" placeholder="New Controller/Cloud">
+                            </div>
+                            <div class="row-right">
+                                <div class="radio-container">
+                                    <label for="controller-add">Add</label>
+                                    <input type="radio" name="controller-action" value="add" id="controller-add"
+                                        checked>
+                                </div>
+                                <div class="radio-container">
+                                    <label for="controller-edit">Edit</label>
+                                    <input type="radio" name="controller-action" value="edit" id="controller-edit">
+                                </div>
+                                <div class="radio-container">
+                                    <label for="controller-delete">Delete</label>
+                                    <input type="radio" name="controller-action" value="delete" id="controller-delete">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- <div class="form-row">
+                            <select name="status">
                                 <option value="" disabled selected>Select Status</option>
                                 <option value="Available">Available</option>
                                 <option value="In Progress">In Progress</option>
                                 <option value="Not Available">Not Available</option>
                             </select>
-                            <input type="url" name="link" placeholder="Resource Link">
-                        </div>
-
-
-                        <div class="form-row">
-                            <label for="controllers">Select Controllers</label>
-                            <div id="controllers-container">
-                                <!-- Checkboxes will be populated dynamically -->
-                            </div>
-                        </div>
-
-
+                        </div> -->
                         <input type="hidden" name="resource_id" id="resource_id">
-                        <button type="submit" class="submit-btn">Add Resource</button>
+                        <button type="submit" class="submit-btn">Save</button>
                     </form>
                 </div>
             </div>
@@ -246,6 +302,299 @@
                 }
             };
         })
+
+        document.querySelectorAll('input[name="manu-action"]').forEach(radio => {
+            radio.addEventListener('change', function () {
+                if (this.value === "edit") {
+                    const left = document.getElementsByClassName('row-left')[0];
+                    left.innerHTML = "";
+
+                    const selectMan = document.createElement("select")
+                    selectMan.name = "edit_manufacturer";
+                    selectMan.innerHTML = `<option value="" disabled selected>Select Manufacturer</option>`
+                    // {% for m in manufacturers %}
+                    // <option value="{{m.id}}">{{m.name}}</option>
+                    // {% endfor %}`
+                    fetch('/get_manufacturers')
+                        .then(response => response.json())
+                        .then(data => {
+                            // console.log(data)
+                            data.forEach(m => {
+                                const option = document.createElement('option');
+                                option.value = m['manufacturer_id'];
+                                option.innerText = m['name'];
+                                selectMan.appendChild(option)
+                            })
+                        })
+                        .catch(err => console.log("Error:" + err))
+
+                    const newName = document.createElement('input');
+                    newName.type = "text";
+                    newName.name = "new-manu-name";
+                    newName.placeholder = "Enter New Name for Manufacturer"
+
+                    left.appendChild(selectMan)
+                    left.appendChild(newName)
+
+                } else if (this.value == "delete") {
+                    const left = document.getElementsByClassName('row-left')[0]
+                    left.innerHTML = "";
+                    const selectMan = document.createElement("select")
+                    selectMan.name = "delete_manufacturer";
+                    selectMan.innerHTML = `<option value="" disabled selected>Select Manufacturer</option>`
+                    // {% for m in manufacturers %}
+                    // <option value="{{m.id}}">{{m.name}}</option>
+                    // {% endfor %}`
+                    fetch('/get_manufacturers')
+                        .then(response => response.json())
+                        .then(data => {
+                            data.forEach(m => {
+                                const option = document.createElement('option');
+                                option.value = m['manufacturer_id'];
+                                option.innerText = m['name'];
+                                selectMan.appendChild(option)
+                            })
+                        })
+                        .catch(err => console.log("Error:" + err))
+
+                    left.appendChild(selectMan)
+                } else {
+                    const left = document.getElementsByClassName("row-left")[0];
+                    left.innerHTML = `
+                    <input type="text" name="new_manufacturer" id="new_manufacturer"
+                                placeholder="New Manufacturer/Vendor">`
+                }
+            });
+        });
+
+        document.querySelectorAll('input[name="action"]').forEach(radio => {
+            radio.addEventListener('change', function () {
+                if (this.value === "edit") {
+                    const left = document.getElementsByClassName('row-left')[1];
+                    left.innerHTML = "";
+
+                    // const selectMan=document.createElement("select")
+                    // selectMan.name=ap_manufacturer;
+                    // selectMan.innerHTML=`<option value="" disabled selected>Select Manufacturer</option>
+                    //             {% for m in manufacturers %}
+                    //             <option value="{{m.id}}">{{m.name}}</option>
+                    //             {% endfor %}`
+                    // selectMan.onchange=getAP
+
+                    const selectAP = document.createElement("select");
+                    selectAP.name = "select_edit_ap"
+                    const option = document.createElement('option');
+                    option.innerText = "Select an AP to edit";
+                    // option.disabled = true;
+                    option.value = "";
+                    selectAP.appendChild(option)
+                    fetch('/get_ap')
+                        .then(response => response.json())
+                        .then(data => {
+                            data.forEach(ap => {
+                                // console.log(ap)
+                                const option = document.createElement('option');
+                                option.innerText = ap.model_name;
+                                option.value = ap.ap_id;
+                                option.setAttribute('manu-id', ap.manufacturer_id);
+                                selectAP.appendChild(option);
+                            })
+
+                        })
+
+                    const newName = document.createElement('input');
+                    newName.type = "text";
+                    newName.name = "new-ap-name";
+                    newName.placeholder = "Enter New Name for AP"
+
+                    const controllersDiv = document.createElement('div');
+                    controllersDiv.classList.add('edit-controllers-div')
+                    selectAP.onchange = () => {
+                        const manu_id = selectAP.options[selectAP.selectedIndex].getAttribute('manu-id')
+                        controllersDiv.innerHTML = "";
+                        // console.log(`/get_controllers_by_manufacturer?manufacturer=${manu_id}`);
+                        fetch(`/get_controllers_by_manufacturer_id?manufacturer_id=${manu_id}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                data.forEach(controller => {
+                                    const label = document.createElement('label');
+                                    label.htmlFor = `controller-${controller.controller_id}`;
+                                    label.innerText = controller.name;
+
+                                    const checkbox = document.createElement('input');
+                                    checkbox.type = "checkbox"
+                                    checkbox.name = "ap-controllers";
+                                    checkbox.value = controller.controller_id;
+                                    checkbox.id = `controller-${controller.controller_id}`
+
+                                    controllersDiv.appendChild(checkbox);
+                                    controllersDiv.appendChild(label);
+                                })
+
+                            })
+                            .catch(err => console.log("Error:" + err))
+
+                        fetch(`/get_controllers_by_AP?ap_id=${selectAP.value}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                data.forEach(controller => {
+                                    const checkbox = document.getElementById(`controller-${controller.controller_id}`);
+                                    checkbox.checked = true;
+                                })
+
+                            }).catch(err => console.log("Error:" + err))
+
+                        console.log(controllersDiv)
+                    }
+
+
+                    left.appendChild(selectAP)
+                    left.appendChild(newName)
+                    left.appendChild(controllersDiv)
+
+                } else if (this.value == "delete") {
+                    const left = document.getElementsByClassName('row-left')[1]
+                    left.innerHTML = "";
+                    const selectAP = document.createElement("select");
+                    selectAP.name = "select_delete_ap"
+                    const option = document.createElement('option');
+                    option.innerText = "Select an AP to delete";
+                    // option.disabled = true;
+                    option.value = "";
+                    selectAP.appendChild(option)
+                    fetch('/get_ap')
+                        .then(response => response.json())
+                        .then(data => {
+                            data.forEach(ap => {
+                                const option = document.createElement('option');
+                                option.innerText = ap.model_name;
+                                option.value = ap.ap_id;
+                                selectAP.appendChild(option);
+                            })
+
+                        })
+                    left.appendChild(selectAP)
+                } else {
+                    const left = document.getElementsByClassName("row-left")[1];
+                    left.innerHTML = ""
+                    const selectMan = document.createElement('select');
+                    selectMan.name = "ap_manufacturer"
+                    selectMan.innerHTML = `<option value="">Select AP manufacturer</option>`
+
+                    fetch('/get_manufacturers')
+                        .then(response => response.json())
+                        .then(data => {
+                            data.forEach(m => {
+                                const option = document.createElement('option');
+                                option.value = m['manufacturer_id'];
+                                option.innerText = m['name'];
+                                selectMan.appendChild(option)
+                            })
+                        })
+                        .catch(err => console.log("Error:" + err))
+
+                    const newInput = document.createElement('input')
+                    newInput.type = "text";
+                    newInput.name = "new_ap";
+                    newInput.placeholder = "New AP Name";
+
+                    left.appendChild(selectMan);
+                    left.appendChild(newInput)
+                }
+            });
+        });
+
+        document.querySelectorAll('input[name="controller-action"]').forEach(radio => {
+            radio.addEventListener('change', function () {
+                if (this.value === "edit") {
+                    const left = document.getElementsByClassName('row-left')[2];
+                    left.innerHTML = "";
+
+                    // const selectMan=document.createElement("select")
+                    // selectMan.name=ap_manufacturer;
+                    // selectMan.innerHTML=`<option value="" disabled selected>Select Manufacturer</option>
+                    //             {% for m in manufacturers %}
+                    //             <option value="{{m.id}}">{{m.name}}</option>
+                    //             {% endfor %}`
+                    // selectMan.onchange=getAP
+
+                    const selectController = document.createElement("select");
+                    selectController.name = "select_edit_controller"
+                    const option = document.createElement('option');
+                    option.innerText = "Select an controller to edit";
+                    // option.disabled = true;
+                    option.value = "";
+                    selectController.appendChild(option)
+                    fetch('/get_controllers')
+                        .then(response => response.json())
+                        .then(data => {
+                            data.forEach(controller => {
+                                const option = document.createElement('option');
+                                option.innerText = controller.name;
+                                option.value = controller.controller_id;
+                                selectController.appendChild(option);
+                            })
+
+                        })
+
+                    const newName = document.createElement('input');
+                    newName.type = "text";
+                    newName.name = "new-controller-name";
+                    newName.placeholder = "Enter New Name for Controller"
+                    left.appendChild(selectController)
+                    left.appendChild(newName)
+
+                } else if (this.value == "delete") {
+                    const left = document.getElementsByClassName('row-left')[2]
+                    left.innerHTML = "";
+                    const selectController = document.createElement("select");
+                    selectController.name = "select_delete_controller"
+                    const option = document.createElement('option');
+                    option.innerText = "Select an Controller to delete";
+                    // option.disabled = true;
+                    option.value = "";
+                    selectController.appendChild(option)
+                    fetch('/get_controllers')
+                        .then(response => response.json())
+                        .then(data => {
+                            data.forEach(controller => {
+                                const option = document.createElement('option');
+                                option.innerText = controller.name;
+                                option.value = controller.controller_id;
+                                selectController.appendChild(option);
+                            })
+
+                        })
+                    left.appendChild(selectController)
+                } else {
+                    const left = document.getElementsByClassName("row-left")[2];
+                    left.innerHTML = ""
+                    const selectMan = document.createElement('select');
+                    selectMan.name = "select_controller_manu"
+                    selectMan.innerHTML = `<option value="">Select controller manufacturer</option>`
+
+                    fetch('/get_manufacturers')
+                        .then(response => response.json())
+                        .then(data => {
+                            data.forEach(m => {
+                                const option = document.createElement('option');
+                                option.value = m['manufacturer_id'];
+                                option.innerText = m['name'];
+                                selectMan.appendChild(option)
+                            })
+                        })
+                        .catch(err => console.log("Error:" + err))
+
+                    const newInput = document.createElement('input')
+                    newInput.type = "text";
+                    newInput.name = "new_controller";
+                    newInput.placeholder = "New Controller Name";
+
+                    left.appendChild(selectMan);
+                    left.appendChild(newInput)
+                }
+            });
+        });
 
 
         function addResource() {
@@ -333,45 +682,440 @@
             modal.style.display = 'block';
         }
 
-        document.querySelector('select[name="manufacturer"]').addEventListener('change', function () {
-            const manufacturerId = this.value;
-            const controllerContainer = document.getElementById('controllers-container');
+        function updateManufacturerDropdown(manufacturers) {
+            console.log(manufacturers)
+            const dropdown = document.getElementById('manufacturer');
+            dropdown.innerHTML = `<option value="">Select manufacturer</option>`
+            manufacturers.forEach(manufacturer => {
+                let option = document.createElement('option');
+                option.innerHTML = manufacturer[1];
+                option.value = manufacturer[1];
+                // console.log(option)
+                dropdown.appendChild(option);
+            })
 
-            // Clear previous checkboxes
-            controllerContainer.innerHTML = '';
+            const edit_manufacturer = document.querySelector("input[name='edit_manufacturer']");
+            if (edit_manufacturer) {
+                edit_manufacturer.innerHTML = `<option value="" disabled selected>Select Manufacturer</option>`
+                manufacturers.forEach(manufacturer => {
+                    let option = document.createElement('option');
+                    option.innerHTML = manufacturer[1];
+                    option.value = manufacturer[0];
+                    edit_manufacturer.appendChild(option);
+                })
+            }
 
-            // Fetch controllers for selected manufacturer
-            fetch(`/get_controllers/${manufacturerId}`)
+            const delete_manufacturer = document.querySelector("input[name='delete_manufacturer']");
+            if (delete_manufacturer) {
+                delete_manufacturer = `<option value="" disabled selected>Select Manufacturer</option>`
+                manufacturers.forEach(manufacturer => {
+                    let option = document.createElement('option');
+                    option.innerHTML = manufacturer[1];
+                    option.value = manufacturer[0];
+                    delete_manufacturer.appendChild(option);
+                })
+            }
+
+            const ap_manufacturer = document.querySelector("select[name='ap_manufacturer']");
+            if (ap_manufacturer) {
+                ap_manufacturer = `<option value="">Select AP manufacturer</option>`
+                manufacturers.forEach(manufacturer => {
+                    let option = document.createElement('option');
+                    option.innerHTML = manufacturer[1];
+                    option.value = manufacturer[0];
+                    ap_manufacturer.appendChild(option);
+                })
+            }
+
+            const controller_manufacturer = document.querySelector("input[name='controller_manufacturer']");
+            if (controller_manufacturer) {
+                controller_manufacturer = `<option value="">Select Controller manufacturer</option>`
+                manufacturers.forEach(manufacturer => {
+                    let option = document.createElement('option');
+                    option.innerHTML = manufacturer[1];
+                    option.value = manufacturer[0];
+                    controller_manufacturer.appendChild(option);
+                })
+            }
+        }
+
+        function saveChanges(event) {
+            event.preventDefault()
+
+            // add, delete or edit manufacturer 
+            const manufacturerSelected = document.querySelector('input[name="manu-action"]:checked').value;
+            if (manufacturerSelected === 'add') {
+                newManufacturer = document.getElementById('new_manufacturer').value;
+                newManufacturer = newManufacturer.trim();
+                if (newManufacturer !== "") {
+
+                    fetch('inventory/add_manufacturer', {
+
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            manufacturer_name: newManufacturer,
+                        })
+
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error("Network response was not ok");
+                            }
+                            return response.json();
+                        }
+                        )
+                        .then(data => {
+                            // console.log(data)
+                            updateManufacturerDropdown(data);
+                            showAlert("Successfully added manufacturer", "success");
+                        })
+                        .catch(err => {
+                            console.log("Error:" + err);
+                        })
+                }
+
+
+            } else if (manufacturerSelected === "edit") {
+                const edit_manufacturer = document.querySelector("select[name='edit_manufacturer']").value;
+                const new_name = document.querySelector("input[name='new-manu-name']").value;
+                if (edit_manufacturer !== "" && new_name !== "") {
+
+
+                    fetch('/edit_manufacturer', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            id: edit_manufacturer,
+                            new_name: new_name,
+                        })
+                    }).then(response => {
+                        if (!response.ok) {
+                            throw new Error("Network response was not ok");
+                        }
+                        return response.json();
+                    }
+                    )
+                        .then(data => {
+                            updateManufacturerDropdown(data)
+                            showAlert("Successfully updated manufacturer", "success");
+                        })
+                        .catch(err => {
+                            console.log("Error:" + err);
+                        })
+                }
+            } else if (manufacturerSelected === 'delete') {
+                const delete_id = document.querySelector('select[name="delete_manufacturer"]').value;
+                if (delete_id !== "") {
+
+                    fetch('/delete_manufacturer', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            id: delete_id,
+                        })
+                    }).then(response => {
+                        if (!response.ok) {
+                            throw new Error("Network response was not ok");
+                        }
+                        return response.json();
+                    }
+                    )
+                        .then(data => {
+                            updateManufacturerDropdown(data)
+                            showAlert("Successfully deleted manufacturer", "success");
+                        })
+                        .catch(err => {
+                            console.log("Error:" + err);
+                        })
+                }
+            }
+
+            // add, delete or edit ap 
+            const apSelected = document.querySelector("input[name='action']:checked").value;
+            if (apSelected === "add") {
+                const ap_manufacturer = document.querySelector("select[name='ap_manufacturer']").value;
+                const new_ap = document.querySelector("input[name='new_ap']").value.trim();
+                if (ap_manufacturer !== "" && new_ap !== "") {
+
+                    fetch('/add_ap', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            manu_id: ap_manufacturer,
+                            ap_name: new_ap
+                        })
+                    }).then(response => {
+                        if (!response.ok) {
+                            throw new Error("Network response was not ok");
+                        }
+                        return response.json();
+                    }
+                    )
+                        .then(data => {
+                            showAlert("Successfully added AP", "success");
+                        })
+                        .catch(err => {
+                            console.log("Error:" + err);
+                        })
+                }
+
+
+            } else if (apSelected === "edit") {
+                const edit_ap = document.querySelector("select[name='select_edit_ap']").value;
+                const new_name = document.querySelector("input[name='new-ap-name']").value.trim();
+                const ap_controllers = document.querySelectorAll("input[name='ap-controllers']:checked");
+                const checkedValues = Array.from(ap_controllers).map(c => c.value);
+                // console.log(checkedValues)
+                if (edit_ap !== "" /*&& (new_name !== "" || */) {
+                    fetch('/edit_ap', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            ap_id: edit_ap,
+                            ap_name: new_name,
+                            checkedValues: checkedValues
+                        })
+                    }).then(response => {
+                        if (!response.ok) {
+                            throw new Error("Network response was not ok");
+                        }
+                        return response.json();
+                    }
+                    )
+                        .then(data => {
+                            showAlert("Successfully edited AP", "success");
+                        })
+                        .catch(err => {
+                            console.log("Error:" + err);
+                        })
+
+                }
+            } else if (apSelected === "delete") {
+                const deleteAp = document.querySelector("select[name='select_delete_ap']").value;
+                if (deleteAp !== "") {
+                    fetch('/delete_ap', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            ap_id: deleteAp,
+                        })
+                    }).then(response => {
+                        if (!response.ok) {
+                            throw new Error("Network response was not ok");
+                        }
+                        return response.json();
+                    }
+                    )
+                        .then(data => {
+                            showAlert("Successfully deleted AP", "success");
+                        })
+                        .catch(err => {
+                            console.log("Error:" + err);
+                        })
+                }
+            }
+
+            // add, edit or delete controllers 
+            const controllerSelected = document.querySelector("input[name='controller-action']:checked").value;
+
+            if (controllerSelected === "add") {
+                const controller_manufacturer = document.querySelector("select[name='select_controller_manu']").value;
+                const new_name = document.querySelector("input[name='new_controller']").value.trim();
+                if (controller_manufacturer !== "" && new_name !== "") {
+                    fetch('/add_controller', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            manu_id: controller_manufacturer,
+                            controller_name: new_name
+                        })
+                    }).then(response => {
+                        if (!response.ok) {
+                            throw new Error("Network response was not ok");
+                        }
+                        return response.json();
+                    }
+                    )
+                        .then(data => {
+                            showAlert("Successfully added Controller", "success");
+                        })
+                        .catch(err => {
+                            console.log("Error:" + err);
+                        })
+                }
+            } else if (controllerSelected === "edit") {
+                const edit_controller = document.querySelector("select[name='select_edit_controller']").value;
+                const new_name = document.querySelector("input[name='new-controller-name']").value.trim();
+                if (edit_controller !== "" && new_name !== "") {
+                    fetch('/edit_controller', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            controller_id: edit_controller,
+                            controller_name: new_name
+                        })
+                    }).then(response => {
+                        if (!response.ok) {
+                            throw new Error("Network response was not ok");
+                        }
+                        return response.json();
+                    }
+                    )
+                        .then(data => {
+                            showAlert("Successfully edited controller", "success");
+                        })
+                        .catch(err => {
+                            console.log("Error:" + err);
+                        })
+
+                }
+            } else if (controllerSelected === "delete") {
+                const deleteController = document.querySelector("select[name='select_delete_controller']").value;
+                if (deleteController !== "") {
+                    fetch('/delete_controller', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            controller_id: deleteController,
+                        })
+                    }).then(response => {
+                        if (!response.ok) {
+                            throw new Error("Network response was not ok");
+                        }
+                        return response.json();
+                    }
+                    )
+                        .then(data => {
+                            showAlert("Successfully deleted controller", "success");
+                        })
+                        .catch(err => {
+                            console.log("Error:" + err);
+                        })
+                }
+            }
+
+            // reset the row-left 
+            const left = document.getElementsByClassName("row-left")[0];
+            left.innerHTML = `
+                    <input type="text" name="new_manufacturer" id="new_manufacturer"
+                                placeholder="New Manufacturer/Vendor">`
+
+            const left_ap = document.getElementsByClassName("row-left")[1];
+            left_ap.innerHTML = ""
+            const selectMan = document.createElement('select');
+            selectMan.name = "ap_manufacturer"
+            selectMan.innerHTML = `<option value="">Select AP manufacturer</option>`
+
+            fetch('/get_manufacturers')
                 .then(response => response.json())
                 .then(data => {
-                    console.log(data);
-                    data.controllers.forEach(controller => {
-                        const label = document.createElement('label');
-                        label.style.display = 'block';
-
-                        const checkbox = document.createElement('input');
-                        checkbox.type = 'checkbox';
-                        checkbox.name = 'controllers_list';
-                        checkbox.value = controller.controller_id;
-
-                        label.appendChild(checkbox);
-                        label.appendChild(document.createTextNode(` ${controller.name}`));
-                        controllerContainer.appendChild(label);
-                    });
+                    data.forEach(m => {
+                        const option = document.createElement('option');
+                        option.value = m['manufacturer_id'];
+                        option.innerText = m['name'];
+                        selectMan.appendChild(option)
+                    })
                 })
-                .catch(error => {
-                    console.error('Error fetching controllers:', error);
-                });
-        });
+                .catch(err => console.log("Error:" + err))
+
+            const newInput = document.createElement('input')
+            newInput.type = "text";
+            newInput.name = "new_ap";
+            newInput.placeholder = "New AP Name";
+
+            left_ap.appendChild(selectMan);
+            left_ap.appendChild(newInput);
+
+            const left_controller = document.getElementsByClassName("row-left")[2];
+            left_controller.innerHTML = ""
+            const selectMan_controller = document.createElement('select');
+            selectMan_controller.name = "select_controller_manu"
+            selectMan_controller.innerHTML = `<option value="">Select controller manufacturer</option>`
+
+            fetch('/get_manufacturers')
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(m => {
+                        const option = document.createElement('option');
+                        option.value = m['manufacturer_id'];
+                        option.innerText = m['name'];
+                        selectMan_controller.appendChild(option)
+                    })
+                })
+                .catch(err => console.log("Error:" + err))
+
+            const newInput_controller = document.createElement('input')
+            newInput_controller.type = "text";
+            newInput_controller.name = "new_controller";
+            newInput_controller.placeholder = "New Controller Name";
+
+            left_controller.appendChild(selectMan_controller);
+            left_controller.appendChild(newInput_controller)
+
+            document.getElementById('addResourceForm').firstElementChild.reset();
+            document.getElementById('addResourceForm').style.display = 'none';
+        }
+
+        // document.querySelector('select[name="manufacturer"]').addEventListener('change', function () {
+        //     const manufacturerId = this.value;
+        //     const controllerContainer = document.getElementById('controllers-container');
+
+        //     // Clear previous checkboxes
+        //     controllerContainer.innerHTML = '';
+
+        //     // Fetch controllers for selected manufacturer
+        //     fetch(`/get_controllers/${manufacturerId}`)
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             console.log(data);
+        //             data.controllers.forEach(controller => {
+        //                 const label = document.createElement('label');
+        //                 label.style.display = 'block';
+
+        //                 const checkbox = document.createElement('input');
+        //                 checkbox.type = 'checkbox';
+        //                 checkbox.name = 'controllers_list';
+        //                 checkbox.value = controller.controller_id;
+
+        //                 label.appendChild(checkbox);
+        //                 label.appendChild(document.createTextNode(` ${controller.name}`));
+        //                 controllerContainer.appendChild(label);
+        //             });
+        //         })
+        //         .catch(error => {
+        //             console.error('Error fetching controllers:', error);
+        //         });
+        // });
 
     </script>
     {% endif %}
 
     <script>
-        function showAlert(message) {
+        function showAlert(message, type) {
             const alert = document.getElementsByClassName('alert')[0];
             console.log(alert)
             alert.innerText = message;
+            alert.classList.remove('success', 'error', 'warning')
+            alert.classList.add(type)
             alert.style.display = "block";
             setTimeout(() => {
                 alert.style.display = "none";
@@ -382,8 +1126,8 @@
         document.getElementById('reserveForm').addEventListener('submit', async function (event) {
             event.preventDefault(); // Prevent default form submission
 
-            const ap_id=document.getElementById('ap_id').value;
-            const controller_id=document.getElementById('controller_id').value;
+            const ap_id = document.getElementById('ap_id').value;
+            const controller_id = document.getElementById('controller_id').value;
             const start_datetime = document.getElementById('start_datetime').value;
             const end_datetime = document.getElementById('end_datetime').value;
 
@@ -393,23 +1137,23 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    ap_id:ap_id,
-                    controller_id:controller_id,
+                    ap_id: ap_id,
+                    controller_id: controller_id,
                     start_time: start_datetime,
                     end_time: end_datetime
                 })
             });
 
-            if(response.ok){
-                showAlert("Reservation successful")
-            }else{
+            if (response.ok) {
+                showAlert("Reservation successful", "success")
+            } else {
                 console.log("inside else")
-                const result= await response.json();
-                showAlert(result.message)
+                const result = await response.json();
+                showAlert(result.message, "error")
             }
 
-            const reserveModal=document.getElementById('reserveModal');
-            reserveModal.style.display="none";
+            const reserveModal = document.getElementById('reserveModal');
+            reserveModal.style.display = "none";
         });
 
 
@@ -559,6 +1303,9 @@
                             <th>AP</th>
                             <th>Controller</th>
                             <th>Status</th>
+                            <!--{% if role=="admin" %}
+                            <th>Change Status<th>
+                            {% endif %}-->
                         </tr>
                     </thead>
                     <tbody>
@@ -580,6 +1327,16 @@
                                     <span class="status-indicator ${status.toLowerCase().replace(/ /g, '-')}"></span>
                                     ${status}
                                 </td>
+                                <!--{% if role=="admin" %}
+                                <td>
+                                    <select name="change_status" onchange="changeStatus(${ap_id})">
+                                        <option value="" disabled selected>Change Status</option>
+                                        <option value="Available">Available</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Not Available">Not Available</option>
+                                    </select>
+                                </td>
+                                {% endif %}-->
                             </tr>
                             `;
 
@@ -588,6 +1345,22 @@
                 })
                 .catch(error => console.error("Some error occurred:" + error))
 
+        }
+
+        function changeStatus(ap_id) {
+            const change = document.querySelector("select[name='change_status']").value;
+            fetch(`/change_ap_status?ap_id=${ap_id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    status: change,
+                })
+            }).then(response=>response.json())
+            .then(data=>{
+                showStatus();
+            })
         }
 
         function clearTable() {

@@ -18,7 +18,7 @@
             <a href="{{ url_for('inventory.inventory') }}" {% if request.path.startswith('/inventory') %}class="active"
                 {% endif %}>Inventory</a>
             <a href="{{url_for('reservation.reserve')}}" {% if request.path.startswith('/reserve') %}class="active" {%
-                endif %}>Reserve</a>
+                endif %}>Reservations</a>
             {% if role == 'admin' %}
             <a href="{{ url_for('inventory.admin_page') }}" {% if request.path.startswith('/admin') %}class="active" {%
                 endif %}>Admin Page</a>
@@ -44,7 +44,7 @@
         </table>
         {% endif %}
 
-        {% if active_count < max_reservations %} <div class="details">
+        <!-- {% if active_count < max_reservations %} <div class="details">
             <div class="section" style="width: 90%;">
                 <form method="POST">
                     <input type="hidden" name="resource_id" value="{{ resource.id }}">
@@ -64,7 +64,7 @@
                 </form>
             </div>
     </div>
-    {% endif %}
+    {% endif %} -->
     </div>
 
     <div class="container">
@@ -79,11 +79,11 @@
                 {% else %}
                 <strong>{{ r.controller_name }}</strong> reserved from
                 {{ r.start_datetime_formatted }} to {{ r.end_datetime_formatted }}
-                {% if r.link %}
+                <!-- {% if r.link %}
+                {% endif %} -->
+                <!-- | <a href="{{ r.link }}" target="_blank">🔗 Open Resource</a> -->
                 {% endif %}
-                | <a href="{{ r.link }}" target="_blank">🔗 Open Resource</a>
-                {% endif %}
-                | <a href="/delete_reservation/{{ r.id }}"
+                | <a href="/cancel_reservation/{{ r.id }}"
                     onclick="return confirm('Are you sure you want to cancel this reservation?');"
                     style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a>
             </li>
