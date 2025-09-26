@@ -225,6 +225,7 @@ button:hover {
 
 .row-right{
     display: flex;
+    align-items: center;
 }
 
 
@@ -440,9 +441,9 @@ h2{
     margin:0px 30px
 }
 
-.radio-container label{
-    margin-top:8px;
-}
+/* .radio-container label{
+    /* margin-top:8px; *
+} */
 
 .edit-controllers-div{
     margin:10px 0px;

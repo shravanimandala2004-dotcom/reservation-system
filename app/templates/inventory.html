@@ -21,7 +21,7 @@
             <a href="{{ url_for('inventory.admin_page') }}" {% if request.path.startswith('/admin') %}class="active" {%
                 endif %}>Admin Page</a>
             <a href="{{ url_for('details.details') }}" {% if request.path.startswith('/details') %}class="active" {%
-                endif %}>Details</a>
+                endif %}>User Details</a>
             {% endif %}
         </nav>
         <div class="sidebar-logout-separator"></div>
@@ -31,7 +31,7 @@
     <div class="container">
         <div class="alert">This is a alert</div>
         <div class="container-two">
-            <h1>Resource Inventory</h1>
+            <h1>Network Devices Reservation</h1>
 
             <!-- Search Box -->
             <div class="search-bar">
