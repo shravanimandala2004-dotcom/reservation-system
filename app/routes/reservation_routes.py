@@ -151,6 +151,8 @@ def handle_reservation():
 
     # Check active reservations
     max_reservations = get_setting('max_reservations', 2)
+    max_days = get_setting('max_days', 15)
+
     cursor.execute("""
         SELECT count(res.controller_id) as count
         FROM ap_reservations res
@@ -187,18 +189,18 @@ def handle_reservation():
         }), 400
 
 
-    elif duration > timedelta(days=15):
+    elif duration > timedelta(days=max_days):
         conn.close()
         return jsonify({
             "status": "error",
-            "message": "⛔ Reservation cannot be longer than 15 days"
+            "message": f"⛔ Reservation cannot be longer than {max_days} days"
         }), 400
 
     if active_count >= max_reservations:
         conn.close()
         return jsonify({
             "status": "error",
-            "message": "⚠️ You already have 2 active reservations."
+            "message": f"⚠️ You already have {max_reservations} active reservations."
         }), 400
 
     if ap_id:

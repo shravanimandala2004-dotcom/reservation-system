@@ -227,12 +227,14 @@ button:hover {
     display: flex;
 }
 
+
+
 .add-resource-form input[type="text"],
 .add-resource-form input[type="number"],
 .add-resource-form select {
     flex: 1;
     padding: 10px 12px;
-    border: 1px solid #e0e0e0;
+    /* border: 1px solid #e0e0e0; */
     border-radius: 6px;
     background: #2a2a2a;
     transition: border 0.2s;
@@ -252,6 +254,41 @@ button:hover {
     border: 1.5px solid #f57c00;
     outline: none;
     background: #2a2a2a;
+}
+
+.row-left{
+    display: flex;
+    flex-direction: column;
+}
+
+.row-left input{
+    width: 260px;
+    float: left;
+    border: 1px solid white;
+}
+
+.row-left select{
+    width: 260px;
+    float: left;
+    border: 1px solid white;
+}
+
+.row-left input:disabled,.row-left select:disabled{
+    border: 1px solid #646161;
+}
+
+.resetBtn{
+    padding: 5px 5px;
+    height: fit-content;
+    margin: 18px 5px;
+    border: 1px solid #E12726;
+    background: none;
+    color: #E12726;
+}
+
+.resetBtn:hover{
+    color:black;
+    background-color: #E12726;
 }
 
 .submit-btn {

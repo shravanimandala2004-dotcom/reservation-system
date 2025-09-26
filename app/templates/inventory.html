@@ -15,8 +15,8 @@
         <nav>
             <a href="{{ url_for('inventory.inventory') }}" {% if request.path.startswith('/inventory') %}class="active"
                 {% endif %}>Inventory</a>
-            <a href="{{url_for('reservation.reserve_page')}}" {% if request.path.startswith('/reserve') %}class="active" {%
-                endif %}>Reservations</a>
+            <a href="{{url_for('reservation.reserve_page')}}" {% if request.path.startswith('/reserve') %}class="active"
+                {% endif %}>Reservations</a>
             {% if role == 'admin' %}
             <a href="{{ url_for('inventory.admin_page') }}" {% if request.path.startswith('/admin') %}class="active" {%
                 endif %}>Admin Page</a>
@@ -142,12 +142,12 @@
 
                             <div class="row-left">
                                 <input type="text" name="new_manufacturer" id="new_manufacturer"
-                                    placeholder="New Manufacturer/Vendor">
+                                    placeholder="New Manufacturer/Vendor" disabled>
                             </div>
                             <div class="row-right">
                                 <div class="radio-container">
                                     <label for="manu-add">Add</label>
-                                    <input type="radio" name="manu-action" value="add" id="manu-add" checked>
+                                    <input type="radio" name="manu-action" value="add" id="manu-add">
                                 </div>
                                 <div class="radio-container">
                                     <label for="manu-edit">Edit</label>
@@ -157,22 +157,24 @@
                                     <label for="manu-delete">Delete</label>
                                     <input type="radio" name="manu-action" value="delete" id="manu-delete">
                                 </div>
+                                <button type="button" class="resetBtn"
+                                    onclick="resetRadio('manu-action')">Reset</button>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="row-left">
-                                <select name="ap_manufacturer">
+                                <select name="ap_manufacturer" disabled>
                                     <option value="">Select AP manufacturer</option>
                                     {% for m in manufacturers %}
                                     <option value="{{m.id}}">{{m.name}}</option>
                                     {% endfor %}
                                 </select>
-                                <input type="text" name="new_ap" placeholder="New AP Name">
+                                <input type="text" name="new_ap" placeholder="New AP Name" disabled>
                             </div>
                             <div class="row-right">
                                 <div class="radio-container">
                                     <label for="add">Add</label>
-                                    <input type="radio" name="action" value="add" id="add" checked>
+                                    <input type="radio" name="action" value="add" id="add">
                                 </div>
                                 <div class="radio-container">
                                     <label for="edit">Edit</label>
@@ -182,23 +184,23 @@
                                     <label for="delete">Delete</label>
                                     <input type="radio" name="action" value="delete" id="delete">
                                 </div>
+                                <button type="button" class="resetBtn" onclick="resetRadio('action')">Reset</button>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="row-left">
-                                <select name="select_controller_manu">
+                                <select name="select_controller_manu" disabled>
                                     <option value="">Select controller manufacturer</option>
                                     {% for m in manufacturers %}
                                     <option value="{{m.id}}">{{m.name}}</option>
                                     {% endfor %}
                                 </select>
-                                <input type="text" name="new_controller" placeholder="New Controller/Cloud">
+                                <input type="text" name="new_controller" placeholder="New Controller/Cloud" disabled>
                             </div>
                             <div class="row-right">
                                 <div class="radio-container">
                                     <label for="controller-add">Add</label>
-                                    <input type="radio" name="controller-action" value="add" id="controller-add"
-                                        checked>
+                                    <input type="radio" name="controller-action" value="add" id="controller-add">
                                 </div>
                                 <div class="radio-container">
                                     <label for="controller-edit">Edit</label>
@@ -208,6 +210,8 @@
                                     <label for="controller-delete">Delete</label>
                                     <input type="radio" name="controller-action" value="delete" id="controller-delete">
                                 </div>
+                                <button type="button" class="resetBtn"
+                                    onclick="resetRadio('controller-action')">Reset</button>
                             </div>
                         </div>
                         <!-- <div class="form-row">
@@ -739,280 +743,309 @@
             }
         }
 
+        function resetRadio(classname) {
+            document.querySelectorAll(`input[name=${classname}]`).forEach(radio => {
+                radio.checked = false;
+            })
+
+            const radio = document.querySelector(`input[name=${classname}]`);
+
+            // Traverse up to the .row-right container
+            const rowRight = radio.closest('.row-right');
+
+            // Then get the previous sibling, which should be .row-left
+            const rowLeft = rowRight?.previousElementSibling;
+
+            if (rowLeft && rowLeft.classList.contains('row-left')) {
+
+                rowLeft.querySelectorAll('input, select, textarea, button').forEach(el => {
+                    el.disabled = true;
+                });
+
+            }
+        }
+
         function saveChanges(event) {
             event.preventDefault()
 
             // add, delete or edit manufacturer 
-            const manufacturerSelected = document.querySelector('input[name="manu-action"]:checked').value;
-            if (manufacturerSelected === 'add') {
-                newManufacturer = document.getElementById('new_manufacturer').value;
-                newManufacturer = newManufacturer.trim();
-                if (newManufacturer !== "") {
+            const manufacturerSelect = document.querySelector('input[name="manu-action"]:checked');
+            if (manufacturerSelect) {
+                const manufacturerSelected = manufacturerSelect.value;
+                if (manufacturerSelected === 'add') {
+                    newManufacturer = document.getElementById('new_manufacturer').value;
+                    newManufacturer = newManufacturer.trim();
+                    if (newManufacturer !== "") {
 
-                    fetch('inventory/add_manufacturer', {
+                        fetch('inventory/add_manufacturer', {
 
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            manufacturer_name: newManufacturer,
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                manufacturer_name: newManufacturer,
+                            })
+
                         })
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error("Network response was not ok");
+                                }
+                                return response.json();
+                            }
+                            )
+                            .then(data => {
+                                // console.log(data)
+                                updateManufacturerDropdown(data);
+                                showAlert("Successfully added manufacturer", "success");
+                            })
+                            .catch(err => {
+                                console.log("Error:" + err);
+                            })
+                    }
 
-                    })
-                        .then(response => {
+
+                } else if (manufacturerSelected === "edit") {
+                    const edit_manufacturer = document.querySelector("select[name='edit_manufacturer']").value;
+                    const new_name = document.querySelector("input[name='new-manu-name']").value;
+                    if (edit_manufacturer !== "" && new_name !== "") {
+
+
+                        fetch('/edit_manufacturer', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                id: edit_manufacturer,
+                                new_name: new_name,
+                            })
+                        }).then(response => {
                             if (!response.ok) {
                                 throw new Error("Network response was not ok");
                             }
                             return response.json();
                         }
                         )
-                        .then(data => {
-                            // console.log(data)
-                            updateManufacturerDropdown(data);
-                            showAlert("Successfully added manufacturer", "success");
-                        })
-                        .catch(err => {
-                            console.log("Error:" + err);
-                        })
-                }
-
-
-            } else if (manufacturerSelected === "edit") {
-                const edit_manufacturer = document.querySelector("select[name='edit_manufacturer']").value;
-                const new_name = document.querySelector("input[name='new-manu-name']").value;
-                if (edit_manufacturer !== "" && new_name !== "") {
-
-
-                    fetch('/edit_manufacturer', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            id: edit_manufacturer,
-                            new_name: new_name,
-                        })
-                    }).then(response => {
-                        if (!response.ok) {
-                            throw new Error("Network response was not ok");
-                        }
-                        return response.json();
+                            .then(data => {
+                                updateManufacturerDropdown(data)
+                                showAlert("Successfully updated manufacturer", "success");
+                            })
+                            .catch(err => {
+                                console.log("Error:" + err);
+                            })
                     }
-                    )
-                        .then(data => {
-                            updateManufacturerDropdown(data)
-                            showAlert("Successfully updated manufacturer", "success");
-                        })
-                        .catch(err => {
-                            console.log("Error:" + err);
-                        })
-                }
-            } else if (manufacturerSelected === 'delete') {
-                const delete_id = document.querySelector('select[name="delete_manufacturer"]').value;
-                if (delete_id !== "") {
+                } else if (manufacturerSelected === 'delete') {
+                    const delete_id = document.querySelector('select[name="delete_manufacturer"]').value;
+                    if (delete_id !== "") {
 
-                    fetch('/delete_manufacturer', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            id: delete_id,
-                        })
-                    }).then(response => {
-                        if (!response.ok) {
-                            throw new Error("Network response was not ok");
+                        fetch('/delete_manufacturer', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                id: delete_id,
+                            })
+                        }).then(response => {
+                            if (!response.ok) {
+                                throw new Error("Network response was not ok");
+                            }
+                            return response.json();
                         }
-                        return response.json();
+                        )
+                            .then(data => {
+                                updateManufacturerDropdown(data)
+                                showAlert("Successfully deleted manufacturer", "success");
+                            })
+                            .catch(err => {
+                                console.log("Error:" + err);
+                            })
                     }
-                    )
-                        .then(data => {
-                            updateManufacturerDropdown(data)
-                            showAlert("Successfully deleted manufacturer", "success");
-                        })
-                        .catch(err => {
-                            console.log("Error:" + err);
-                        })
                 }
             }
 
             // add, delete or edit ap 
-            const apSelected = document.querySelector("input[name='action']:checked").value;
-            if (apSelected === "add") {
-                const ap_manufacturer = document.querySelector("select[name='ap_manufacturer']").value;
-                const new_ap = document.querySelector("input[name='new_ap']").value.trim();
-                if (ap_manufacturer !== "" && new_ap !== "") {
+            const apSelect = document.querySelector("input[name='action']:checked");
+            if (apSelect) {
+                const apSelected = apSelect.value;
+                if (apSelected === "add") {
+                    const ap_manufacturer = document.querySelector("select[name='ap_manufacturer']").value;
+                    const new_ap = document.querySelector("input[name='new_ap']").value.trim();
+                    if (ap_manufacturer !== "" && new_ap !== "") {
 
-                    fetch('/add_ap', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            manu_id: ap_manufacturer,
-                            ap_name: new_ap
-                        })
-                    }).then(response => {
-                        if (!response.ok) {
-                            throw new Error("Network response was not ok");
+                        fetch('/add_ap', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                manu_id: ap_manufacturer,
+                                ap_name: new_ap
+                            })
+                        }).then(response => {
+                            if (!response.ok) {
+                                throw new Error("Network response was not ok");
+                            }
+                            return response.json();
                         }
-                        return response.json();
+                        )
+                            .then(data => {
+                                showAlert("Successfully added AP", "success");
+                            })
+                            .catch(err => {
+                                console.log("Error:" + err);
+                            })
                     }
-                    )
-                        .then(data => {
-                            showAlert("Successfully added AP", "success");
-                        })
-                        .catch(err => {
-                            console.log("Error:" + err);
-                        })
-                }
 
 
-            } else if (apSelected === "edit") {
-                const edit_ap = document.querySelector("select[name='select_edit_ap']").value;
-                const new_name = document.querySelector("input[name='new-ap-name']").value.trim();
-                const ap_controllers = document.querySelectorAll("input[name='ap-controllers']:checked");
-                const checkedValues = Array.from(ap_controllers).map(c => c.value);
-                // console.log(checkedValues)
-                if (edit_ap !== "" /*&& (new_name !== "" || */) {
-                    fetch('/edit_ap', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            ap_id: edit_ap,
-                            ap_name: new_name,
-                            checkedValues: checkedValues
-                        })
-                    }).then(response => {
-                        if (!response.ok) {
-                            throw new Error("Network response was not ok");
+                } else if (apSelected === "edit") {
+                    const edit_ap = document.querySelector("select[name='select_edit_ap']").value;
+                    const new_name = document.querySelector("input[name='new-ap-name']").value.trim();
+                    const ap_controllers = document.querySelectorAll("input[name='ap-controllers']:checked");
+                    const checkedValues = Array.from(ap_controllers).map(c => c.value);
+                    // console.log(checkedValues)
+                    if (edit_ap !== "" /*&& (new_name !== "" || */) {
+                        fetch('/edit_ap', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                ap_id: edit_ap,
+                                ap_name: new_name,
+                                checkedValues: checkedValues
+                            })
+                        }).then(response => {
+                            if (!response.ok) {
+                                throw new Error("Network response was not ok");
+                            }
+                            return response.json();
                         }
-                        return response.json();
-                    }
-                    )
-                        .then(data => {
-                            showAlert("Successfully edited AP", "success");
-                        })
-                        .catch(err => {
-                            console.log("Error:" + err);
-                        })
+                        )
+                            .then(data => {
+                                showAlert("Successfully edited AP", "success");
+                            })
+                            .catch(err => {
+                                console.log("Error:" + err);
+                            })
 
-                }
-            } else if (apSelected === "delete") {
-                const deleteAp = document.querySelector("select[name='select_delete_ap']").value;
-                if (deleteAp !== "") {
-                    fetch('/delete_ap', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            ap_id: deleteAp,
-                        })
-                    }).then(response => {
-                        if (!response.ok) {
-                            throw new Error("Network response was not ok");
-                        }
-                        return response.json();
                     }
-                    )
-                        .then(data => {
-                            showAlert("Successfully deleted AP", "success");
-                        })
-                        .catch(err => {
-                            console.log("Error:" + err);
-                        })
+                } else if (apSelected === "delete") {
+                    const deleteAp = document.querySelector("select[name='select_delete_ap']").value;
+                    if (deleteAp !== "") {
+                        fetch('/delete_ap', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                ap_id: deleteAp,
+                            })
+                        }).then(response => {
+                            if (!response.ok) {
+                                throw new Error("Network response was not ok");
+                            }
+                            return response.json();
+                        }
+                        )
+                            .then(data => {
+                                showAlert("Successfully deleted AP", "success");
+                            })
+                            .catch(err => {
+                                console.log("Error:" + err);
+                            })
+                    }
                 }
             }
-
             // add, edit or delete controllers 
-            const controllerSelected = document.querySelector("input[name='controller-action']:checked").value;
+            const controllerSelect = document.querySelector("input[name='controller-action']:checked");
+            if (controllerSelect) {
+                const controllerSelected = controllerSelect.value;
 
-            if (controllerSelected === "add") {
-                const controller_manufacturer = document.querySelector("select[name='select_controller_manu']").value;
-                const new_name = document.querySelector("input[name='new_controller']").value.trim();
-                if (controller_manufacturer !== "" && new_name !== "") {
-                    fetch('/add_controller', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            manu_id: controller_manufacturer,
-                            controller_name: new_name
-                        })
-                    }).then(response => {
-                        if (!response.ok) {
-                            throw new Error("Network response was not ok");
+                if (controllerSelected === "add") {
+                    const controller_manufacturer = document.querySelector("select[name='select_controller_manu']").value;
+                    const new_name = document.querySelector("input[name='new_controller']").value.trim();
+                    if (controller_manufacturer !== "" && new_name !== "") {
+                        fetch('/add_controller', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                manu_id: controller_manufacturer,
+                                controller_name: new_name
+                            })
+                        }).then(response => {
+                            if (!response.ok) {
+                                throw new Error("Network response was not ok");
+                            }
+                            return response.json();
                         }
-                        return response.json();
+                        )
+                            .then(data => {
+                                showAlert("Successfully added Controller", "success");
+                            })
+                            .catch(err => {
+                                console.log("Error:" + err);
+                            })
                     }
-                    )
-                        .then(data => {
-                            showAlert("Successfully added Controller", "success");
-                        })
-                        .catch(err => {
-                            console.log("Error:" + err);
-                        })
-                }
-            } else if (controllerSelected === "edit") {
-                const edit_controller = document.querySelector("select[name='select_edit_controller']").value;
-                const new_name = document.querySelector("input[name='new-controller-name']").value.trim();
-                if (edit_controller !== "" && new_name !== "") {
-                    fetch('/edit_controller', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            controller_id: edit_controller,
-                            controller_name: new_name
-                        })
-                    }).then(response => {
-                        if (!response.ok) {
-                            throw new Error("Network response was not ok");
+                } else if (controllerSelected === "edit") {
+                    const edit_controller = document.querySelector("select[name='select_edit_controller']").value;
+                    const new_name = document.querySelector("input[name='new-controller-name']").value.trim();
+                    if (edit_controller !== "" && new_name !== "") {
+                        fetch('/edit_controller', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                controller_id: edit_controller,
+                                controller_name: new_name
+                            })
+                        }).then(response => {
+                            if (!response.ok) {
+                                throw new Error("Network response was not ok");
+                            }
+                            return response.json();
                         }
-                        return response.json();
-                    }
-                    )
-                        .then(data => {
-                            showAlert("Successfully edited controller", "success");
-                        })
-                        .catch(err => {
-                            console.log("Error:" + err);
-                        })
+                        )
+                            .then(data => {
+                                showAlert("Successfully edited controller", "success");
+                            })
+                            .catch(err => {
+                                console.log("Error:" + err);
+                            })
 
-                }
-            } else if (controllerSelected === "delete") {
-                const deleteController = document.querySelector("select[name='select_delete_controller']").value;
-                if (deleteController !== "") {
-                    fetch('/delete_controller', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            controller_id: deleteController,
-                        })
-                    }).then(response => {
-                        if (!response.ok) {
-                            throw new Error("Network response was not ok");
-                        }
-                        return response.json();
                     }
-                    )
-                        .then(data => {
-                            showAlert("Successfully deleted controller", "success");
-                        })
-                        .catch(err => {
-                            console.log("Error:" + err);
-                        })
+                } else if (controllerSelected === "delete") {
+                    const deleteController = document.querySelector("select[name='select_delete_controller']").value;
+                    if (deleteController !== "") {
+                        fetch('/delete_controller', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                controller_id: deleteController,
+                            })
+                        }).then(response => {
+                            if (!response.ok) {
+                                throw new Error("Network response was not ok");
+                            }
+                            return response.json();
+                        }
+                        )
+                            .then(data => {
+                                showAlert("Successfully deleted controller", "success");
+                            })
+                            .catch(err => {
+                                console.log("Error:" + err);
+                            })
+                    }
                 }
             }
-
             // reset the row-left 
             const left = document.getElementsByClassName("row-left")[0];
             left.innerHTML = `
@@ -1357,10 +1390,10 @@
                 body: JSON.stringify({
                     status: change,
                 })
-            }).then(response=>response.json())
-            .then(data=>{
-                showStatus();
-            })
+            }).then(response => response.json())
+                .then(data => {
+                    showStatus();
+                })
         }
 
         function clearTable() {
