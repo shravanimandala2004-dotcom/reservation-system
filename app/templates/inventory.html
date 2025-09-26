@@ -15,8 +15,8 @@
         <nav>
             <a href="{{ url_for('inventory.inventory') }}" {% if request.path.startswith('/inventory') %}class="active"
                 {% endif %}>Inventory</a>
-            <a href="{{url_for('reservation.reserve_page')}}" {% if request.path.startswith('/reserve') %}class="active"
-                {% endif %}>Reservations</a>
+            <!-- <a href="{{url_for('reservation.reserve_page')}}" {% if request.path.startswith('/reserve') %}class="active"
+                {% endif %}>Reservations</a> -->
             {% if role == 'admin' %}
             <a href="{{ url_for('inventory.admin_page') }}" {% if request.path.startswith('/admin') %}class="active" {%
                 endif %}>Admin Page</a>
@@ -120,6 +120,34 @@
             </table>
 
             <button id="reserveBtn" onclick="reserveSelection()">Reserve</button>
+
+            <div class="reservations-container">
+                {% if active_reservations %}
+                <h3>Your Active Reservations</h3>
+                <ul class="reservation-list">
+                    {% for r in active_reservations %}
+                    <li>
+                        {% if r.resource_name != None %}
+                        <strong>{{ r.resource_name }}</strong> reserved on <strong>{{ r.controller_name }}</strong> from
+                        {{ r.start_datetime_formatted}} to {{ r.end_datetime_formatted }}
+                        {% else %}
+                        <strong>{{ r.controller_name }}</strong> reserved from
+                        {{ r.start_datetime_formatted }} to {{ r.end_datetime_formatted }}
+                        <!-- {% if r.link %}
+                {% endif %} -->
+                        <!-- | <a href="{{ r.link }}" target="_blank">🔗 Open Resource</a> -->
+                        {% endif %}
+                        | <a href="/cancel_reservation/{{ r.id }}"
+                            onclick="return confirm('Are you sure you want to cancel this reservation?');"
+                            style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a>
+                    </li>
+                    {% endfor %}
+
+                </ul>
+                {% else %}
+                No active reservations found
+                {% endif %}
+            </div>
 
             {% if role == 'admin' %}
             <!-- Collapsible Add Resource Form -->
@@ -1178,9 +1206,60 @@
             });
 
             if (response.ok) {
-                showAlert("Reservation successful", "success")
+                showAlert("Reservation successful", "success");
+                const result = await response.json();
+                const nr = result.new_reservation;
+                // console.log("result:",result)
+                // fill the reservations container 
+                const reservation_container = document.getElementsByClassName('reservations-container')[0];
+                
+                const hasTextNode = Array.from(reservation_container.childNodes).some(node => node.nodeType === 3 && node.textContent.trim() !== '');
+
+                console.log("Has text node:", hasTextNode);
+
+
+                if (hasTextNode) {
+                    let reservationHTML = `<h3>Your Active Reservations</h3>
+                            <ul class="reservation-list">
+                                <li>`;
+
+                    if (nr.resource_name) {
+                        reservationHTML += `<strong>${nr.resource_name}</strong> reserved on <strong>${nr.controller_name}</strong> from
+                                ${nr.start_datetime_formatted} to ${nr.end_datetime_formatted}`;
+                    } else {
+                        reservationHTML += `<strong>${nr.controller_name}</strong> reserved from
+                            ${nr.start_datetime_formatted} to ${nr.end_datetime_formatted}`;
+                    }
+
+                    reservationHTML += ` | <a href="/cancel_reservation/${ nr.id }"
+                            onclick="return confirm('Are you sure you want to cancel this reservation?');"
+                            style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a>
+                            </li>
+                        </ul>`;
+
+                    reservation_container.innerHTML = reservationHTML;
+                } else {
+                    const ul = document.getElementsByClassName('reservation-list')[0];
+                    console.log(ul);
+                    const li = document.createElement('li');
+                    let liHTML=``;
+                    if (nr.resource_name) {
+                        liHTML += `<strong>${nr.resource_name}</strong> reserved on <strong>${nr.controller_name}</strong> from
+                                ${nr.start_datetime_formatted} to ${nr.end_datetime_formatted}`;
+                    } else {
+                        liHTML += `<strong>${nr.controller_name}</strong> reserved from
+                            ${nr.start_datetime_formatted} to ${nr.end_datetime_formatted}`;
+                    }
+
+                    liHTML += ` | <a href="/cancel_reservation/${ nr.id }"
+                            onclick="return confirm('Are you sure you want to cancel this reservation?');"
+                            style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a>`;
+                    
+                    li.innerHTML=liHTML
+                    ul.appendChild(li);
+                }
             } else {
-                console.log("inside else")
+                // console.log("inside else")
                 const result = await response.json();
                 showAlert(result.message, "error")
             }

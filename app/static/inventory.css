@@ -452,3 +452,35 @@ h2{
     margin-right: 20px;
     margin-left:2px;
 }
+
+/* reservations styles */
+.reservations-container {
+    background-color: #1C1C1C;
+    text-align: center;
+    /* margin-left: 220px; */
+    margin-top:20px;
+    margin-bottom: 40px;
+    padding: 30px 40px;
+    border-radius: 15px;
+}
+
+h3{
+    color:orange;
+    text-align: left;
+}
+
+.reservation-list li {
+    margin: 10px 0;
+    line-height: 1.6;
+    text-align: left;
+}
+
+.reservation-list a {
+    color: #4fc3f7;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.reservation-list a:hover {
+    text-decoration: underline;
+}

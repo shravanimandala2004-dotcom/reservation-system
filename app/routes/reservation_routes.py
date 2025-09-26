@@ -170,7 +170,7 @@ def handle_reservation():
 
     if(ap_id):
         cursor.execute("SELECT * FROM AP WHERE ap_id = %s", (ap_id,))
-    ap = cursor.fetchone()
+        ap = cursor.fetchone()
 
     cursor.execute("SELECT * FROM controllers WHERE controller_id = %s", (controller_id,))
     controller = cursor.fetchone()
@@ -225,8 +225,22 @@ def handle_reservation():
         )    
 
     conn.commit()
+    
+    inserted_id = cursor.lastrowid
+    
+    # Fetch the row using that ID
+    cursor.execute("SELECT * FROM ap_reservations WHERE id = %s", (inserted_id,))
+    row = cursor.fetchone()
+    
+    row['start_datetime_formatted'] = row['start_datetime'].strftime("%b %d, %Y %H:%M")
+    row['end_datetime_formatted'] = row['end_datetime'].strftime("%b %d, %Y %H:%M")
+    if(ap):
+        row['resource_name']=ap['model_name']
+    row['controller_name']=controller['name']
+
+
     conn.close()
-    return redirect(url_for('reservation.reserve_page', resource_id=ap_id, controller_id=controller_id))
+    return jsonify(resource_id=ap_id, controller_id=controller_id,new_reservation=row)
 
 
 @reservation_bp.route('/delete_reservation/<int:id>')
@@ -279,4 +293,4 @@ def cancel_reservation(id):
         )
 
     conn.close()
-    return redirect(url_for('reservation.reserve_page'))
+    return redirect(url_for('inventory.inventory'))

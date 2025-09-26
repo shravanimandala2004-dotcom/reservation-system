@@ -8,6 +8,10 @@ inventory_bp = Blueprint('inventory', __name__)
 
 @inventory_bp.route('/inventory', methods=['GET', 'POST'])
 def inventory():
+    if 'user_id' not in session:
+        return redirect(url_for('auth.index'))
+
+    user_id = session['user_id']
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -84,11 +88,25 @@ def inventory():
     manufacturers =  cursor.fetchall()
     print("manufacturers:", manufacturers)
 
+    # Fetch active reservations
+    cursor.execute("""
+        SELECT r.*, res.model_name AS resource_name, c.name AS controller_name
+        FROM ap_reservations r
+        LEFT JOIN ap res ON r.ap_id = res.ap_id
+        LEFT JOIN controllers c ON r.controller_id = c.controller_id
+        WHERE r.user_id = %s AND r.end_datetime >= NOW()
+    """, (user_id,))
+    active_reservations = cursor.fetchall()
+    
+    for r in active_reservations:
+        r['start_datetime_formatted'] = r['start_datetime'].strftime("%b %d, %Y %H:%M")
+        r['end_datetime_formatted'] = r['end_datetime'].strftime("%b %d, %Y %H:%M")
+
     # Display inventory
     # cursor.execute("SELECT * FROM resources")
     # resources = cursor.fetchall()
     conn.close()
-    return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers)
+    return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers,active_reservations=active_reservations)
 
 @inventory_bp.route('/add_controller', methods=['POST'])
 def add_controller():
