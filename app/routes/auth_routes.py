@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from app.utils.db import get_db_connection
+from flask import jsonify
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -31,12 +32,13 @@ def signup():
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        role = request.form.get('role')
+        data=request.get_json()
+        username =data.get('username')
+        password =data.get('password')
+        role =data.get('role')
 
         if not username or not password or not role:
-            return "Missing username, password, or role."
+            return jsonify(status='error',message="Missing username, password, or role.")
 
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
@@ -49,9 +51,10 @@ def login():
             session['user_id'] = user['id']     
             session['username'] = username
             session['role'] = role
-            return redirect(url_for('inventory.inventory'))
+            return jsonify(status='success',message="Login successful"),200
+            # return redirect(url_for('inventory.inventory'))
         else:
-            return "❌ Invalid login credentials"
+            return jsonify(status='error',message="❌ Invalid login credentials"),401
     else:
         return redirect(url_for('auth.index'))
     
