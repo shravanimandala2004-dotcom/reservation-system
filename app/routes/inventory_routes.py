@@ -503,6 +503,26 @@ def get_ap_status():
         conn.close()
     return jsonify(ap_id)
 
+@inventory_bp.route('/get_controller_status',methods=['GET'])
+def get_controller_status():
+    controller_id = request.args.get('controller_id')
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("select status from controllers where controller_id=%s",(controller_id,))
+        controller=cursor.fetchone()
+        controller_status=controller['status']        
+        
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
+
+    finally:
+        cursor.close()
+        conn.close()
+    return jsonify(controller_status)
+
 @inventory_bp.route('/get_manufacturers',methods=['GET'])
 def get_manufacturers():
     try:

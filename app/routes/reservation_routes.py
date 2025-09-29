@@ -163,10 +163,11 @@ def handle_reservation():
     
     
     data = request.get_json()
-    ap_id = data.get('ap_id')
+    ap_id = data.get('ap_id') or None
     controller_id = data.get('controller_id')
     start_time = data.get('start_time')
     end_time = data.get('end_time')
+    ap=None
 
     if(ap_id):
         cursor.execute("SELECT * FROM AP WHERE ap_id = %s", (ap_id,))
@@ -175,7 +176,7 @@ def handle_reservation():
     cursor.execute("SELECT * FROM controllers WHERE controller_id = %s", (controller_id,))
     controller = cursor.fetchone()
 
-    print("resource:",ap,"controller:",controller)
+    # print("resource:",ap,"controller:",controller)
 
     start_dt = datetime.strptime(start_time, '%Y-%m-%dT%H:%M')
     end_dt = datetime.strptime(end_time, '%Y-%m-%dT%H:%M')
@@ -201,6 +202,41 @@ def handle_reservation():
         return jsonify({
             "status": "error",
             "message": f"⚠️ You already have {max_reservations} active reservations."
+        }), 400
+    
+    # Check for overlapping reservations
+    cursor.execute("""
+        SELECT * FROM ap_reservations
+        WHERE controller_id = %s
+        AND (
+            (start_datetime <= %s AND end_datetime > %s) OR
+            (start_datetime < %s AND end_datetime >= %s) OR
+            (start_datetime >= %s AND end_datetime <= %s)
+        )
+    """, (controller_id, end_dt, start_dt, end_dt, start_dt, start_dt, end_dt))
+
+    controller_conflicts = cursor.fetchall()
+
+    if ap_id:
+        cursor.execute("""
+            SELECT * FROM ap_reservations
+            WHERE ap_id = %s
+            AND (
+                (start_datetime <= %s AND end_datetime > %s) OR
+                (start_datetime < %s AND end_datetime >= %s) OR
+                (start_datetime >= %s AND end_datetime <= %s)
+            )
+        """, (ap_id, end_dt, start_dt, end_dt, start_dt, start_dt, end_dt))
+
+        ap_conflicts = cursor.fetchall()
+    else:
+        ap_conflicts = []
+
+    if controller_conflicts or ap_conflicts:
+        conn.close()
+        return jsonify({
+            "status": "error",
+            "message": "❌ The selected controller or AP is already reserved during the chosen time slot."
         }), 400
 
     if ap_id:

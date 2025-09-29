@@ -1212,7 +1212,7 @@
                 // console.log("result:",result)
                 // fill the reservations container 
                 const reservation_container = document.getElementsByClassName('reservations-container')[0];
-                
+
                 const hasTextNode = Array.from(reservation_container.childNodes).some(node => node.nodeType === 3 && node.textContent.trim() !== '');
 
                 console.log("Has text node:", hasTextNode);
@@ -1231,7 +1231,7 @@
                             ${nr.start_datetime_formatted} to ${nr.end_datetime_formatted}`;
                     }
 
-                    reservationHTML += ` | <a href="/cancel_reservation/${ nr.id }"
+                    reservationHTML += ` | <a href="/cancel_reservation/${nr.id}"
                             onclick="return confirm('Are you sure you want to cancel this reservation?');"
                             style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a>
                             </li>
@@ -1242,7 +1242,7 @@
                     const ul = document.getElementsByClassName('reservation-list')[0];
                     console.log(ul);
                     const li = document.createElement('li');
-                    let liHTML=``;
+                    let liHTML = ``;
                     if (nr.resource_name) {
                         liHTML += `<strong>${nr.resource_name}</strong> reserved on <strong>${nr.controller_name}</strong> from
                                 ${nr.start_datetime_formatted} to ${nr.end_datetime_formatted}`;
@@ -1251,11 +1251,11 @@
                             ${nr.start_datetime_formatted} to ${nr.end_datetime_formatted}`;
                     }
 
-                    liHTML += ` | <a href="/cancel_reservation/${ nr.id }"
+                    liHTML += ` | <a href="/cancel_reservation/${nr.id}"
                             onclick="return confirm('Are you sure you want to cancel this reservation?');"
                             style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a>`;
-                    
-                    li.innerHTML=liHTML
+
+                    li.innerHTML = liHTML
                     ul.appendChild(li);
                 }
             } else {
@@ -1397,6 +1397,7 @@
 
             const controllerSelect = document.getElementById('controller');
             const controller = controllerSelect.options[controllerSelect.selectedIndex].text;
+            const controller_id = controllerSelect.value;
             if (controller == "Select Cloud/on-prem Controllers") {
                 return;
             }
@@ -1424,11 +1425,12 @@
                     `;
             table.innerHTML = tableHTML;
 
-            fetch(`/get_ap_status?ap_id=${ap_id}`)
-                .then(response => response.json())
-                .then(data => {
-                    const status = data;
-                    tableHTML += `
+            if (ap_id !== "") {
+                fetch(`/get_ap_status?ap_id=${ap_id}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const status = data;
+                        tableHTML += `
                             <tr>
                                 <td>${manufacturer}</td>
                                 <td>${ap}</td>
@@ -1452,12 +1454,47 @@
                             </tr>
                             `;
 
-                    tableHTML += `</tbody>`;
-                    table.innerHTML = tableHTML;
-                })
-                .catch(error => console.error("Some error occurred:" + error))
+                        tableHTML += `</tbody>`;
+                        table.innerHTML = tableHTML;
+                    })
+                    .catch(error => {console.error("Some error occurred:" , error)})
+            }else{
+                fetch(`get_controller_status?controller_id=${controller_id}`)
+                .then(response => response.json())
+                    .then(data => {
+                        const status = data;
+                        tableHTML += `
+                            <tr>
+                                <td>${manufacturer}</td>
+                                <td>-</td>
+                                <td>
+                                    ${controller}
+                                </td>
+                                <td id="status">
+                                    <span class="status-indicator ${status.toLowerCase().replace(/ /g, '-')}"></span>
+                                    ${status}
+                                </td>
+                                <!--{% if role=="admin" %}
+                                <td>
+                                    <select name="change_status" onchange="changeStatus(${controller_id})">
+                                        <option value="" disabled selected>Change Status</option>
+                                        <option value="Available">Available</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Not Available">Not Available</option>
+                                    </select>
+                                </td>
+                                {% endif %}-->
+                            </tr>
+                            `;
+
+                        tableHTML += `</tbody>`;
+                        table.innerHTML = tableHTML;
+                    })
+                    .catch(error => {console.error("Some error occurred:" , error)})
+            }
 
         }
+
 
         function changeStatus(ap_id) {
             const change = document.querySelector("select[name='change_status']").value;
@@ -1512,13 +1549,13 @@
             const manufacturer_id = manufacturerSelect.value;
             const ap_id = apSelect.value;
 
-            if (controller_id === "" || manufacturer_id === "" || ap_id === "" || start === "" || end === "") {
-                alert("Select a manufacturer,AP and controller before reserving");
+            if ( manufacturer_id === "" || (controller_id === "" && ap_id === "" )|| start === "" || end === "") {
+                alert("Select a manufacturer,AP or controller before reserving");
                 return;
             }
 
             const status = document.getElementById('status').innerText.trim();
-            if (status != "Available") {
+            if (status.toLowerCase() != "available") {
                 alert("Resource cannot be reserved");
                 return;
             }
