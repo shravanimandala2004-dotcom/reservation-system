@@ -15,73 +15,62 @@ def inventory():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    if request.method == 'POST' and session.get('role') == 'admin':
-        manufacturer = request.form['manufacturer']
-        name = request.form['resource_name']
-        ap_count = request.form['ap_count']
-        status = request.form['status']
-        link = request.form['link']
-        controllers=request.form.getlist('controllers_list')
-        action_type = request.form.get('action_type', 'add')  # from form hidden field
+    # if request.method == 'POST' and session.get('role') == 'admin':
+    #     manufacturer = request.form['manufacturer']
+    #     name = request.form['resource_name']
+    #     ap_count = request.form['ap_count']
+    #     status = request.form['status']
+    #     link = request.form['link']
+    #     controllers=request.form.getlist('controllers_list')
+    #     action_type = request.form.get('action_type', 'add')  # from form hidden field
 
-        if action_type == 'edit':
-            resource_id = request.form['resource_id']
-            cursor.execute("UPDATE resources SET name=%s, ap_count=%s, status=%s, link=%s WHERE id=%s",
-                           (name, ap_count, status, link, resource_id))
-            conn.commit()
+    #     if action_type == 'edit':
+    #         resource_id = request.form['resource_id']
+    #         cursor.execute("UPDATE resources SET name=%s, ap_count=%s, status=%s, link=%s WHERE id=%s",
+    #                        (name, ap_count, status, link, resource_id))
+    #         conn.commit()
 
             
-            emails = get_emails_by_resource(resource_id)
-            for email in emails:
-                subject=f"Resource Updated: {name}"
-                body=f"The resource '{name}' has been updated.\nAPs: {ap_count}\nStatus: {status}"
-                notify_user(
-                    to_email=email,
-                    subject=subject,
-                    email_body=body,
-                )
+    #         emails = get_emails_by_resource(resource_id)
+    #         for email in emails:
+    #             subject=f"Resource Updated: {name}"
+    #             body=f"The resource '{name}' has been updated.\nAPs: {ap_count}\nStatus: {status}"
+    #             notify_user(
+    #                 to_email=email,
+    #                 subject=subject,
+    #                 email_body=body,
+    #             )
 
-        else:  # Add new resource
-            cursor.execute("INSERT INTO resources (manufacturer_id,name, ap_count, status, link) VALUES (%s,%s, %s, %s, %s)",
-                           (manufacturer,name, ap_count, status, link))
-            conn.commit()
-            print(controllers)
-            if len(controllers)!=0:
-                cursor.execute("Select id from resources where manufacturer_id=%s and name=%s and ap_count=%s and status=%s and link=%s",(manufacturer,name, ap_count, status, link))
-                resource_id=cursor.fetchone()['id']
-                for controller in controllers:
-                    cursor.execute("insert into resource_controller_map (controller_id,resource_id) values (%s,%s)",(controller,resource_id))
-                    conn.commit()
+    #     else:  # Add new resource
+    #         cursor.execute("INSERT INTO resources (manufacturer_id,name, ap_count, status, link) VALUES (%s,%s, %s, %s, %s)",
+    #                        (manufacturer,name, ap_count, status, link))
+    #         conn.commit()
+    #         print(controllers)
+    #         if len(controllers)!=0:
+    #             cursor.execute("Select id from resources where manufacturer_id=%s and name=%s and ap_count=%s and status=%s and link=%s",(manufacturer,name, ap_count, status, link))
+    #             resource_id=cursor.fetchone()['id']
+    #             for controller in controllers:
+    #                 cursor.execute("insert into resource_controller_map (controller_id,resource_id) values (%s,%s)",(controller,resource_id))
+    #                 conn.commit()
 
 
-            # Notify all admins
-            cursor.execute("SELECT username FROM users WHERE role = 'admin'")
-            admin_users = cursor.fetchall()
-            subject = "Resource Added"
-            body = f"""
-            Resource Name: {name}
-            AP Count: {ap_count}
-            Status: {status}
-            Link: {link}
-            Action: ADDED
-            """
-            for admin in admin_users:
-                notify_user(
-                    to_email=admin['username'],
-                    subject=subject,
-                    email_body=body,
-                )
- 
-
-            # Optional: Send to all users if needed
-            # cursor.execute("SELECT username FROM users")
-            # all_users = cursor.fetchall()
-            # for user in all_users:
-            #     notify_user(
-            #         to_email=user['username'],
-            #         subject=f"New Resource Added: {name}",
-            #         email_body=f"A new resource '{name}' with {ap_count} APs is now available.",
-            #    )
+    #         # Notify all admins
+    #         cursor.execute("SELECT username FROM users WHERE role = 'admin'")
+    #         admin_users = cursor.fetchall()
+    #         subject = "Resource Added"
+    #         body = f"""
+    #         Resource Name: {name}
+    #         AP Count: {ap_count}
+    #         Status: {status}
+    #         Link: {link}
+    #         Action: ADDED
+    #         """
+    #         for admin in admin_users:
+    #             notify_user(
+    #                 to_email=admin['username'],
+    #                 subject=subject,
+    #                 email_body=body,
+    #             )
 
     # Fetch manufacturers
     cursor.execute("SELECT distinct name,manufacturer_id as id from manufacturers")
@@ -191,81 +180,78 @@ def add_manufacturer():
     finally:
         cursor.close()
         conn.close()
-    return redirect(url_for('inventory.inventory'))
 
-@inventory_bp.route('/delete_resource/<int:id>')
-def delete_resource(id):
-    if session.get('role') == 'admin':
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+# @inventory_bp.route('/delete_resource/<int:id>')
+# def delete_resource(id):
+#     if session.get('role') == 'admin':
+#         conn = get_db_connection()
+#         cursor = conn.cursor(dictionary=True)
 
-        # Get resource details first
-        cursor.execute("SELECT * FROM resources WHERE id = %s", (id,))
-        resource = cursor.fetchone()
+#         # Get resource details first
+#         cursor.execute("SELECT * FROM resources WHERE id = %s", (id,))
+#         resource = cursor.fetchone()
 
-        if resource:
-            # Get all user emails for this resource
-            emails = get_emails_by_resource(id)
-            print(emails) 
-            # Notify each user
-            for email in emails:
-                notify_user(
-                    to_email=email,
-                    subject=f"Resource Deleted: {resource['name']}",
-                    email_body=f"The resource '{resource['name']}' with {resource['ap_count']} APs has been deleted.",
-                )
+#         if resource:
+#             # Get all user emails for this resource
+#             emails = get_emails_by_resource(id)
+#             print(emails) 
+#             # Notify each user
+#             for email in emails:
+#                 notify_user(
+#                     to_email=email,
+#                     subject=f"Resource Deleted: {resource['name']}",
+#                     email_body=f"The resource '{resource['name']}' with {resource['ap_count']} APs has been deleted.",
+#                 )
 
-            cursor.execute("DELETE FROM reservations WHERE resource_id = %s", (id,))
-            cursor.execute("DELETE FROM resources WHERE id = %s", (id,))
-            conn.commit()
-        conn.close()
-    return redirect(url_for('inventory.inventory'))
+#             cursor.execute("DELETE FROM reservations WHERE resource_id = %s", (id,))
+#             cursor.execute("DELETE FROM resources WHERE id = %s", (id,))
+#             conn.commit()
+#         conn.close()
+#     return redirect(url_for('inventory.inventory'))
 
-@inventory_bp.route('/edit_resource', methods=['POST'])
-def edit_resource():
-    if session.get('role') != 'admin':
-        return "Unauthorized", 403
+# @inventory_bp.route('/edit_resource', methods=['POST'])
+# def edit_resource():
+#     if session.get('role') != 'admin':
+#         return "Unauthorized", 403
 
-    resource_id = request.form['id']
-    name = request.form['name']
-    ap_count = request.form['ap_count']
-    status = request.form['status']
+#     resource_id = request.form['id']
+#     name = request.form['name']
+#     ap_count = request.form['ap_count']
+#     status = request.form['status']
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE resources 
-        SET name = %s, ap_count = %s, status = %s 
-        WHERE id = %s
-    """, (name, ap_count, status, resource_id))
-    conn.commit()
-    if session.get('role') == 'admin':
-        subject = "Resource Edited"
-        body = f"""
-        Resource Name: {name}
-        AP Count: {ap_count}
-        Status: {status}
-        Action: EDITED
-        """
-        notify_user(
-            to_email=session.get('username'),
-            subject=subject,
-            email_body=body,
-        )
+#     conn = get_db_connection()
+#     cursor = conn.cursor()
+#     cursor.execute("""
+#         UPDATE resources 
+#         SET name = %s, ap_count = %s, status = %s 
+#         WHERE id = %s
+#     """, (name, ap_count, status, resource_id))
+#     conn.commit()
+#     if session.get('role') == 'admin':
+#         subject = "Resource Edited"
+#         body = f"""
+#         Resource Name: {name}
+#         AP Count: {ap_count}
+#         Status: {status}
+#         Action: EDITED
+#         """
+#         notify_user(
+#             to_email=session.get('username'),
+#             subject=subject,
+#             email_body=body,
+#         )
 
-    # Send notification to all users who reserved this resource
-    emails = get_emails_by_resource(resource_id)
-    for email in emails:
-        notify_user(
-            to_email=email,
-            subject=f"Resource Updated: {name}",
-            email_body=f"The resource '{name}' has been updated.\nAPs: {ap_count}\nStatus: {status}",
-        )
+#     # Send notification to all users who reserved this resource
+#     emails = get_emails_by_resource(resource_id)
+#     for email in emails:
+#         notify_user(
+#             to_email=email,
+#             subject=f"Resource Updated: {name}",
+#             email_body=f"The resource '{name}' has been updated.\nAPs: {ap_count}\nStatus: {status}",
+#         )
 
-    conn.close()
-
-
-    return redirect(url_for('inventory.inventory'))
+#     conn.close()
+#     return redirect(url_for('inventory.inventory'))
 
 @inventory_bp.route('/get_controllers_by_manufacturer_id')
 def get_controllers_by_manufacturer_id():
@@ -309,44 +295,28 @@ def admin_page():
     )
 
 
-@inventory_bp.route('/get_resources_by_manufacturer',methods=['GET'])
-def get_resources_by_manufacturer():
-    manufacturer = request.args.get('manufacturer')
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT r.* from resources as r join manufacturers as m on r.manufacturer_id=m.manufacturer_id where m.name=%s",(manufacturer,))
-    resources=cursor.fetchall()
-    cursor.execute("""
-        SELECT 
-            distinct c.*, 
-            CASE 
-                WHEN r.controller_id IS NOT NULL THEN 'Reserved'
-                ELSE 'Available'
-            END AS reservation_status
-        FROM controllers c
-        JOIN manufacturers m ON c.manufacturer_id = m.manufacturer_id
-        LEFT JOIN reservations r ON c.controller_id = r.controller_id
-        WHERE m.name = %s;""",(manufacturer,)
-        )
-    controllers=cursor.fetchall()
-    conn.close()
-    return jsonify(resources,controllers)
-
-@inventory_bp.route('/get_controllers_by_resource')
-def get_controllers_by_resource():
-    resource_id = request.args.get('resource_id')
-    query = """
-        SELECT c.controller_id, c.name
-        FROM controllers c
-        JOIN resource_controller_map rcm ON c.controller_id = rcm.controller_id
-        WHERE rcm.resource_id = %s
-    """
-    conn = get_db_connection()
-    cursor= conn.cursor(dictionary=True)
-    cursor.execute(query, (resource_id,))
-    controllers = cursor.fetchall()
-    return jsonify(controllers)
-
+# @inventory_bp.route('/get_resources_by_manufacturer',methods=['GET'])
+# def get_resources_by_manufacturer():
+#     manufacturer = request.args.get('manufacturer')
+#     conn = get_db_connection()
+#     cursor = conn.cursor(dictionary=True)
+#     cursor.execute("SELECT r.* from resources as r join manufacturers as m on r.manufacturer_id=m.manufacturer_id where m.name=%s",(manufacturer,))
+#     resources=cursor.fetchall()
+#     cursor.execute("""
+#         SELECT 
+#             distinct c.*, 
+#             CASE 
+#                 WHEN r.controller_id IS NOT NULL THEN 'Reserved'
+#                 ELSE 'Available'
+#             END AS reservation_status
+#         FROM controllers c
+#         JOIN manufacturers m ON c.manufacturer_id = m.manufacturer_id
+#         LEFT JOIN reservations r ON c.controller_id = r.controller_id
+#         WHERE m.name = %s;""",(manufacturer,)
+#         )
+#     controllers=cursor.fetchall()
+#     conn.close()
+#     return jsonify(resources,controllers)
 
 @inventory_bp.route('/delete_controller',methods=['POST'])
 def delete_controller():
@@ -634,6 +604,7 @@ def add_ap():
     data=request.get_json()
     manu_id=data.get('manu_id')
     ap_name=data.get('ap_name')
+    controller=data.get('controller')
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
@@ -642,6 +613,15 @@ def add_ap():
         
         # Get the last inserted ID
         ap_id = cursor.lastrowid
+        
+        # Insert into ap_controller_map if controller list is provided
+        if controller and isinstance(controller, list):
+            for controller_id in controller:
+                cursor.execute(
+                    "INSERT INTO ap_controller_map (ap_id, controller_id) VALUES (%s, %s)",
+                    (ap_id, controller_id)
+                )
+            conn.commit()
 
         # Optionally fetch the full row
         cursor.execute("SELECT * FROM ap WHERE ap_id = %s", (ap_id,))
@@ -655,7 +635,6 @@ def add_ap():
                 "model_name": new_ap['model_name']
             }
         }), 201
-
         
     except mysql.connector.Error as err:
         conn.rollback()
@@ -717,8 +696,7 @@ def edit_ap():
                 "model_name": new_ap['model_name']
             }
         }), 201
-
-        
+            
     except mysql.connector.Error as err:
         conn.rollback()
         print(f"Database error: {err}")
@@ -746,7 +724,6 @@ def delete_ap():
         return jsonify({
             "message": "Access Point successfully deleted",
         }), 201
-
         
     except mysql.connector.Error as err:
         conn.rollback()

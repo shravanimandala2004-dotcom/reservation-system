@@ -29,7 +29,7 @@
     </div>
 
     <div class="container">
-        <div class="alert">This is a alert</div>
+        <div class="alert">This is a alert</div> <!-- alert message -->
         <div class="container-two">
             <h1>Network Devices Reservation</h1>
 
@@ -50,26 +50,26 @@
                         {% endfor %}
                     </select>
                 </div>
-
+                <!-- AP dropdown -->
                 <div class="select-container">
                     <label for="AP">AP</label>
                     <select id="AP" onchange="getControllerByAP()" class="drop-down">
                         <option value="">Select AP</option>
                     </select>
                 </div>
-
+                <!-- Cloud dropdown  -->
                 <div class="select-container">
                     <label for="controller">Cloud / on-prem Controller</label>
                     <select id="controller" onchange="showStatus()" class="drop-down">
                         <option value="">Select Cloud/on-prem Controllers</option>
                     </select>
                 </div>
-
+                <!-- Start date select  -->
                 <div class="select-container">
                     <label for="start-date">Start date</label>
                     <input type="datetime-local" name="start-date" id="start-date">
                 </div>
-
+                <!-- End date select  -->
                 <div class="select-container">
                     <label for="end-date">End date</label>
                     <input type="datetime-local" name="end-date" id="end-date">
@@ -119,8 +119,9 @@
             </tbody> -->
             </table>
 
-            <button id="reserveBtn" onclick="reserveSelection()">Reserve</button>
+            <button id="reserveBtn" onclick="reserveSelection()">Reserve</button> <!-- Reserve button -->
 
+            <!-- Show reservations container  -->
             <div class="reservations-container">
                 {% if active_reservations %}
                 <h3>Your Active Reservations</h3>
@@ -128,14 +129,18 @@
                     {% for r in active_reservations %}
                     <li>
                         {% if r.resource_name != None %}
+
                         <strong>{{ r.resource_name }}</strong> reserved on <strong>{{ r.controller_name }}</strong> from
                         {{ r.start_datetime_formatted}} to {{ r.end_datetime_formatted }}
+
                         {% else %}
+
                         <strong>{{ r.controller_name }}</strong> reserved from
                         {{ r.start_datetime_formatted }} to {{ r.end_datetime_formatted }}
                         <!-- {% if r.link %}
-                {% endif %} -->
-                        <!-- | <a href="{{ r.link }}" target="_blank">🔗 Open Resource</a> -->
+                            | <a href="{{ r.link }}" target="_blank">🔗 Open Resource</a> 
+                            {% endif %} -->
+                        
                         {% endif %}
                         | <a href="/cancel_reservation/{{ r.id }}"
                             onclick="return confirm('Are you sure you want to cancel this reservation?');"
@@ -149,25 +154,22 @@
                 {% endif %}
             </div>
 
+            <!-- Admin controls  -->
             {% if role == 'admin' %}
             <!-- Collapsible Add Resource Form -->
             <div class="add-resource-box">
+                <!-- toggle button  -->
                 <button id="toggleAddFormBtn" class="collapsible-btn">
                     <span style="vertical-align:middle;">+ Add Resource</span>
                     <span id="arrow" class="arrow">&#9660;</span>
                 </button>
+                <!-- Manage resources form  -->
                 <div id="addResourceForm" style="display:none;">
                     <form method="POST" class="add-resource-form" onsubmit="saveChanges(event)">
-                        <input type="hidden" name="action_type" id="action_type" value="add">
+                        <!-- <input type="hidden" name="action_type" id="action_type" value="add"> -->
+
+                        <!-- Manufacturer controls  -->
                         <div class="form-row">
-                            <!-- <select name="manufacturer" required>
-                                <option value="" disabled selected>Select Manufacturer</option>
-                                {% for m in manufacturers %}
-                                <option value="{{m.id}}">{{m.name}}</option>
-                                {% endfor %}
-                            </select> -->
-
-
                             <div class="row-left">
                                 <input type="text" name="new_manufacturer" id="new_manufacturer"
                                     placeholder="New Manufacturer/Vendor" disabled>
@@ -189,6 +191,7 @@
                                     onclick="resetRadio('manu-action')">Reset</button>
                             </div>
                         </div>
+                        <!-- AP controls  -->
                         <div class="form-row">
                             <div class="row-left">
                                 <select name="ap_manufacturer" disabled>
@@ -215,6 +218,7 @@
                                 <button type="button" class="resetBtn" onclick="resetRadio('action')">Reset</button>
                             </div>
                         </div>
+                        <!-- Cloud/Controller controls  -->
                         <div class="form-row">
                             <div class="row-left">
                                 <select name="select_controller_manu" disabled>
@@ -250,7 +254,7 @@
                                 <option value="Not Available">Not Available</option>
                             </select>
                         </div> -->
-                        <input type="hidden" name="resource_id" id="resource_id">
+                        <!-- <input type="hidden" name="resource_id" id="resource_id"> -->
                         <button type="submit" class="submit-btn">Save</button>
                     </form>
                 </div>
@@ -259,7 +263,7 @@
 
 
             <!-- Edit Modal -->
-            <div id="editModal"
+            <!-- <div id="editModal"
                 style="display:none; position:fixed; top:20%; left:35%; background:#333; color:white; padding:20px; border-radius:8px; box-shadow: 0 0 10px black; z-index: 200;">
                 <h3>Edit Resource</h3>
                 <form id="editForm" method="POST" action="/edit_resource">
@@ -271,7 +275,7 @@
                     <button type="button"
                         onclick="document.getElementById('editModal').style.display='none'">Cancel</button>
                 </form>
-            </div>
+            </div> -->
 
             <!-- Reserve Modal -->
             <div id="reserveModal"
@@ -318,8 +322,11 @@
             </div>
         </div>
     </div>
+
+    <!-- Admin script  -->
     {% if role == 'admin' %}
     <script>
+        // add event listener to toggle button 
         document.addEventListener("DOMContentLoaded", function () {
             const btn = document.getElementById('toggleAddFormBtn');
             const form = document.getElementById('addResourceForm');
@@ -327,6 +334,10 @@
             btn.onclick = function () {
                 if (form.style.display === 'none' || form.style.display === '') {
                     form.style.display = 'block';
+                    const inputsAndSelects = document.querySelectorAll('.row-left input, .row-left select');
+                    inputsAndSelects.forEach(element => {
+                        element.disabled = true;
+                    })
                     arrow.style.transform = 'rotate(180deg)';
                 } else {
                     form.style.display = 'none';
@@ -335,6 +346,7 @@
             };
         })
 
+        // Add event listener to manufacturer control radio buttons
         document.querySelectorAll('input[name="manu-action"]').forEach(radio => {
             radio.addEventListener('change', function () {
                 if (this.value === "edit") {
@@ -344,13 +356,10 @@
                     const selectMan = document.createElement("select")
                     selectMan.name = "edit_manufacturer";
                     selectMan.innerHTML = `<option value="" disabled selected>Select Manufacturer</option>`
-                    // {% for m in manufacturers %}
-                    // <option value="{{m.id}}">{{m.name}}</option>
-                    // {% endfor %}`
+                    // fill select manufacturer with options 
                     fetch('/get_manufacturers')
                         .then(response => response.json())
                         .then(data => {
-                            // console.log(data)
                             data.forEach(m => {
                                 const option = document.createElement('option');
                                 option.value = m['manufacturer_id'];
@@ -374,9 +383,7 @@
                     const selectMan = document.createElement("select")
                     selectMan.name = "delete_manufacturer";
                     selectMan.innerHTML = `<option value="" disabled selected>Select Manufacturer</option>`
-                    // {% for m in manufacturers %}
-                    // <option value="{{m.id}}">{{m.name}}</option>
-                    // {% endfor %}`
+                    
                     fetch('/get_manufacturers')
                         .then(response => response.json())
                         .then(data => {
@@ -399,27 +406,20 @@
             });
         });
 
+        // Add event listener to AP control radio buttons
         document.querySelectorAll('input[name="action"]').forEach(radio => {
             radio.addEventListener('change', function () {
                 if (this.value === "edit") {
                     const left = document.getElementsByClassName('row-left')[1];
                     left.innerHTML = "";
 
-                    // const selectMan=document.createElement("select")
-                    // selectMan.name=ap_manufacturer;
-                    // selectMan.innerHTML=`<option value="" disabled selected>Select Manufacturer</option>
-                    //             {% for m in manufacturers %}
-                    //             <option value="{{m.id}}">{{m.name}}</option>
-                    //             {% endfor %}`
-                    // selectMan.onchange=getAP
-
                     const selectAP = document.createElement("select");
                     selectAP.name = "select_edit_ap"
                     const option = document.createElement('option');
                     option.innerText = "Select an AP to edit";
-                    // option.disabled = true;
                     option.value = "";
                     selectAP.appendChild(option)
+
                     fetch('/get_ap')
                         .then(response => response.json())
                         .then(data => {
@@ -440,11 +440,12 @@
                     newName.placeholder = "Enter New Name for AP"
 
                     const controllersDiv = document.createElement('div');
-                    controllersDiv.classList.add('edit-controllers-div')
+                    controllersDiv.classList.add('edit-controllers-div');
+
                     selectAP.onchange = () => {
                         const manu_id = selectAP.options[selectAP.selectedIndex].getAttribute('manu-id')
                         controllersDiv.innerHTML = "";
-                        // console.log(`/get_controllers_by_manufacturer?manufacturer=${manu_id}`);
+                        
                         fetch(`/get_controllers_by_manufacturer_id?manufacturer_id=${manu_id}`)
                             .then(response => response.json())
                             .then(data => {
@@ -458,6 +459,19 @@
                                     checkbox.name = "ap-controllers";
                                     checkbox.value = controller.controller_id;
                                     checkbox.id = `controller-${controller.controller_id}`
+
+                                    // uncheck other checkboxes when checked 
+                                    checkbox.addEventListener('change', () => {
+                                        if (checkbox.checked) {
+                                            const checkboxes = document.querySelectorAll('input[name="ap-controllers"]');
+
+                                            checkboxes.forEach(cb => {
+                                                if (cb !== checkbox) {
+                                                    cb.checked = false;
+                                                }
+                                            });
+                                        }
+                                    });
 
                                     controllersDiv.appendChild(checkbox);
                                     controllersDiv.appendChild(label);
@@ -491,9 +505,9 @@
                     selectAP.name = "select_delete_ap"
                     const option = document.createElement('option');
                     option.innerText = "Select an AP to delete";
-                    // option.disabled = true;
                     option.value = "";
-                    selectAP.appendChild(option)
+                    selectAP.appendChild(option);
+
                     fetch('/get_ap')
                         .then(response => response.json())
                         .then(data => {
@@ -504,7 +518,7 @@
                                 selectAP.appendChild(option);
                             })
 
-                        })
+                        }).catch(err => console.log("Error:" + err))
                     left.appendChild(selectAP)
                 } else {
                     const left = document.getElementsByClassName("row-left")[1];
@@ -530,33 +544,68 @@
                     newInput.name = "new_ap";
                     newInput.placeholder = "New AP Name";
 
+                    const controllersDiv = document.createElement('div');
+                    controllersDiv.classList.add('edit-controllers-div')
+                    selectMan.onchange = () => {
+                        const manu_id = selectMan.value;
+                        controllersDiv.innerHTML = "";
+                        
+                        fetch(`/get_controllers_by_manufacturer_id?manufacturer_id=${manu_id}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                data.forEach(controller => {
+                                    const label = document.createElement('label');
+                                    label.htmlFor = `controller-${controller.controller_id}`;
+                                    label.innerText = controller.name;
+
+                                    const checkbox = document.createElement('input');
+                                    checkbox.type = "checkbox"
+                                    checkbox.name = "ap-controllers";
+                                    checkbox.value = controller.controller_id;
+                                    checkbox.id = `controller-${controller.controller_id}`
+
+                                    // uncheck other checkboxes when checked 
+                                    checkbox.addEventListener('change', () => {
+                                        if (checkbox.checked) {
+                                            const checkboxes = document.querySelectorAll('input[name="ap-controllers"]');
+
+                                            checkboxes.forEach(cb => {
+                                                if (cb !== checkbox) {
+                                                    cb.checked = false;
+                                                }
+                                            });
+                                        }
+                                    });
+
+                                    controllersDiv.appendChild(checkbox);
+                                    controllersDiv.appendChild(label);
+                                })
+
+                            })
+                            .catch(err => console.log("Error:" + err))
+                    }
+
                     left.appendChild(selectMan);
-                    left.appendChild(newInput)
+                    left.appendChild(newInput);
+                    left.appendChild(controllersDiv);
                 }
             });
         });
 
+        // Add event listener to Controller control radio buttons
         document.querySelectorAll('input[name="controller-action"]').forEach(radio => {
             radio.addEventListener('change', function () {
                 if (this.value === "edit") {
                     const left = document.getElementsByClassName('row-left')[2];
                     left.innerHTML = "";
 
-                    // const selectMan=document.createElement("select")
-                    // selectMan.name=ap_manufacturer;
-                    // selectMan.innerHTML=`<option value="" disabled selected>Select Manufacturer</option>
-                    //             {% for m in manufacturers %}
-                    //             <option value="{{m.id}}">{{m.name}}</option>
-                    //             {% endfor %}`
-                    // selectMan.onchange=getAP
-
                     const selectController = document.createElement("select");
                     selectController.name = "select_edit_controller"
                     const option = document.createElement('option');
                     option.innerText = "Select an controller to edit";
-                    // option.disabled = true;
                     option.value = "";
-                    selectController.appendChild(option)
+                    selectController.appendChild(option);
+
                     fetch('/get_controllers')
                         .then(response => response.json())
                         .then(data => {
@@ -567,12 +616,13 @@
                                 selectController.appendChild(option);
                             })
 
-                        })
+                        }).catch(err => console.log("Error:" + err))
 
                     const newName = document.createElement('input');
                     newName.type = "text";
                     newName.name = "new-controller-name";
                     newName.placeholder = "Enter New Name for Controller"
+
                     left.appendChild(selectController)
                     left.appendChild(newName)
 
@@ -583,9 +633,9 @@
                     selectController.name = "select_delete_controller"
                     const option = document.createElement('option');
                     option.innerText = "Select an Controller to delete";
-                    // option.disabled = true;
                     option.value = "";
-                    selectController.appendChild(option)
+                    selectController.appendChild(option);
+
                     fetch('/get_controllers')
                         .then(response => response.json())
                         .then(data => {
@@ -596,7 +646,7 @@
                                 selectController.appendChild(option);
                             })
 
-                        })
+                        }).catch(err => console.log("Error:" + err));
                     left.appendChild(selectController)
                 } else {
                     const left = document.getElementsByClassName("row-left")[2];
@@ -628,94 +678,9 @@
             });
         });
 
-
-        function addResource() {
-            const name = document.getElementById("resourceName").value;
-            const ap = document.getElementById("apCount").value;
-            const status = document.getElementById("status").value;
-
-            if (name && ap && status) {
-                const table = document.getElementById("inventoryTable").getElementsByTagName('tbody')[0];
-                const row = table.insertRow();
-                row.innerHTML = `
-                    <td>${name}</td>
-                    <td>${ap}</td>
-                    <td>${status}</td>
-                    <td class="admin-only">
-                        <button onclick="editRow(this)">Edit</button>
-                        <button onclick="deleteRow(this)">Delete</button>
-                    </td>
-                `;
-                document.getElementById("resourceName").value = '';
-                document.getElementById("apCount").value = '';
-                document.getElementById("status").value = '';
-            } else {
-                alert("Please fill all fields");
-            }
-        }
-
-        function deleteRow(btn) {
-            const row = btn.parentElement.parentElement;
-            row.remove();
-        }
-
-        function editRow(btn) {
-            const row = btn.parentElement.parentElement;
-            const cols = row.getElementsByTagName("td");
-
-            const name = cols[0].innerText;
-            const ap = cols[1].innerText;
-            const status = cols[2].innerText;
-
-            // Set form values
-            document.querySelector("input[name='resource_name']").value = name;
-            document.querySelector("input[name='ap_count']").value = ap;
-            document.querySelector("input[name='status']").value = status;
-
-            // Set action type to edit
-            document.getElementById("action_type").value = "edit";
-
-            // Store resource ID (you'll need to add a data-id in your <tr> or <button>)
-            document.getElementById("resource_id").value = row.getAttribute("data-id");
-        }
-
-        function openEditModal(id, name, ap, status) {
-            document.getElementById('edit_id').value = id;
-            document.getElementById('edit_name').value = name;
-            document.getElementById('edit_ap').value = ap;
-            document.getElementById('edit_status').value = status;
-            document.getElementById('editModal').style.display = 'block';
-        }
-
-        function deleteController(id) {
-            if (confirm("Are you sure you want to delete this controller?")) {
-                window.location.href = `/delete_controller/${id}`;
-            }
-        }
-
-        function openEditControllerModal(id, name, status) {
-            const modalContent = `
-                <h3>Edit Controller</h3>
-                <form id="editControllerForm" method="POST" action="/edit_controller">
-                    <input type="hidden" name="id" value="${id}">
-                    <input type="text" name="name" placeholder="Controller Name" value="${name}" required>
-                    <button type="submit">Save Changes</button>
-                    <button type="button" onclick="document.getElementById('editControllerModal').style.display='none'">Cancel</button>
-                </form>
-            `;
-            let modal = document.getElementById('editControllerModal');
-            if (!modal) {
-                modal = document.createElement('div');
-                modal.id = 'editControllerModal';
-                modal.style.cssText = 'display:none; position:fixed; top:20%; left:35%; background:#333; color:white; padding:20px; border-radius:8px; box-shadow: 0 0 10px black; z-index: 200;';
-                document.body.appendChild(modal);
-            }
-            modal.innerHTML = modalContent;
-            modal.style.display = 'block';
-        }
-
+        // update all manufacturer dropdowns when new manufacturer is added or manufacturer is deleted 
         function updateManufacturerDropdown(manufacturers) {
-            console.log(manufacturers)
+            // console.log(manufacturers)
             const dropdown = document.getElementById('manufacturer');
             dropdown.innerHTML = `<option value="">Select manufacturer</option>`
             manufacturers.forEach(manufacturer => {
@@ -771,6 +736,7 @@
             }
         }
 
+        // uncheck radio buttons when reset button is clicked
         function resetRadio(classname) {
             document.querySelectorAll(`input[name=${classname}]`).forEach(radio => {
                 radio.checked = false;
@@ -793,6 +759,7 @@
             }
         }
 
+        // add,delete or edit resources 
         function saveChanges(event) {
             event.preventDefault()
 
@@ -901,6 +868,8 @@
                 if (apSelected === "add") {
                     const ap_manufacturer = document.querySelector("select[name='ap_manufacturer']").value;
                     const new_ap = document.querySelector("input[name='new_ap']").value.trim();
+                    const ap_controllers = document.querySelectorAll("input[name='ap-controllers']:checked");
+                    const checkedValues = Array.from(ap_controllers).map(c => c.value);
                     if (ap_manufacturer !== "" && new_ap !== "") {
 
                         fetch('/add_ap', {
@@ -910,7 +879,8 @@
                             },
                             body: JSON.stringify({
                                 manu_id: ap_manufacturer,
-                                ap_name: new_ap
+                                ap_name: new_ap,
+                                controller: checkedValues
                             })
                         }).then(response => {
                             if (!response.ok) {
@@ -987,6 +957,7 @@
                     }
                 }
             }
+
             // add, edit or delete controllers 
             const controllerSelect = document.querySelector("input[name='controller-action']:checked");
             if (controllerSelect) {
@@ -1136,41 +1107,12 @@
             document.getElementById('addResourceForm').style.display = 'none';
         }
 
-        // document.querySelector('select[name="manufacturer"]').addEventListener('change', function () {
-        //     const manufacturerId = this.value;
-        //     const controllerContainer = document.getElementById('controllers-container');
-
-        //     // Clear previous checkboxes
-        //     controllerContainer.innerHTML = '';
-
-        //     // Fetch controllers for selected manufacturer
-        //     fetch(`/get_controllers/${manufacturerId}`)
-        //         .then(response => response.json())
-        //         .then(data => {
-        //             console.log(data);
-        //             data.controllers.forEach(controller => {
-        //                 const label = document.createElement('label');
-        //                 label.style.display = 'block';
-
-        //                 const checkbox = document.createElement('input');
-        //                 checkbox.type = 'checkbox';
-        //                 checkbox.name = 'controllers_list';
-        //                 checkbox.value = controller.controller_id;
-
-        //                 label.appendChild(checkbox);
-        //                 label.appendChild(document.createTextNode(` ${controller.name}`));
-        //                 controllerContainer.appendChild(label);
-        //             });
-        //         })
-        //         .catch(error => {
-        //             console.error('Error fetching controllers:', error);
-        //         });
-        // });
-
     </script>
     {% endif %}
 
+    <!-- Script for both admin and user  -->
     <script>
+        // Show alerts 
         function showAlert(message, type) {
             const alert = document.getElementsByClassName('alert')[0];
             console.log(alert)
@@ -1183,7 +1125,7 @@
             }, 5000)
         }
 
-
+        // reserve resources 
         document.getElementById('reserveForm').addEventListener('submit', async function (event) {
             event.preventDefault(); // Prevent default form submission
 
@@ -1214,9 +1156,7 @@
                 const reservation_container = document.getElementsByClassName('reservations-container')[0];
 
                 const hasTextNode = Array.from(reservation_container.childNodes).some(node => node.nodeType === 3 && node.textContent.trim() !== '');
-
-                console.log("Has text node:", hasTextNode);
-
+                // console.log("Has text node:", hasTextNode);
 
                 if (hasTextNode) {
                     let reservationHTML = `<h3>Your Active Reservations</h3>
@@ -1284,28 +1224,16 @@
             });
         }
 
+        // get AP and controllers by manufacturer name 
         function getResourcesByManufacturer() {
             clearTable();
             const select = document.getElementById("manufacturer");
             const manufacturer = select.value;
 
-            // const table = document.getElementById("inventoryTable");
-            // const controllersDiv = document.querySelector(".controller-cards");
-            // controllersDiv.innerHTML = ""
-            // if (table)
-            //     table.innerHTML = "";
-            // if (manufacturer === "") {
-            //     document.getElementById("noResourcesMsg").style.display = "block";
-            //     return;
-            // }
-            // document.getElementById("noResourcesMsg").style.display = "none";
-
-
             fetch(`/get_ap_by_manufacturer?manufacturer=${manufacturer}`)
                 .then(response => response.json())
                 .then(data => {
                     // console.log(data);
-
                     const apSelect = document.getElementById('AP');
                     apSelect.innerHTML = `<option value="">Select AP</option>`;
 
@@ -1315,8 +1243,6 @@
                         option.value = ap.ap_id;
                         apSelect.appendChild(option);
                     })
-
-
                 })
                 .catch(error => console.error('Error fetching resources:', error));
 
@@ -1324,7 +1250,6 @@
                 .then(response => response.json())
                 .then(data => {
                     // console.log(data);
-
                     const controllerSelect = document.getElementById('controller');
                     controllerSelect.innerHTML = `<option value="">Select Cloud/on-prem Controllers</option>`;
 
@@ -1335,18 +1260,16 @@
                         // console.log(option)
                         controllerSelect.appendChild(option);
                     })
-
-                    // console.log(controllerSelect)
-
-
                 })
                 .catch(error => console.error('Error fetching resources:', error));
         }
 
+        // get controllers by AP id 
         function getControllerByAP() {
             clearTable()
             const ap_id = document.getElementById('AP').value;
             // console.log(ap_id)
+            // get controllers by manufacturer is no ap is selected 
             if (ap_id == "") {
                 const select = document.getElementById("manufacturer");
                 const manufacturer = select.value;
@@ -1354,7 +1277,6 @@
                     .then(response => response.json())
                     .then(data => {
                         // console.log(data);
-
                         const controllerSelect = document.getElementById('controller');
                         controllerSelect.innerHTML = `<option value="">Select Cloud/on-prem Controllers</option>`;
 
@@ -1390,6 +1312,7 @@
                 .catch(error => console.error('Error fetching resources:', error));
         }
 
+        // display the selected AP and controller details in table
         function showStatus() {
             const table = document.getElementById("inventoryTable");
             if (table)
@@ -1426,6 +1349,7 @@
             table.innerHTML = tableHTML;
 
             if (ap_id !== "") {
+                // get ap status when ap is selected 
                 fetch(`/get_ap_status?ap_id=${ap_id}`)
                     .then(response => response.json())
                     .then(data => {
@@ -1457,10 +1381,11 @@
                         tableHTML += `</tbody>`;
                         table.innerHTML = tableHTML;
                     })
-                    .catch(error => {console.error("Some error occurred:" , error)})
-            }else{
+                    .catch(error => { console.error("Some error occurred:", error) })
+            } else {
+                // get controller status when ap is not selected 
                 fetch(`get_controller_status?controller_id=${controller_id}`)
-                .then(response => response.json())
+                    .then(response => response.json())
                     .then(data => {
                         const status = data;
                         tableHTML += `
@@ -1490,12 +1415,11 @@
                         tableHTML += `</tbody>`;
                         table.innerHTML = tableHTML;
                     })
-                    .catch(error => {console.error("Some error occurred:" , error)})
+                    .catch(error => { console.error("Some error occurred:", error) })
             }
-
         }
 
-
+        // change the status: only for admin 
         function changeStatus(ap_id) {
             const change = document.querySelector("select[name='change_status']").value;
             fetch(`/change_ap_status?ap_id=${ap_id}`, {
@@ -1512,26 +1436,14 @@
                 })
         }
 
+        // clear the inventory table 
         function clearTable() {
             const table = document.getElementById("inventoryTable");
             if (table)
                 table.innerHTML = "";
         }
 
-        function fetchControllers(resourceId) {
-            fetch(`/get_controllers_by_resource?resource_id=${resourceId}`)
-                .then(response => response.json())
-                .then(controllers => {
-                    disableControllers();
-
-                    controllers.forEach(controller => {
-                        enableControllers(controller.name);
-
-                    });
-                })
-                .catch(error => console.error('Error fetching controllers:', error));
-        }
-
+        // display reservation details for confirmation 
         function reserveSelection() {
             const controllerSelect = document.getElementById('controller');
             const manufacturerSelect = document.getElementById('manufacturer');
@@ -1549,7 +1461,7 @@
             const manufacturer_id = manufacturerSelect.value;
             const ap_id = apSelect.value;
 
-            if ( manufacturer_id === "" || (controller_id === "" && ap_id === "" )|| start === "" || end === "") {
+            if (manufacturer_id === "" || (controller_id === "" && ap_id === "") || start === "" || end === "") {
                 alert("Select a manufacturer,AP or controller before reserving");
                 return;
             }
@@ -1574,11 +1486,8 @@
             document.getElementById('end_datetime').value = end;
 
             document.getElementById('reserveModal').style.display = 'block';
-
-            // Redirect to reservation page with query parameters
-            // window.location.href = `/reserve_page?resource_id=${ap_id}&controller_id=${controller_id}&controller=${controller}&ap=${ap}`;
         }
     </script>
-</body>
 
+</body>
 </html>

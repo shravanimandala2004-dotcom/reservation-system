@@ -228,8 +228,6 @@ button:hover {
     align-items: center;
 }
 
-
-
 .add-resource-form input[type="text"],
 .add-resource-form input[type="number"],
 .add-resource-form select {
@@ -266,6 +264,12 @@ button:hover {
     width: 260px;
     float: left;
     border: 1px solid white;
+}
+
+.row-left input[type='checkbox']{
+    width: fit-content;
+    border: none;
+    float: none;
 }
 
 .row-left select{
@@ -351,26 +355,6 @@ h2{
     cursor: pointer;
 }
 
-/* edit controller modal  */
-.edit-controller-form{
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    animation: fadeIn 0.3s;
-    padding: 10px 20px
-}
-
-.edit-controller-form input[type="text"],
-.edit-controller-form select {
-    flex: 1;
-    padding: 10px 12px;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    /* font-size: 1rem; */
-    background: #2a2a2a;
-    transition: border 0.2s;
-}
-
 /* new changes */
 .drop-down-container{
     display: flex;
@@ -440,10 +424,6 @@ h2{
     flex-direction: column;
     margin:0px 30px
 }
-
-/* .radio-container label{
-    /* margin-top:8px; *
-} */
 
 .edit-controllers-div{
     margin:10px 0px;
