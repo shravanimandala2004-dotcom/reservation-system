@@ -160,7 +160,7 @@
             <div class="add-resource-box">
                 <!-- toggle button  -->
                 <button id="toggleAddFormBtn" class="collapsible-btn">
-                    <span style="vertical-align:middle;">+ Add Resource</span>
+                    <span style="vertical-align:middle;">+ Manage Resources</span>
                     <span id="arrow" class="arrow">&#9660;</span>
                 </button>
                 <!-- Manage resources form  -->
@@ -1156,7 +1156,6 @@
                 const reservation_container = document.getElementsByClassName('reservations-container')[0];
 
                 const hasTextNode = Array.from(reservation_container.childNodes).some(node => node.nodeType === 3 && node.textContent.trim() !== '');
-                // console.log("Has text node:", hasTextNode);
 
                 if (hasTextNode) {
                     let reservationHTML = `<h3>Your Active Reservations</h3>
@@ -1199,7 +1198,6 @@
                     ul.appendChild(li);
                 }
             } else {
-                // console.log("inside else")
                 const result = await response.json();
                 showAlert(result.message, "error")
             }
@@ -1269,7 +1267,7 @@
             clearTable()
             const ap_id = document.getElementById('AP').value;
             // console.log(ap_id)
-            // get controllers by manufacturer is no ap is selected 
+            // get controllers by manufacturer if no ap is selected 
             if (ap_id == "") {
                 const select = document.getElementById("manufacturer");
                 const manufacturer = select.value;
