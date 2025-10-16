@@ -14,8 +14,6 @@
         <nav>
             <a href="{{ url_for('inventory.inventory') }}" {% if request.path.startswith('/inventory') %}class="active"
                 {% endif %}>Inventory</a>
-            <!-- <a href="{{url_for('reservation.reserve')}}" {% if request.path.startswith('/reserve') %}class="active" {%
-                endif %}>Reserve</a> -->
             {% if role == 'admin' %}
             <a href="{{ url_for('inventory.admin_page') }}" {% if request.path.startswith('/admin') %}class="active" {%
                 endif %}>Admin Page</a>
@@ -39,6 +37,11 @@
             <div style="margin-bottom: 20px;">
                 <label for="max_reservations"><b>Maximum Active Reservations per User:</b></label>
                 <input type="number" id="max_reservations" name="max_reservations" value="{{settings.max_reservations}}" min="1" max="10" required>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="max_preBooking"><b>Maximum Number of Days Before which the user can reserve a resource:</b></label>
+                <input type="number" id="max_preBooking" name="max_preBooking" value="{{settings.max_preBooking}}" min="1" max="10" required>
             </div>
 
             <button type="submit"

@@ -14,9 +14,10 @@ def permission():
     if request.method == 'POST':
         max_reservations = request.form['max_reservations']
         max_days = request.form['max_days']
+        max_preBooking=request.form['max_preBooking']
 
-        cursor.execute("UPDATE permissions SET max_reservations=%s, max_days=%s",
-                       (max_reservations, max_days))
+        cursor.execute("UPDATE permissions SET max_reservations=%s, max_days=%s,max_preBooking=%s",
+                       (max_reservations, max_days,max_preBooking))
         conn.commit()
 
     conn.close()

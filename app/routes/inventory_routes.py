@@ -284,7 +284,7 @@ def admin_page():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     # Fetch current settings for display
-    cursor.execute("SELECT max_reservations, max_days FROM permissions ")
+    cursor.execute("SELECT max_reservations, max_days,max_preBooking FROM permissions ")
     # settings = {row['key_name']: row['value'] for row in cursor.fetchall()}
     settings=cursor.fetchone()
     conn.close()
