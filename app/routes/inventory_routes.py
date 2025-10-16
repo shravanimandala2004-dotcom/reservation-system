@@ -105,16 +105,18 @@ def add_controller():
     data=request.get_json()
     manufacturer = data.get('manu_id')
     name = data.get('controller_name')
+    url=data.get('url')
+    print("url:",url)
 
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO controllers (manufacturer_id, name) VALUES (%s, %s)",
-                    (manufacturer, name))
+        cursor.execute("INSERT INTO controllers (manufacturer_id, name,url) VALUES (%s, %s, %s)",
+                    (manufacturer, name, url))
         conn.commit()
 
         return jsonify({
-            "message": "Access Point successfully deleted",
+            "message": "Controller successfully added",
         }), 201
 
         # Notify all admins
@@ -367,15 +369,24 @@ def edit_controller():
     data=request.get_json()
     controller_id = data.get('controller_id')
     name = data.get('controller_name')
+    new_url=data.get('new_url')
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE controllers 
-        SET name = %s
-        WHERE controller_id = %s
-    """, (name, controller_id))
-    conn.commit()
+    if name != "":
+        cursor.execute("""
+            UPDATE controllers 
+            SET name = %s, url=%s
+            WHERE controller_id = %s
+        """, (name,new_url, controller_id))
+        conn.commit()
+    else:
+        cursor.execute("""
+            UPDATE controllers 
+            SET url=%s
+            WHERE controller_id = %s
+        """, (new_url, controller_id))
+        conn.commit()
 
     # Notify all admins
     # cursor.execute("SELECT username FROM users WHERE role = 'admin'")
@@ -492,6 +503,26 @@ def get_controller_status():
         cursor.close()
         conn.close()
     return jsonify(controller_status)
+
+@inventory_bp.route('/get_controller_url',methods=['GET'])
+def get_controller_url():
+    controller_id = request.args.get('controller_id')
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("select url from controllers where controller_id=%s",(controller_id,))
+        controller=cursor.fetchone()
+        controller_url=controller['url']        
+        
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
+
+    finally:
+        cursor.close()
+        conn.close()
+    return jsonify(controller_url)
 
 @inventory_bp.route('/get_manufacturers',methods=['GET'])
 def get_manufacturers():

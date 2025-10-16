@@ -242,11 +242,14 @@ button:hover {
 .add-resource-form input[type="url"] {
     flex: 1;
     padding: 10px 12px;
-    border: 1px solid #e0e0e0;
+    /* border: 1px solid #e0e0e0; */
     border-radius: 6px;
     background: #2a2a2a;
     transition: border 0.2s;
     margin: 10px 0px;
+    font-size: 16px;
+    width:235px;
+    color:white;
 }
 
 .add-resource-form input:focus {
