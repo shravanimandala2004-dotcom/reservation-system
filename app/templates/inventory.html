@@ -15,8 +15,7 @@
         <nav>
             <a href="{{ url_for('inventory.inventory') }}" {% if request.path.startswith('/inventory') %}class="active"
                 {% endif %}>Inventory</a>
-            <!-- <a href="{{url_for('reservation.reserve_page')}}" {% if request.path.startswith('/reserve') %}class="active"
-                {% endif %}>Reservations</a> -->
+            
             {% if role == 'admin' %}
             <a href="{{ url_for('inventory.admin_page') }}" {% if request.path.startswith('/admin') %}class="active" {%
                 endif %}>Admin Page</a>
