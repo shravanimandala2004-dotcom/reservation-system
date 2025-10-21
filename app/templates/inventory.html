@@ -15,7 +15,7 @@
         <nav>
             <a href="{{ url_for('inventory.inventory') }}" {% if request.path.startswith('/inventory') %}class="active"
                 {% endif %}>Inventory</a>
-            
+
             {% if role == 'admin' %}
             <a href="{{ url_for('inventory.admin_page') }}" {% if request.path.startswith('/admin') %}class="active" {%
                 endif %}>Admin Page</a>
@@ -66,12 +66,12 @@
                 <!-- Start date select  -->
                 <div class="select-container">
                     <label for="start-date">Start date</label>
-                    <input type="datetime-local" name="start-date" id="start-date">
+                    <input type="datetime-local" name="start-date" id="start-date" min="{{min_str}}" max="{{ max_str}}">
                 </div>
                 <!-- End date select  -->
                 <div class="select-container">
                     <label for="end-date">End date</label>
-                    <input type="datetime-local" name="end-date" id="end-date">
+                    <input type="datetime-local" name="end-date" id="end-date" min="{{min_str}}" max="{{ max_str}}">
                 </div>
             </div>
 
@@ -139,7 +139,7 @@
                         <!-- {% if r.link %}
                             | <a href="{{ r.link }}" target="_blank">🔗 Open Resource</a> 
                             {% endif %} -->
-                        
+
                         {% endif %}
                         | <a href="/cancel_reservation/{{ r.id }}"
                             onclick="return confirm('Are you sure you want to cancel this reservation?');"
@@ -227,7 +227,8 @@
                                     {% endfor %}
                                 </select>
                                 <input type="text" name="new_controller" placeholder="New Controller/Cloud" disabled>
-                                <input type="url" id="website_url" name="url" placeholder="https://example.com" required disabled>
+                                <input type="url" id="website_url" name="url" placeholder="https://example.com" required
+                                    disabled>
                             </div>
                             <div class="row-right">
                                 <div class="radio-container">
@@ -383,7 +384,7 @@
                     const selectMan = document.createElement("select")
                     selectMan.name = "delete_manufacturer";
                     selectMan.innerHTML = `<option value="" disabled selected>Select Manufacturer</option>`
-                    
+
                     fetch('/get_manufacturers')
                         .then(response => response.json())
                         .then(data => {
@@ -439,42 +440,23 @@
                     newName.name = "new-ap-name";
                     newName.placeholder = "Enter New Name for AP"
 
-                    const controllersDiv = document.createElement('div');
-                    controllersDiv.classList.add('edit-controllers-div');
+                    const controllerSelect = document.createElement('select');
+                    controllerSelect.name = 'ap-controllers';
+                    controllerSelect.innerHTML = "<option value=''>Select AP Controller</option>";
 
                     selectAP.onchange = () => {
                         const manu_id = selectAP.options[selectAP.selectedIndex].getAttribute('manu-id')
-                        controllersDiv.innerHTML = "";
-                        
+                        controllerSelect.innerHTML = "";
+
                         fetch(`/get_controllers_by_manufacturer_id?manufacturer_id=${manu_id}`)
                             .then(response => response.json())
                             .then(data => {
                                 data.forEach(controller => {
-                                    const label = document.createElement('label');
-                                    label.htmlFor = `controller-${controller.controller_id}`;
-                                    label.innerText = controller.name;
 
-                                    const checkbox = document.createElement('input');
-                                    checkbox.type = "checkbox"
-                                    checkbox.name = "ap-controllers";
-                                    checkbox.value = controller.controller_id;
-                                    checkbox.id = `controller-${controller.controller_id}`
-
-                                    // uncheck other checkboxes when checked 
-                                    checkbox.addEventListener('change', () => {
-                                        if (checkbox.checked) {
-                                            const checkboxes = document.querySelectorAll('input[name="ap-controllers"]');
-
-                                            checkboxes.forEach(cb => {
-                                                if (cb !== checkbox) {
-                                                    cb.checked = false;
-                                                }
-                                            });
-                                        }
-                                    });
-
-                                    controllersDiv.appendChild(checkbox);
-                                    controllersDiv.appendChild(label);
+                                    const option = document.createElement('option');
+                                    option.value = controller.controller_id;
+                                    option.innerText = controller.name;
+                                    controllerSelect.appendChild(option);
                                 })
 
                             })
@@ -484,19 +466,18 @@
                             .then(response => response.json())
                             .then(data => {
                                 data.forEach(controller => {
-                                    const checkbox = document.getElementById(`controller-${controller.controller_id}`);
-                                    checkbox.checked = true;
+                                    controllerSelect.value = controller.controller_id;
                                 })
 
                             }).catch(err => console.log("Error:" + err))
 
-                        console.log(controllersDiv)
+                        // console.log(controllerSelect)
                     }
 
 
                     left.appendChild(selectAP)
                     left.appendChild(newName)
-                    left.appendChild(controllersDiv)
+                    left.appendChild(controllerSelect)
 
                 } else if (this.value == "delete") {
                     const left = document.getElementsByClassName('row-left')[1]
@@ -544,41 +525,24 @@
                     newInput.name = "new_ap";
                     newInput.placeholder = "New AP Name";
 
-                    const controllersDiv = document.createElement('div');
-                    controllersDiv.classList.add('edit-controllers-div')
+                    const controllerSelect = document.createElement('select');
+                    controllerSelect.name = "ap-controllers";
+                    controllerSelect.innerHTML = "<option value=''>Select AP Controller</option>";
+
                     selectMan.onchange = () => {
                         const manu_id = selectMan.value;
-                        controllersDiv.innerHTML = "";
-                        
+                        controllerSelect.innerHTML = "<option value=''>Select AP Cloud/Controller</option>";
+
                         fetch(`/get_controllers_by_manufacturer_id?manufacturer_id=${manu_id}`)
                             .then(response => response.json())
                             .then(data => {
                                 data.forEach(controller => {
-                                    const label = document.createElement('label');
-                                    label.htmlFor = `controller-${controller.controller_id}`;
-                                    label.innerText = controller.name;
 
-                                    const checkbox = document.createElement('input');
-                                    checkbox.type = "checkbox"
-                                    checkbox.name = "ap-controllers";
-                                    checkbox.value = controller.controller_id;
-                                    checkbox.id = `controller-${controller.controller_id}`
+                                    const option = document.createElement('option');
+                                    option.value = controller.controller_id;
+                                    option.innerText = controller.name;
 
-                                    // uncheck other checkboxes when checked 
-                                    checkbox.addEventListener('change', () => {
-                                        if (checkbox.checked) {
-                                            const checkboxes = document.querySelectorAll('input[name="ap-controllers"]');
-
-                                            checkboxes.forEach(cb => {
-                                                if (cb !== checkbox) {
-                                                    cb.checked = false;
-                                                }
-                                            });
-                                        }
-                                    });
-
-                                    controllersDiv.appendChild(checkbox);
-                                    controllersDiv.appendChild(label);
+                                    controllerSelect.appendChild(option);
                                 })
 
                             })
@@ -587,7 +551,7 @@
 
                     left.appendChild(selectMan);
                     left.appendChild(newInput);
-                    left.appendChild(controllersDiv);
+                    left.appendChild(controllerSelect);
                 }
             });
         });
@@ -623,22 +587,22 @@
                     newName.name = "new-controller-name";
                     newName.placeholder = "Enter New Name for Controller"
 
-                    const edit_url=document.createElement('input');
-                    edit_url.type="url";
-                    edit_url.name="edit_url";
-                    edit_url.required=true;
+                    const edit_url = document.createElement('input');
+                    edit_url.type = "url";
+                    edit_url.name = "edit_url";
+                    edit_url.required = true;
 
-                    selectController.onchange=()=>{
-                        controller_id=selectController.value;
-                        if(controller_id!==""){
+                    selectController.onchange = () => {
+                        controller_id = selectController.value;
+                        if (controller_id !== "") {
                             fetch(`/get_controller_url?controller_id=${controller_id}`)
-                            .then(response=>response.json())
-                            .then(data=>{
-                                current_url=data;
-                                edit_url.value=current_url;
-                            })
-                        }else{
-                            edit_url.value="";
+                                .then(response => response.json())
+                                .then(data => {
+                                    current_url = data;
+                                    edit_url.value = current_url;
+                                })
+                        } else {
+                            edit_url.value = "";
                         }
                     }
 
@@ -692,11 +656,11 @@
                     newInput.name = "new_controller";
                     newInput.placeholder = "New Controller Name";
 
-                    const url=document.createElement('input');
-                    url.type="url";
-                    url.required=true;
-                    url.name="url";
-                    url.placeholder="https://example.com"
+                    const url = document.createElement('input');
+                    url.type = "url";
+                    url.required = true;
+                    url.name = "url";
+                    url.placeholder = "https://example.com"
 
                     left.appendChild(selectMan);
                     left.appendChild(newInput)
@@ -895,8 +859,7 @@
                 if (apSelected === "add") {
                     const ap_manufacturer = document.querySelector("select[name='ap_manufacturer']").value;
                     const new_ap = document.querySelector("input[name='new_ap']").value.trim();
-                    const ap_controllers = document.querySelectorAll("input[name='ap-controllers']:checked");
-                    const checkedValues = Array.from(ap_controllers).map(c => c.value);
+                    const ap_controller = document.querySelector('select[name="ap-controllers"]').value;
                     if (ap_manufacturer !== "" && new_ap !== "") {
 
                         fetch('/add_ap', {
@@ -907,7 +870,7 @@
                             body: JSON.stringify({
                                 manu_id: ap_manufacturer,
                                 ap_name: new_ap,
-                                controller: checkedValues
+                                controller: ap_controller
                             })
                         }).then(response => {
                             if (!response.ok) {
@@ -928,9 +891,7 @@
                 } else if (apSelected === "edit") {
                     const edit_ap = document.querySelector("select[name='select_edit_ap']").value;
                     const new_name = document.querySelector("input[name='new-ap-name']").value.trim();
-                    const ap_controllers = document.querySelectorAll("input[name='ap-controllers']:checked");
-                    const checkedValues = Array.from(ap_controllers).map(c => c.value);
-                    // console.log(checkedValues)
+                    const ap_controller = document.querySelector('select[name="ap-controllers"]').value;
                     if (edit_ap !== "" /*&& (new_name !== "" || */) {
                         fetch('/edit_ap', {
                             method: 'POST',
@@ -940,7 +901,7 @@
                             body: JSON.stringify({
                                 ap_id: edit_ap,
                                 ap_name: new_name,
-                                checkedValues: checkedValues
+                                checkedValues: ap_controller
                             })
                         }).then(response => {
                             if (!response.ok) {
@@ -993,7 +954,7 @@
                 if (controllerSelected === "add") {
                     const controller_manufacturer = document.querySelector("select[name='select_controller_manu']").value;
                     const new_name = document.querySelector("input[name='new_controller']").value.trim();
-                    const url=document.querySelector("input[name='url']").value.trim();
+                    const url = document.querySelector("input[name='url']").value.trim();
                     if (controller_manufacturer !== "" && new_name !== "") {
                         fetch('/add_controller', {
                             method: 'POST',
@@ -1003,7 +964,7 @@
                             body: JSON.stringify({
                                 manu_id: controller_manufacturer,
                                 controller_name: new_name,
-                                url:url
+                                url: url
                             })
                         }).then(response => {
                             if (!response.ok) {
@@ -1022,8 +983,8 @@
                 } else if (controllerSelected === "edit") {
                     const edit_controller = document.querySelector("select[name='select_edit_controller']").value;
                     const new_name = document.querySelector("input[name='new-controller-name']").value.trim();
-                    const new_url=document.querySelector("input[name='edit_url']").value.trim();
-                    if (edit_controller !== "" && (new_name !== "" || new_url!=="")) {
+                    const new_url = document.querySelector("input[name='edit_url']").value.trim();
+                    if (edit_controller !== "" && (new_name !== "" || new_url !== "")) {
                         fetch('/edit_controller', {
                             method: 'POST',
                             headers: {
@@ -1032,7 +993,7 @@
                             body: JSON.stringify({
                                 controller_id: edit_controller,
                                 controller_name: new_name,
-                                new_url:new_url
+                                new_url: new_url
                             })
                         }).then(response => {
                             if (!response.ok) {
@@ -1143,6 +1104,26 @@
 
     <!-- Script for both admin and user  -->
     <script>
+        // change end date input boundaries according to the selected start date 
+        const start_date = document.getElementById('start-date');
+        start_date.onchange = () => {
+            const end_date = document.getElementById('end-date');
+            end_date.min = start_date.value;
+
+            const startDate = new Date(start_date.value);
+            const maxDays = {{ maxDays }}
+            // Add exactly maxDays in milliseconds
+            const maxDate = new Date(startDate.getTime() + maxDays * 24 * 60 * 60 * 1000);
+
+            // Format to 'YYYY-MM-DDTHH:MM' for datetime-local
+            const formatDateTimeLocal = (date) => {
+                const pad = (n) => n.toString().padStart(2, '0');
+                return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+            };
+
+            end_date.max = formatDateTimeLocal(maxDate);
+        }
+
         // Show alerts 
         function showAlert(message, type) {
             const alert = document.getElementsByClassName('alert')[0];
@@ -1519,4 +1500,5 @@
     </script>
 
 </body>
+
 </html>

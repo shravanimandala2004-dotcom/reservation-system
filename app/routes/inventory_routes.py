@@ -3,6 +3,8 @@ from app.utils.db import get_db_connection
 from .notification_routes import notify_user, get_emails_by_resource
 from flask import jsonify
 import mysql 
+from .permission_routes import get_setting
+from datetime import datetime, timedelta
 
 inventory_bp = Blueprint('inventory', __name__)
 
@@ -91,11 +93,18 @@ def inventory():
         r['start_datetime_formatted'] = r['start_datetime'].strftime("%b %d, %Y %H:%M")
         r['end_datetime_formatted'] = r['end_datetime'].strftime("%b %d, %Y %H:%M")
 
+    preBooking=get_setting('max_preBooking',4)
+    maxDays=get_setting('max_days',2)
+    now=datetime.now()
+    max_date = now + timedelta(days=preBooking)
+    min_str = now.strftime('%Y-%m-%dT%H:%M')
+    max_str = max_date.strftime('%Y-%m-%dT%H:%M')
+
     # Display inventory
     # cursor.execute("SELECT * FROM resources")
     # resources = cursor.fetchall()
     conn.close()
-    return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers,active_reservations=active_reservations)
+    return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers,active_reservations=active_reservations,min_str=min_str,max_str=max_str,preBooking=preBooking,maxDays=maxDays)
 
 @inventory_bp.route('/add_controller', methods=['POST'])
 def add_controller():
@@ -636,6 +645,7 @@ def add_ap():
     manu_id=data.get('manu_id')
     ap_name=data.get('ap_name')
     controller=data.get('controller')
+    print("controller:",controller=="")
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
@@ -646,12 +656,11 @@ def add_ap():
         ap_id = cursor.lastrowid
         
         # Insert into ap_controller_map if controller list is provided
-        if controller and isinstance(controller, list):
-            for controller_id in controller:
-                cursor.execute(
-                    "INSERT INTO ap_controller_map (ap_id, controller_id) VALUES (%s, %s)",
-                    (ap_id, controller_id)
-                )
+        if controller!="":
+            cursor.execute(
+                "INSERT INTO ap_controller_map (ap_id, controller_id) VALUES (%s, %s)",
+                (ap_id, controller)
+            )
             conn.commit()
 
         # Optionally fetch the full row
@@ -684,7 +693,7 @@ def edit_ap():
     data=request.get_json()
     ap_id=data.get('ap_id')
     ap_name=data.get('ap_name')
-    checked_values=data.get('checkedValues')
+    controller_id=data.get('checkedValues')
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
@@ -692,28 +701,11 @@ def edit_ap():
             cursor.execute("update AP set model_name=%s where ap_id=%s",(ap_name,ap_id,))
             conn.commit()
 
-        cursor.execute("SELECT c.* from controllers as c join ap_controller_map as acm on c.controller_id=acm.controller_id where acm.ap_id=%s",(ap_id,))
-        controllers=cursor.fetchall()
-        controller_ids = [str(controller['controller_id']) for controller in controllers]
-        unattach = [cid for cid in controller_ids if cid not in checked_values]
-        attach =[cid for cid in checked_values if cid not in controller_ids]
-        # print(controller_ids,checked_values)
-        # print("unattach controllers:",unattach)
-        # print("attach controllers:",attach)
-        
-        if(len(unattach)>0):
-            placeholders = ','.join(['%s'] * len(unattach))
-            query = f"DELETE FROM ap_controller_map WHERE ap_id=%s AND controller_id IN ({placeholders})"
-            params = [ap_id] + unattach
+        cursor.execute("delete from ap_controller_map where ap_id=%s",(ap_id,))
+        conn.commit()
 
-            cursor.execute(query,params)
-            conn.commit()
-
-        if(len(attach)>0):
-            values = [(ap_id, cid) for cid in attach]
-            query = "INSERT INTO ap_controller_map (ap_id, controller_id) VALUES (%s, %s)"
-            cursor.executemany(query, values)
-            conn.commit()
+        cursor.execute("insert into ap_controller_map (ap_id,controller_id) values (%s,%s)",(ap_id,controller_id,))
+        conn.commit()
 
         # Optionally fetch the full row
         cursor.execute("SELECT * FROM ap WHERE ap_id = %s", (ap_id,))
