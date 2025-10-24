@@ -7,6 +7,8 @@ auth_bp = Blueprint('auth', __name__)
 
 # LDAP Configuration
 LDAP_SERVER = 'ldap://your-ad-server.com'
+TME_GROUP_DN = 'CN=tme,OU=Groups,DC=commscope,DC=com'
+SE_GROUP_DN = 'CN=se,OU=Groups,DC=commscope,DC=com'
 
 @auth_bp.route('/')
 def index():
@@ -77,6 +79,25 @@ def login():
     #     conn = Connection(server, user=username, password=password, authentication=SIMPLE)
 
     #     if conn.bind():
+    #         # Search for user's DN and group memberships
+    #         conn.search(search_base='DC=commscope,DC=com',
+    #                     search_filter=f'(mail={username})',
+    #                     attributes=['memberOf'])
+
+    #         if not conn.entries:
+    #             return jsonify(status='error', message="User not found in LDAP."), 404
+
+    #         user_entry = conn.entries[0]
+    #         groups = user_entry.memberOf.values if 'memberOf' in user_entry else []
+
+    #         # Role-based group access check
+    #         if role == 'admin':
+    #             if TME_GROUP_DN not in groups:
+    #                 return jsonify(status='error', message="Access denied: Please try logging in as user."), 403
+    #         elif role == 'user':
+    #             if not any(group in groups for group in [TME_GROUP_DN, SE_GROUP_DN]):
+    #                 return jsonify(status='error', message="Access denied."), 403
+
     #         session['username'] = username
     #         session['role'] = role
     #         return jsonify(status='success', message="Login successful"), 200

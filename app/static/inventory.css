@@ -112,6 +112,10 @@ select {
     color: white;
 }
 
+#controller{
+    width:212px;
+}
+
 /* Button styling */
 button {
     padding: 5px 10px;

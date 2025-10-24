@@ -1309,7 +1309,8 @@
                 .then(data => {
                     console.log(data)
                     const controllerSelect = document.getElementById('controller');
-                    controllerSelect.innerHTML = `<option value="">Select Cloud/on-prem Controllers</option>`;
+                    // controllerSelect.innerHTML = `<option value="">Select Cloud/on-prem Controllers</option>`;
+                    controllerSelect.innerHTML = ``;
 
                     data.forEach(controller => {
                         let option = document.createElement('option');
@@ -1317,6 +1318,7 @@
                         option.value = controller.controller_id;
                         controllerSelect.appendChild(option);
                     })
+                    showStatus()
                     // console.log(controllerSelect)
                 })
                 .catch(error => console.error('Error fetching resources:', error));
