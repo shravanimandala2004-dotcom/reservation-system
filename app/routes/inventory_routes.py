@@ -645,11 +645,13 @@ def add_ap():
     manu_id=data.get('manu_id')
     ap_name=data.get('ap_name')
     controller=data.get('controller')
+    ap_status=data.get('ap_status')
     print("controller:",controller=="")
+    print("ap_status:",ap_status)
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("insert into ap (manufacturer_id,model_name,status) values (%s,%s,'Available')",(manu_id,ap_name,))
+        cursor.execute("insert into ap (manufacturer_id,model_name,status) values (%s,%s,%s)",(manu_id,ap_name,ap_status))
         conn.commit()
         
         # Get the last inserted ID
@@ -693,12 +695,17 @@ def edit_ap():
     data=request.get_json()
     ap_id=data.get('ap_id')
     ap_name=data.get('ap_name')
+    ap_status=data.get('ap_status')
     controller_id=data.get('checkedValues')
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         if(ap_name!= ""):
             cursor.execute("update AP set model_name=%s where ap_id=%s",(ap_name,ap_id,))
+            conn.commit()
+
+        if(ap_status!= ""):
+            cursor.execute("update AP set status=%s where ap_id=%s",(ap_status,ap_id))
             conn.commit()
 
         cursor.execute("delete from ap_controller_map where ap_id=%s",(ap_id,))

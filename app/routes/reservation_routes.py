@@ -143,7 +143,7 @@ reservation_bp = Blueprint('reservation', __name__)
 
 # reserve resources
 @reservation_bp.route('/reserve_page', methods=['POST'])
-def handle_reservation():
+def reserve():
     if 'user_id' not in session:
         return redirect(url_for('auth.index'))
     

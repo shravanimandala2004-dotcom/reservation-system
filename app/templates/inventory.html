@@ -53,13 +53,61 @@
                         {% endfor %}
                     </select>
                 </div>
-                <!-- AP dropdown -->
-                <div class="select-container">
+              <!--AP dropdown -->
+             <div class="select-container">
                     <label for="AP">AP</label>
                     <select id="AP" onchange="getControllerByAP()" class="drop-down">
                         <option value="">Select AP</option>
+                         {% for ap in ap_list %}
+    <option value="{{ ap.id }}">{{ ap.name }}</option>
+    {% endfor %}
                     </select>
-                </div>
+                </div> 
+
+
+  
+
+                <!-- Custom AP dropdown with status dots -->         
+<!-- AP dropdown with status dot 
+<div class="select-container">
+  <label for="AP">AP</label>
+  <div class="ap-select-wrapper">
+    <select id="AP" onchange="getControllerByAP(); updateApStatusDot()" class="drop-down">
+      <option value="">Select AP</option>
+      {% for ap in ap_list %}
+      <option value="{{ ap.id }}" data-status="{{ ap.status }}">{{ ap.name }}</option>
+      {% endfor %}
+    </select>
+    <span id="apStatusDot" class="status-indicator"></span>
+  </div>
+</div>
+
+
+ 
+
+<script>
+ function updateApStatusDot() {
+    const select = document.getElementById("AP");
+    const selectedOption = select.options[select.selectedIndex];
+    const status = selectedOption.getAttribute("data-status");
+
+    const dot = document.getElementById("apStatusDot");
+    dot.className = "status-indicator"; // reset
+
+    if (status === "Available") {
+        dot.classList.add("available");
+    } else if (status === "In Progress") {
+        dot.classList.add("in-progress");
+    } else if (status === "Not Available") {
+        dot.classList.add("not-available");
+    } else {
+        dot.style.backgroundColor = "transparent"; // hide if no status
+    }
+}
+
+</script>
+-->
+
                 <!-- Cloud dropdown  -->
                 <div class="select-container">
                     <label for="controller">Cloud / on-prem Controller</label>
@@ -204,7 +252,14 @@
                                     {% endfor %}
                                 </select>
                                 <input type="text" name="new_ap" placeholder="New AP model" disabled>
+ <select name="ap_status" disabled>
+  <option value="">Select AP status</option>
+  <option value="Available">Available 🟢</option>
+  <option value="In Progress">In Progress 🟡</option>
+  <option value="Not Available">Not Available 🔴</option>
+</select>
                             </div>
+                            
                             <div class="row-right">
                                 <div class="radio-container">
                                     <label for="add">Add</label>
@@ -439,6 +494,14 @@
 
                         })
 
+   const statusSelect = document.createElement('select');
+statusSelect.name = "ap_status";
+statusSelect.innerHTML = `
+    <option value="">Select AP Status</option>
+    <option value="available">available</option>
+    <option value="in progress">in progress</option>
+    <option value="not available">not available</option>
+`;
                     const newName = document.createElement('input');
                     newName.type = "text";
                     newName.name = "new-ap-name";
@@ -482,6 +545,7 @@
                     left.appendChild(selectAP)
                     left.appendChild(newName)
                     left.appendChild(controllerSelect)
+                    left.appendChild(statusSelect);
 
                 } else if (this.value == "delete") {
                     const left = document.getElementsByClassName('row-left')[1]
@@ -524,6 +588,16 @@
                         })
                         .catch(err => console.log("Error:" + err))
 
+                        const statusSelect = document.createElement('select');
+statusSelect.name = "ap_status";
+statusSelect.innerHTML = `
+    <option value="">Select AP Status</option>
+    <option value="available">available</option>
+    <option value="in progress">in progress</option>
+    <option value="not available">not available</option>
+`;
+
+
                     const newInput = document.createElement('input')
                     newInput.type = "text";
                     newInput.name = "new_ap";
@@ -556,6 +630,7 @@
                     left.appendChild(selectMan);
                     left.appendChild(newInput);
                     left.appendChild(controllerSelect);
+                    left.appendChild(statusSelect);
                 }
             });
         });
@@ -713,6 +788,7 @@
                 ap_manufacturer = `<option value="">Select AP manufacturer</option>`
                 manufacturers.forEach(manufacturer => {
                     let option = document.createElement('option');
+
                     option.innerHTML = manufacturer[1];
                     option.value = manufacturer[0];
                     ap_manufacturer.appendChild(option);
@@ -863,8 +939,12 @@
                 if (apSelected === "add") {
                     const ap_manufacturer = document.querySelector("select[name='ap_manufacturer']").value;
                     const new_ap = document.querySelector("input[name='new_ap']").value.trim();
+               const ap_status = document.querySelector("select[name='ap_status']").value;
+
+               console.log(ap_status);
+
                     const ap_controller = document.querySelector('select[name="ap-controllers"]').value;
-                    if (ap_manufacturer !== "" && new_ap !== "") {
+             if (ap_manufacturer !== "" && new_ap !== "") {
 
                         fetch('/add_ap', {
                             method: 'POST',
@@ -874,7 +954,8 @@
                             body: JSON.stringify({
                                 manu_id: ap_manufacturer,
                                 ap_name: new_ap,
-                                controller: ap_controller
+                                controller: ap_controller,
+                                ap_status: ap_status
                             })
                         }).then(response => {
                             if (!response.ok) {
@@ -895,6 +976,8 @@
                 } else if (apSelected === "edit") {
                     const edit_ap = document.querySelector("select[name='select_edit_ap']").value;
                     const new_name = document.querySelector("input[name='new-ap-name']").value.trim();
+                    const ap_status = document.querySelector("select[name='ap_status']").value;
+
                     const ap_controller = document.querySelector('select[name="ap-controllers"]').value;
                     if (edit_ap !== "" /*&& (new_name !== "" || */) {
                         fetch('/edit_ap', {
@@ -905,7 +988,9 @@
                             body: JSON.stringify({
                                 ap_id: edit_ap,
                                 ap_name: new_name,
-                                checkedValues: ap_controller
+                                checkedValues: ap_controller,
+                                ap_status: ap_status
+
                             })
                         }).then(response => {
                             if (!response.ok) {
@@ -949,6 +1034,12 @@
                     }
                 }
             }
+
+     //status add for AP
+
+
+
+
 
             // add, edit or delete controllers 
             const controllerSelect = document.querySelector("input[name='controller-action']:checked");
@@ -1301,10 +1392,13 @@
                     const apSelect = document.getElementById('AP');
                     apSelect.innerHTML = `<option value="">Select AP</option>`;
 
+
                     data.forEach(ap => {
                         let option = document.createElement('option');
-                        option.innerHTML = ap.model_name;
+                        const statusClass = ap.status ? ap.status.toLowerCase().replace(/ /g, '-') : '';
+                       option.innerHTML = `${ap.model_name} <span class="status-indicator ${statusClass}"></span>`;
                         option.value = ap.ap_id;
+
                         apSelect.appendChild(option);
                     })
                 })
