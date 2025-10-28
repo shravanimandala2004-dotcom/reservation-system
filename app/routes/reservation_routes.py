@@ -347,12 +347,21 @@ def handle_reservation():
 #     conn.close()
 #     return redirect(url_for('reservation.reserve'))
 
-@reservation_bp.route('/cancel_reservation/<int:id>')
-def cancel_reservation(id):
+@reservation_bp.route('/cancel_reservation',methods=['POST'])
+def cancel_reservation():
     if 'user_id' not in session:
         return redirect(url_for('auth.index'))
+    print("inside cancel reservation")
 
     user_id = session['user_id']
+
+    data = request.get_json()
+
+    if not data or 'id' not in data:
+        return jsonify({'error': 'Missing reservation ID'}), 400
+
+    id = data['id']
+    print("id:",id)
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -360,15 +369,20 @@ def cancel_reservation(id):
     # Make sure the reservation belongs to the current user
     cursor.execute("SELECT * FROM ap_reservations WHERE id = %s AND user_id = %s", (id, user_id))
     reservation = cursor.fetchone()
+    print("reservation:",reservation)
 
     if reservation:
         cursor.execute("DELETE FROM ap_reservations WHERE id = %s", (id,))
         conn.commit()
+        print("deleted reservation")
         notify_user(
             to_email=session.get('username'),
             subject="Reservation Cancelled",
             email_body=f"Your reservation ID {id} has been cancelled.",
         )
+        response = {'status': 'success', 'cancelled_id': id}
+    else:
+        response = {'status': 'error', 'message': 'Reservation not found or unauthorized'}
 
     conn.close()
-    return redirect(url_for('inventory.inventory'))
+    return jsonify(response)

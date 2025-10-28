@@ -8,6 +8,10 @@
 </head>
 
 <body>
+    <div id="loadingOverlay" style="display:none;">
+        <div class="spinner"></div>
+    </div>
+
     <!-- Sidebar Navigation -->
     <div class="sidebar">
         <img src="{{ url_for('static', filename='RUCKUS-Networks-Logos-artwork_white-orange.png') }}" alt="Logo"
@@ -141,8 +145,8 @@
                             {% endif %} -->
 
                         {% endif %}
-                        | <a href="/cancel_reservation/{{ r.id }}"
-                            onclick="return confirm('Are you sure you want to cancel this reservation?');"
+                        | <a href="#" data-id="{{ r.id }}"
+                            onclick="return confirmAndCancel(event,this);"
                             style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a>
                     </li>
                     {% endfor %}
@@ -1104,14 +1108,62 @@
 
     <!-- Script for both admin and user  -->
     <script>
-        // change end date input boundaries according to the selected start date 
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        function confirmAndCancel(event,el){
+            event.preventDefault();
+            if(confirm('Are you sure you want to cancel this reservation?')){
+                const reservationId = el.dataset.id;
+                if (!reservationId) return false;
+                showLoading();
+                console.log(el);
+                 try {
+                    // send POST (or DELETE) request to server endpoint
+                    fetch(`/cancel_reservation`, {
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: reservationId })
+                    }).then(response => {
+                        if (response.ok) {
+                            hideLoading();
+                            showAlert('Reservation cancelled successfully', 'success');
+                            // remove the reservation from the DOM
+                            el.closest('li').remove();
+                            setTimeout(() => {
+                                location.reload();
+                                }, 5000); // Reloads after 5 seconds
+
+                        } else {
+                            hideLoading();
+                            response.json().then(data => {
+                                showAlert(data.message || 'Failed to cancel reservation', 'error');
+                            });
+                        }
+                    });
+                } catch (err) {
+                    hideLoading();
+                    showAlert('Network error', 'error');
+                    console.error(err);
+                }
+                return false;
+            }
+            return false;
+        }
+
+        // change end date input constraints according to the selected start date 
         const start_date = document.getElementById('start-date');
         start_date.onchange = () => {
             const end_date = document.getElementById('end-date');
             end_date.min = start_date.value;
 
             const startDate = new Date(start_date.value);
-            const maxDays = {{ maxDays }}
+            const maxDays = {{ maxDays }};
             // Add exactly maxDays in milliseconds
             const maxDate = new Date(startDate.getTime() + maxDays * 24 * 60 * 60 * 1000);
 
@@ -1140,7 +1192,7 @@
         // reserve resources 
         document.getElementById('reserveForm').addEventListener('submit', async function (event) {
             event.preventDefault(); // Prevent default form submission
-
+            showLoading()
             const ap_id = document.getElementById('ap_id').value;
             const controller_id = document.getElementById('controller_id').value;
             const start_datetime = document.getElementById('start_datetime').value;
@@ -1160,6 +1212,7 @@
             });
 
             if (response.ok) {
+                hideLoading()
                 showAlert("Reservation successful", "success");
                 const result = await response.json();
                 const nr = result.new_reservation;
@@ -1210,6 +1263,7 @@
                     ul.appendChild(li);
                 }
             } else {
+                hideLoading()
                 const result = await response.json();
                 showAlert(result.message, "error")
             }
