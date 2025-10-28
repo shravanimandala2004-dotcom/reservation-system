@@ -1326,8 +1326,8 @@ statusSelect.innerHTML = `
                             ${nr.start_datetime_formatted} to ${nr.end_datetime_formatted}`;
                     }
 
-                    reservationHTML += ` | <a href="/cancel_reservation/${nr.id}"
-                            onclick="return confirm('Are you sure you want to cancel this reservation?');"
+                    reservationHTML += ` | <a href="#" data-id=${nr.id}
+                            onclick="return confirmAndCancel(event,this);"
                             style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a>
                             </li>
                         </ul>`;
@@ -1346,8 +1346,8 @@ statusSelect.innerHTML = `
                             ${nr.start_datetime_formatted} to ${nr.end_datetime_formatted}`;
                     }
 
-                    liHTML += ` | <a href="/cancel_reservation/${nr.id}"
-                            onclick="return confirm('Are you sure you want to cancel this reservation?');"
+                    liHTML += ` | <a href="#" data-id=${nr.id}
+                            onclick="return confirmAndCancel(event,this);"
                             style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a>`;
 
                     li.innerHTML = liHTML
