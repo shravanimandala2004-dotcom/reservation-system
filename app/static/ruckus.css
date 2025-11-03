@@ -1,0 +1,41 @@
+body.ruckus-theme {
+  font-family: 'Helvetica Neue', sans-serif;
+  background-color: #f9f9f9;
+  color: #333;
+}
+
+.container {
+  max-width: 800px;
+  margin: auto;
+  padding: 20px;
+}
+
+.header {
+  color: #ff6600;
+  font-size: 2em;
+  margin-bottom: 20px;
+}
+
+.rules-list {
+  list-style-type: decimal;
+  padding-left: 20px;
+}
+
+.add-rule-form textarea {
+  width: 100%;
+  font-size: 1em;
+}
+
+.add-btn, .delete-btn {
+  background-color: #ff6600;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.delete-btn {
+  background-color: #cc0000;
+  margin-left: 10px;
+}

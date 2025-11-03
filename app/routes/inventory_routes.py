@@ -329,6 +329,7 @@ def admin_page():
 #     conn.close()
 #     return jsonify(resources,controllers)
 
+
 @inventory_bp.route('/delete_controller',methods=['POST'])
 def delete_controller():
     if session.get('role') == 'admin':
