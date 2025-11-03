@@ -916,6 +916,7 @@ statusSelect.innerHTML = `
                             })
                         }).then(response => {
                             if (!response.ok) {
+                                showAlert("Failed to delete manufacturer. It may be associated with existing APs or Controllers.", "error");
                                 throw new Error("Network response was not ok");
                             }
                             return response.json();
@@ -1118,6 +1119,7 @@ statusSelect.innerHTML = `
                             })
                         }).then(response => {
                             if (!response.ok) {
+                                showAlert("Failed to delete controller.", "error");
                                 throw new Error("Network response was not ok");
                             }
                             return response.json();

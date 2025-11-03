@@ -67,7 +67,7 @@ def login():
     # LDAP code 
     # if request.method == 'POST':
     #     data = request.get_json()
-    #     username = data.get('username')  
+    #     username = data.get('username')   
     #     password = data.get('password')
     #     role = data.get('role')
 
