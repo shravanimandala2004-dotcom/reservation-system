@@ -14,97 +14,106 @@ def inventory():
         return redirect(url_for('auth.index'))
 
     user_id = session['user_id']
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
 
-    # if request.method == 'POST' and session.get('role') == 'admin':
-    #     manufacturer = request.form['manufacturer']
-    #     name = request.form['resource_name']
-    #     ap_count = request.form['ap_count']
-    #     status = request.form['status']
-    #     link = request.form['link']
-    #     controllers=request.form.getlist('controllers_list')
-    #     action_type = request.form.get('action_type', 'add')  # from form hidden field
+        # if request.method == 'POST' and session.get('role') == 'admin':
+        #     manufacturer = request.form['manufacturer']
+        #     name = request.form['resource_name']
+        #     ap_count = request.form['ap_count']
+        #     status = request.form['status']
+        #     link = request.form['link']
+        #     controllers=request.form.getlist('controllers_list')
+        #     action_type = request.form.get('action_type', 'add')  # from form hidden field
 
-    #     if action_type == 'edit':
-    #         resource_id = request.form['resource_id']
-    #         cursor.execute("UPDATE resources SET name=%s, ap_count=%s, status=%s, link=%s WHERE id=%s",
-    #                        (name, ap_count, status, link, resource_id))
-    #         conn.commit()
+        #     if action_type == 'edit':
+        #         resource_id = request.form['resource_id']
+        #         cursor.execute("UPDATE resources SET name=%s, ap_count=%s, status=%s, link=%s WHERE id=%s",
+        #                        (name, ap_count, status, link, resource_id))
+        #         conn.commit()
 
-            
-    #         emails = get_emails_by_resource(resource_id)
-    #         for email in emails:
-    #             subject=f"Resource Updated: {name}"
-    #             body=f"The resource '{name}' has been updated.\nAPs: {ap_count}\nStatus: {status}"
-    #             notify_user(
-    #                 to_email=email,
-    #                 subject=subject,
-    #                 email_body=body,
-    #             )
+                
+        #         emails = get_emails_by_resource(resource_id)
+        #         for email in emails:
+        #             subject=f"Resource Updated: {name}"
+        #             body=f"The resource '{name}' has been updated.\nAPs: {ap_count}\nStatus: {status}"
+        #             notify_user(
+        #                 to_email=email,
+        #                 subject=subject,
+        #                 email_body=body,
+        #             )
 
-    #     else:  # Add new resource
-    #         cursor.execute("INSERT INTO resources (manufacturer_id,name, ap_count, status, link) VALUES (%s,%s, %s, %s, %s)",
-    #                        (manufacturer,name, ap_count, status, link))
-    #         conn.commit()
-    #         print(controllers)
-    #         if len(controllers)!=0:
-    #             cursor.execute("Select id from resources where manufacturer_id=%s and name=%s and ap_count=%s and status=%s and link=%s",(manufacturer,name, ap_count, status, link))
-    #             resource_id=cursor.fetchone()['id']
-    #             for controller in controllers:
-    #                 cursor.execute("insert into resource_controller_map (controller_id,resource_id) values (%s,%s)",(controller,resource_id))
-    #                 conn.commit()
+        #     else:  # Add new resource
+        #         cursor.execute("INSERT INTO resources (manufacturer_id,name, ap_count, status, link) VALUES (%s,%s, %s, %s, %s)",
+        #                        (manufacturer,name, ap_count, status, link))
+        #         conn.commit()
+        #         print(controllers)
+        #         if len(controllers)!=0:
+        #             cursor.execute("Select id from resources where manufacturer_id=%s and name=%s and ap_count=%s and status=%s and link=%s",(manufacturer,name, ap_count, status, link))
+        #             resource_id=cursor.fetchone()['id']
+        #             for controller in controllers:
+        #                 cursor.execute("insert into resource_controller_map (controller_id,resource_id) values (%s,%s)",(controller,resource_id))
+        #                 conn.commit()
 
 
-    #         # Notify all admins
-    #         cursor.execute("SELECT username FROM users WHERE role = 'admin'")
-    #         admin_users = cursor.fetchall()
-    #         subject = "Resource Added"
-    #         body = f"""
-    #         Resource Name: {name}
-    #         AP Count: {ap_count}
-    #         Status: {status}
-    #         Link: {link}
-    #         Action: ADDED
-    #         """
-    #         for admin in admin_users:
-    #             notify_user(
-    #                 to_email=admin['username'],
-    #                 subject=subject,
-    #                 email_body=body,
-    #             )
+        #         # Notify all admins
+        #         cursor.execute("SELECT username FROM users WHERE role = 'admin'")
+        #         admin_users = cursor.fetchall()
+        #         subject = "Resource Added"
+        #         body = f"""
+        #         Resource Name: {name}
+        #         AP Count: {ap_count}
+        #         Status: {status}
+        #         Link: {link}
+        #         Action: ADDED
+        #         """
+        #         for admin in admin_users:
+        #             notify_user(
+        #                 to_email=admin['username'],
+        #                 subject=subject,
+        #                 email_body=body,
+        #             )
 
-    # Fetch manufacturers
-    cursor.execute("SELECT distinct name,manufacturer_id as id from manufacturers")
-    manufacturers =  cursor.fetchall()
-    print("manufacturers:", manufacturers)
+        # Fetch manufacturers
+        cursor.execute("SELECT distinct name,manufacturer_id as id from manufacturers")
+        manufacturers =  cursor.fetchall()
+        print("manufacturers:", manufacturers)
 
-    # Fetch active reservations
-    cursor.execute("""
-        SELECT r.*, res.model_name AS resource_name, c.name AS controller_name
-        FROM ap_reservations r
-        LEFT JOIN ap res ON r.ap_id = res.ap_id
-        LEFT JOIN controllers c ON r.controller_id = c.controller_id
-        WHERE r.user_id = %s AND r.end_datetime >= NOW()
-    """, (user_id,))
-    active_reservations = cursor.fetchall()
+        # Fetch active reservations
+        cursor.execute("""
+            SELECT r.*, res.model_name AS resource_name, c.name AS controller_name
+            FROM reservations r
+            LEFT JOIN ap res ON r.ap_id = res.ap_id
+            LEFT JOIN controllers c ON r.controller_id = c.controller_id
+            WHERE r.user_id = %s AND r.end_datetime >= NOW()
+        """, (user_id,))
+        active_reservations = cursor.fetchall()
+        
+        for r in active_reservations:
+            r['start_datetime_formatted'] = r['start_datetime'].strftime("%b %d, %Y %H:%M")
+            r['end_datetime_formatted'] = r['end_datetime'].strftime("%b %d, %Y %H:%M")
+
+        preBooking=get_setting('max_preBooking',4)
+        maxDays=get_setting('max_days',2)
+        now=datetime.now()
+        max_date = now + timedelta(days=preBooking)
+        min_str = now.strftime('%Y-%m-%dT%H:%M')
+        max_str = max_date.strftime('%Y-%m-%dT%H:%M')
+
+        # Display inventory
+        # cursor.execute("SELECT * FROM resources")
+        # resources = cursor.fetchall()
+        return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers,active_reservations=active_reservations,min_str=min_str,max_str=max_str,preBooking=preBooking,maxDays=maxDays)
     
-    for r in active_reservations:
-        r['start_datetime_formatted'] = r['start_datetime'].strftime("%b %d, %Y %H:%M")
-        r['end_datetime_formatted'] = r['end_datetime'].strftime("%b %d, %Y %H:%M")
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
 
-    preBooking=get_setting('max_preBooking',4)
-    maxDays=get_setting('max_days',2)
-    now=datetime.now()
-    max_date = now + timedelta(days=preBooking)
-    min_str = now.strftime('%Y-%m-%dT%H:%M')
-    max_str = max_date.strftime('%Y-%m-%dT%H:%M')
-
-    # Display inventory
-    # cursor.execute("SELECT * FROM resources")
-    # resources = cursor.fetchall()
-    conn.close()
-    return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers,active_reservations=active_reservations,min_str=min_str,max_str=max_str,preBooking=preBooking,maxDays=maxDays)
+    finally:
+        cursor.close()
+        conn.close()
 
 @inventory_bp.route('/add_controller', methods=['POST'])
 def add_controller():
@@ -267,17 +276,24 @@ def add_manufacturer():
 @inventory_bp.route('/get_controllers_by_manufacturer_id')
 def get_controllers_by_manufacturer_id():
     if session.get('role') == 'admin':
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        manufacturer_id=request.args.get('manufacturer_id')
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor(dictionary=True)
+            manufacturer_id=request.args.get('manufacturer_id')
 
-        # Get controllers by manufacturer
-        cursor.execute("SELECT * FROM controllers WHERE manufacturer_id = %s", (manufacturer_id,))
-        controllers = cursor.fetchall()
-        print(controllers)
-        cursor.close()
-        conn.close()
-        return jsonify(controllers)
+            # Get controllers by manufacturer
+            cursor.execute("SELECT * FROM controllers WHERE manufacturer_id = %s", (manufacturer_id,))
+            controllers = cursor.fetchall()
+            print(controllers)
+            return jsonify(controllers)
+        except mysql.connector.Error as err:
+            conn.rollback()
+            print(f"Database error: {err}")
+            return "Database error", 500
+
+        finally:
+            cursor.close()
+            conn.close()
 
 
 @inventory_bp.route('/admin_page')
@@ -290,20 +306,29 @@ def admin_page():
     if session.get('role') != 'admin':
         return "⛔ You are not authorized to view this page."
     
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    # Fetch current settings for display
-    cursor.execute("SELECT max_reservations, max_days,max_preBooking FROM permissions ")
-    # settings = {row['key_name']: row['value'] for row in cursor.fetchall()}
-    settings=cursor.fetchone()
-    conn.close()
-    print("settings:", settings)
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        # Fetch current settings for display
+        cursor.execute("SELECT max_reservations, max_days,max_preBooking FROM permissions ")
+        # settings = {row['key_name']: row['value'] for row in cursor.fetchall()}
+        settings=cursor.fetchone()
+        conn.close()
+        print("settings:", settings)
 
-    return render_template(
-        'admin_page.html',
-        role=session.get('role'),
-        settings=settings
-    )
+        return render_template(
+            'admin_page.html',
+            role=session.get('role'),
+            settings=settings
+        )
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
+
+    finally:
+        cursor.close()
+        conn.close()
 
 
 # @inventory_bp.route('/get_resources_by_manufacturer',methods=['GET'])
@@ -333,43 +358,54 @@ def admin_page():
 @inventory_bp.route('/delete_controller',methods=['POST'])
 def delete_controller():
     if session.get('role') == 'admin':
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor(dictionary=True)
 
-        data=request.get_json()
-        id=data.get('controller_id')
+            data=request.get_json()
+            id=data.get('controller_id')
 
-        # Get controller details first
-        cursor.execute("SELECT * FROM controllers WHERE controller_id = %s", (id,))
-        controller = cursor.fetchone()
+            # Get controller details first
+            cursor.execute("SELECT * FROM controllers WHERE controller_id = %s", (id,))
+            controller = cursor.fetchone()
 
-        if controller:
-            # Notify all admins
-            # cursor.execute("SELECT username FROM users WHERE role = 'admin'")
-            # admin_users = cursor.fetchall()
-            # subject = "Controller Deleted"
-            # body = f"""
-            # Controller Name: {controller['name']}
-            # Action: DELETED
-            # """
-            # for admin in admin_users:
-            #     notify_user(
-            #         to_email=admin['username'],
-            #         subject=subject,
-            #         email_body=body,
-            #     )
+            if controller:
+                # Notify all admins
+                # cursor.execute("SELECT username FROM users WHERE role = 'admin'")
+                # admin_users = cursor.fetchall()
+                # subject = "Controller Deleted"
+                # body = f"""
+                # Controller Name: {controller['name']}
+                # Action: DELETED
+                # """
+                # for admin in admin_users:
+                #     notify_user(
+                #         to_email=admin['username'],
+                #         subject=subject,
+                #         email_body=body,
+                #     )
 
-            cursor.execute("DELETE FROM ap_reservations WHERE controller_id = %s", (id,))
-            cursor.execute("DELETE FROM ap_controller_map WHERE controller_id = %s", (id,))
-            cursor.execute("DELETE FROM controllers WHERE controller_id = %s", (id,))
-            conn.commit()
-        conn.close()
-        return jsonify({
-            "message": "Controller successfully deleted",
-        }), 201
+                cursor.execute("DELETE FROM reservations WHERE controller_id = %s", (id,))
+                cursor.execute("DELETE FROM ap_controller_map WHERE controller_id = %s", (id,))
+                cursor.execute("DELETE FROM controllers WHERE controller_id = %s", (id,))
+                conn.commit()
+            return jsonify({
+                "message": "Controller successfully deleted",
+            }), 201
+        except mysql.connector.Error as err:
+            conn.rollback()
+            print(f"Database error: {err}")
+            return jsonify({
+                "message": "Some error occurred",
+            }), 500
+
+        finally:
+            cursor.close()
+            conn.close()
     return jsonify({
             "message": "Some error occurred",
         }), 500
+    
 
 @inventory_bp.route('/edit_controller', methods=['POST'])
 def edit_controller():

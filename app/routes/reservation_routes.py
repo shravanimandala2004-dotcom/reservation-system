@@ -116,7 +116,7 @@ reservation_bp = Blueprint('reservation', __name__)
 
 #     cursor.execute("""
 #         SELECT r.*, res.model_name AS resource_name, c.name AS controller_name
-#         FROM ap_reservations r
+#         FROM reservations r
 #         LEFT JOIN ap res ON r.ap_id = res.ap_id
 #         LEFT JOIN controllers c ON r.controller_id = c.controller_id
 #         WHERE r.user_id = %s AND r.end_datetime >= NOW()
@@ -158,7 +158,7 @@ def reserve():
     # Check active reservations
     cursor.execute("""
         SELECT count(res.controller_id) as count
-        FROM ap_reservations res
+        FROM reservations res
         WHERE res.user_id = %s AND res.end_datetime >= NOW()
     """, (user_id,))
     active = cursor.fetchall() # active reservations of the user
@@ -215,7 +215,7 @@ def reserve():
     
     # Check for overlapping reservations
     cursor.execute("""
-        SELECT * FROM ap_reservations
+        SELECT * FROM reservations
         WHERE controller_id = %s
         AND (
             (start_datetime <= %s AND end_datetime > %s) OR
@@ -228,7 +228,7 @@ def reserve():
 
     if ap_id:
         cursor.execute("""
-            SELECT * FROM ap_reservations
+            SELECT * FROM reservations
             WHERE ap_id = %s
             AND (
                 (start_datetime <= %s AND end_datetime > %s) OR
@@ -251,7 +251,7 @@ def reserve():
     # reserve AP and controller 
     if ap_id:
         cursor.execute("""
-            INSERT INTO ap_reservations (user_id, ap_id, start_datetime, end_datetime,controller_id)
+            INSERT INTO reservations (user_id, ap_id, start_datetime, end_datetime,controller_id)
             VALUES (%s, %s, %s, %s,%s)
         """, (user_id, ap_id, start_dt, end_dt, controller_id))
         notify_user(
@@ -277,7 +277,7 @@ def reserve():
     # reserve cloud/controller 
     else:
         cursor.execute("""
-            INSERT INTO ap_reservations (user_id, start_datetime, end_datetime,controller_id)
+            INSERT INTO reservations (user_id, start_datetime, end_datetime,controller_id)
             VALUES (%s, %s, %s, %s)
         """, (user_id, start_dt, end_dt, controller_id))
         notify_user(
@@ -307,7 +307,7 @@ def reserve():
     inserted_id = cursor.lastrowid
     
     # Fetch the row using that ID
-    cursor.execute("SELECT * FROM ap_reservations WHERE id = %s", (inserted_id,))
+    cursor.execute("SELECT * FROM reservations WHERE id = %s", (inserted_id,))
     row = cursor.fetchone()
     
     row['start_datetime_formatted'] = row['start_datetime'].strftime("%b %d, %Y %H:%M")
@@ -367,12 +367,12 @@ def cancel_reservation():
     cursor = conn.cursor()
 
     # Make sure the reservation belongs to the current user
-    cursor.execute("SELECT * FROM ap_reservations WHERE id = %s AND user_id = %s", (id, user_id))
+    cursor.execute("SELECT * FROM reservations WHERE id = %s AND user_id = %s", (id, user_id))
     reservation = cursor.fetchone()
     print("reservation:",reservation)
 
     if reservation:
-        cursor.execute("DELETE FROM ap_reservations WHERE id = %s", (id,))
+        cursor.execute("DELETE FROM reservations WHERE id = %s", (id,))
         conn.commit()
         print("deleted reservation")
         notify_user(

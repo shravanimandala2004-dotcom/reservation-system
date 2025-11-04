@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, session
 from flask_login import login_required, current_user
 from app.models import db, Rule
 
@@ -6,7 +6,7 @@ rules_bp = Blueprint('rules', __name__, url_prefix='/rules')
 
 @rules_bp.route('/')
 def rules():
-    return render_template('rules.html')
+    return render_template('rules.html', role=session.get('role'))
 # @rules_bp.route('/', methods=['GET', 'POST'])
 
 # def rules():

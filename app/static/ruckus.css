@@ -1,13 +1,22 @@
 body.ruckus-theme {
   font-family: 'Helvetica Neue', sans-serif;
-  background-color: #f9f9f9;
-  color: #333;
+  /* background-color: #f9f9f9; */
+  color: white;
+  background: linear-gradient(to bottom, #333333, #000000);
+  min-height: 100vh;
 }
 
 .container {
   max-width: 800px;
-  margin: auto;
+  /* margin: auto; */
   padding: 20px;
+  margin-left: 220px;
+  
+}
+
+.container-two{
+    padding: 0px 40px 30px 40px;
+    margin-top: 30px;
 }
 
 .header {

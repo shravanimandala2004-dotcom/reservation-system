@@ -1,28 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <title>Rules & Regulations</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='ruckus.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='sidebar.css') }}">
 </head>
-<body class="ruckus-theme">
-  <div class="container">
-    <h1 class="header">📜 Website Rules & Regulations</h1>
-    <ol class="rules-list">
-      <li>Users must log in before accessing reservation features.</li>
-      <li>Reservations are limited to one active booking per user.</li>
-      <li>Cancellation must be done at least 24 hours in advance.</li>
-      <li>Admins reserve the right to modify or delete any reservation.</li>
-      <li>System maintenance may occur without prior notice.</li>
-    </ol>
 
-    <div class="add-rule-form">
-      <h2>Add a New Rule</h2>
-      <form method="POST" action="/rules/add">
-        <textarea name="new_rule" rows="3" placeholder="Type your rule here..." required></textarea><br>
-        <button type="submit">➕ Add Rule</button>
-      </form>
+<body class="ruckus-theme">
+  <!-- Sidebar Navigation -->
+  <div class="sidebar">
+    <img src="{{ url_for('static', filename='RUCKUS-Networks-Logos-artwork_white-orange.png') }}" alt="Logo"
+      class="logo">
+    <nav>
+      <a href="{{ url_for('inventory.inventory') }}" {% if request.path.startswith('/inventory') %}class="active" {%
+        endif %}>Inventory</a>
+
+      <a href="{{ url_for('rules.rules') }}" {% if request.path.startswith('/rules') %}class="active" {% endif %}>Rules
+        Page</a>
+
+
+
+      {% if role == 'admin' %}
+      <a href="{{ url_for('inventory.admin_page') }}" {% if request.path.startswith('/admin') %}class="active" {% endif
+        %}>Admin Page</a>
+      <a href="{{ url_for('details.details') }}" {% if request.path.startswith('/details') %}class="active" {% endif
+        %}>User Details</a>
+      {% endif %}
+
+
+    </nav>
+    <div class="sidebar-logout-separator"></div>
+    <a href="{{ url_for('auth.login') }}" class="logout-btn">Logout</a>
+  </div>
+  <div class="container">
+    <div class="container-two">
+      <h1 class="header">📜 Website Rules & Regulations</h1>
+      <ol class="rules-list">
+        <li>Users must log in before accessing reservation features.</li>
+        <li>Reservations are limited to one active booking per user.</li>
+        <li>Cancellation must be done at least 24 hours in advance.</li>
+        <li>Admins reserve the right to modify or delete any reservation.</li>
+        <li>System maintenance may occur without prior notice.</li>
+      </ol>
+
+      <div class="add-rule-form">
+        <h2>Add a New Rule</h2>
+        <form method="POST" action="/rules/add">
+          <textarea name="new_rule" rows="3" placeholder="Type your rule here..." required></textarea><br>
+          <button type="submit">➕ Add Rule</button>
+        </form>
+      </div>
     </div>
-    
   </div>
 </body>
+
 </html>
