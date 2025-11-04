@@ -36,21 +36,48 @@
   <div class="container">
     <div class="container-two">
       <h1 class="header">📜 Website Rules & Regulations</h1>
-      <ol class="rules-list">
+      <!-- <ol class="rules-list">
         <li>Users must log in before accessing reservation features.</li>
         <li>Reservations are limited to one active booking per user.</li>
         <li>Cancellation must be done at least 24 hours in advance.</li>
         <li>Admins reserve the right to modify or delete any reservation.</li>
         <li>System maintenance may occur without prior notice.</li>
-      </ol>
+      </ol> -->
 
-      <div class="add-rule-form">
+
+
+      <!-- <div class="add-rule-form">
         <h2>Add a New Rule</h2>
         <form method="POST" action="/rules/add">
           <textarea name="new_rule" rows="3" placeholder="Type your rule here..." required></textarea><br>
           <button type="submit">➕ Add Rule</button>
         </form>
-      </div>
+      </div> -->
+
+      <ol class="rules-list">
+  {% for rule in rules %}
+    <li>
+      {{ rule.content }}
+       {% if role == 'admin' %}
+      <form method="POST" action="{{ url_for('rules.delete_rule', rule_id=rule.id) }}" style="display:inline;">
+        <button type="submit">Delete</button>
+        <!-- 🗑️ -->
+      </form>
+         {% endif %}
+    </li>
+  {% endfor %}
+</ol>
+
+{% if role == 'admin' %}
+<div class="add-rule-form">
+  <h2>Add a New Rule</h2>
+  <form method="POST" action="{{ url_for('rules.add_rule') }}">
+    <textarea name="new_rule" rows="3" placeholder="Type your rule here..." required></textarea><br>
+    <button type="submit">➕ Add Rule</button>
+  </form>
+</div>
+{% endif %}
+
     </div>
   </div>
 </body>

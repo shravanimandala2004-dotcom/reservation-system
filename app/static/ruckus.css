@@ -30,6 +30,12 @@ body.ruckus-theme {
   padding-left: 20px;
 }
 
+.rules-list li {
+  margin-bottom: 12px; /* Adjust this value for more or less spacing */
+  line-height: 1.6;
+}
+
+
 .add-rule-form textarea {
   width: 100%;
   font-size: 1em;
