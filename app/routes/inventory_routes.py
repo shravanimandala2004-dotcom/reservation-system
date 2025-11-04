@@ -101,19 +101,18 @@ def inventory():
         min_str = now.strftime('%Y-%m-%dT%H:%M')
         max_str = max_date.strftime('%Y-%m-%dT%H:%M')
 
-        # Display inventory
-        # cursor.execute("SELECT * FROM resources")
-        # resources = cursor.fetchall()
-        return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers,active_reservations=active_reservations,min_str=min_str,max_str=max_str,preBooking=preBooking,maxDays=maxDays)
+        
+        # return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers,active_reservations=active_reservations,min_str=min_str,max_str=max_str,preBooking=preBooking,maxDays=maxDays)
     
     except mysql.connector.Error as err:
         conn.rollback()
         print(f"Database error: {err}")
-        return "Database error", 500
+        # return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers,active_reservations=active_reservations,min_str=min_str,max_str=max_str,preBooking=preBooking,maxDays=maxDays)
 
     finally:
         cursor.close()
         conn.close()
+        return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers,active_reservations=active_reservations,min_str=min_str,max_str=max_str,preBooking=preBooking,maxDays=maxDays)
 
 @inventory_bp.route('/add_controller', methods=['POST'])
 def add_controller():
@@ -132,6 +131,9 @@ def add_controller():
         cursor.execute("INSERT INTO controllers (manufacturer_id, name,url) VALUES (%s, %s, %s)",
                     (manufacturer, name, url))
         conn.commit()
+
+        cursor.close()
+        conn.close()
 
         return jsonify({
             "message": "Controller successfully added",
@@ -157,7 +159,7 @@ def add_controller():
     except mysql.connector.Error as err:
         conn.rollback()
         print(f"Database error: {err}")
-        return "Database error", 500
+        return jsonify({"message":"Database error"}), 500
 
     finally:
         cursor.close()
@@ -464,6 +466,7 @@ def get_ap_by_manufacturer():
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT a.* from AP as a join manufacturers as m on a.manufacturer_id=m.manufacturer_id where m.name=%s",(manufacturer,))
         ap=cursor.fetchall()
+        return jsonify(ap)
     except mysql.connector.Error as err:
         conn.rollback()
         print(f"Database error: {err}")
@@ -472,7 +475,7 @@ def get_ap_by_manufacturer():
     finally:
         cursor.close()
         conn.close()
-    return jsonify(ap)
+    
 
 @inventory_bp.route('/get_controllers_by_manufacturer',methods=['GET'])
 def get_controllers_by_manufacturer():
@@ -482,6 +485,7 @@ def get_controllers_by_manufacturer():
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT c.* from controllers as c join manufacturers as m on c.manufacturer_id=m.manufacturer_id where m.name=%s",(manufacturer,))
         controllers=cursor.fetchall()
+        return jsonify(controllers)
     except mysql.connector.Error as err:
         conn.rollback()
         print(f"Database error: {err}")
@@ -490,7 +494,7 @@ def get_controllers_by_manufacturer():
     finally:
         cursor.close()
         conn.close()
-    return jsonify(controllers)
+    
 
 @inventory_bp.route('/get_controllers_by_AP',methods=['GET'])
 def get_controllers_by_AP():
@@ -500,6 +504,7 @@ def get_controllers_by_AP():
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT c.* from controllers as c join ap_controller_map as acm on c.controller_id=acm.controller_id where acm.ap_id=%s",(ap_id,))
         controllers=cursor.fetchall()
+        return jsonify(controllers)
     except mysql.connector.Error as err:
         conn.rollback()
         print(f"Database error: {err}")
@@ -508,7 +513,7 @@ def get_controllers_by_AP():
     finally:
         cursor.close()
         conn.close()
-    return jsonify(controllers)
+    
 
 @inventory_bp.route('/get_ap_status',methods=['GET'])
 def get_ap_status():
@@ -519,7 +524,7 @@ def get_ap_status():
         cursor.execute("select status from ap where ap_id=%s",(ap_id,))
         ap=cursor.fetchone()
         ap_id=ap['status']
-        
+        return jsonify(ap_id)
     except mysql.connector.Error as err:
         conn.rollback()
         print(f"Database error: {err}")
@@ -528,7 +533,7 @@ def get_ap_status():
     finally:
         cursor.close()
         conn.close()
-    return jsonify(ap_id)
+    
 
 @inventory_bp.route('/get_controller_status',methods=['GET'])
 def get_controller_status():
@@ -539,7 +544,7 @@ def get_controller_status():
         cursor.execute("select status from controllers where controller_id=%s",(controller_id,))
         controller=cursor.fetchone()
         controller_status=controller['status']        
-        
+        return jsonify(controller_status)
     except mysql.connector.Error as err:
         conn.rollback()
         print(f"Database error: {err}")
@@ -548,7 +553,7 @@ def get_controller_status():
     finally:
         cursor.close()
         conn.close()
-    return jsonify(controller_status)
+    
 
 @inventory_bp.route('/get_controller_url',methods=['GET'])
 def get_controller_url():
@@ -559,7 +564,7 @@ def get_controller_url():
         cursor.execute("select url from controllers where controller_id=%s",(controller_id,))
         controller=cursor.fetchone()
         controller_url=controller['url']        
-        
+        return jsonify(controller_url)
     except mysql.connector.Error as err:
         conn.rollback()
         print(f"Database error: {err}")
@@ -568,7 +573,7 @@ def get_controller_url():
     finally:
         cursor.close()
         conn.close()
-    return jsonify(controller_url)
+    
 
 @inventory_bp.route('/get_manufacturers',methods=['GET'])
 def get_manufacturers():
@@ -577,6 +582,7 @@ def get_manufacturers():
         cursor = conn.cursor(dictionary=True)
         cursor.execute("select * from manufacturers")
         manufacturers=cursor.fetchall()
+        return jsonify(manufacturers)
     except mysql.connector.Error as err:
         conn.rollback()
         print(f"Database error: {err}")
@@ -585,7 +591,7 @@ def get_manufacturers():
     finally:
         cursor.close()
         conn.close()
-    return jsonify(manufacturers)
+    
 
 @inventory_bp.route('/get_ap',methods=['GET'])
 def get_ap():
@@ -594,7 +600,7 @@ def get_ap():
         cursor = conn.cursor(dictionary=True)
         cursor.execute("select * from ap ")
         ap=cursor.fetchall()
-        
+        return jsonify(ap)
     except mysql.connector.Error as err:
         conn.rollback()
         print(f"Database error: {err}")
@@ -603,7 +609,7 @@ def get_ap():
     finally:
         cursor.close()
         conn.close()
-    return jsonify(ap)
+    
 
 @inventory_bp.route('/get_controllers',methods=['GET'])
 def get_controllers():
@@ -612,7 +618,7 @@ def get_controllers():
         cursor = conn.cursor(dictionary=True)
         cursor.execute("select * from controllers ")
         controllers=cursor.fetchall()
-        
+        return jsonify(controllers)
     except mysql.connector.Error as err:
         conn.rollback()
         print(f"Database error: {err}")
@@ -621,7 +627,7 @@ def get_controllers():
     finally:
         cursor.close()
         conn.close()
-    return jsonify(controllers)
+    
 
 @inventory_bp.route('/edit_manufacturer',methods=['POST'])
 def edit_manufacturer():
@@ -811,7 +817,7 @@ def change_ap_status():
         cursor = conn.cursor(dictionary=True)
         cursor.execute("update ap set status=%s where ap_id=%s",(status,ap_id,))
         conn.commit()
-        
+        return jsonify(ap_id)
     except mysql.connector.Error as err:
         conn.rollback()
         print(f"Database error: {err}")
@@ -820,4 +826,4 @@ def change_ap_status():
     finally:
         cursor.close()
         conn.close()
-    return jsonify(ap_id)
+    
