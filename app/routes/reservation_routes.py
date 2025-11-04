@@ -174,7 +174,7 @@ def reserve():
 
     # get AP details 
     if(ap_id):
-        cursor.execute("SELECT * FROM AP WHERE ap_id = %s", (ap_id,))
+        cursor.execute("SELECT * FROM ap WHERE ap_id = %s", (ap_id,))
         ap = cursor.fetchone()
     # get controller details 
     cursor.execute("SELECT * FROM controllers WHERE controller_id = %s", (controller_id,))

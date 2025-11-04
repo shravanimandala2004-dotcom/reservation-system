@@ -464,7 +464,7 @@ def get_ap_by_manufacturer():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT a.* from AP as a join manufacturers as m on a.manufacturer_id=m.manufacturer_id where m.name=%s",(manufacturer,))
+        cursor.execute("SELECT a.* from ap as a join manufacturers as m on a.manufacturer_id=m.manufacturer_id where m.name=%s",(manufacturer,))
         ap=cursor.fetchall()
         return jsonify(ap)
     except mysql.connector.Error as err:
@@ -744,11 +744,11 @@ def edit_ap():
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         if(ap_name!= ""):
-            cursor.execute("update AP set model_name=%s where ap_id=%s",(ap_name,ap_id,))
+            cursor.execute("update ap set model_name=%s where ap_id=%s",(ap_name,ap_id,))
             conn.commit()
 
         if(ap_status!= ""):
-            cursor.execute("update AP set status=%s where ap_id=%s",(ap_status,ap_id))
+            cursor.execute("update ap set status=%s where ap_id=%s",(ap_status,ap_id))
             conn.commit()
 
         cursor.execute("delete from ap_controller_map where ap_id=%s",(ap_id,))
@@ -791,7 +791,7 @@ def delete_ap():
         cursor = conn.cursor(dictionary=True)
         cursor.execute("delete from ap_controller_map where ap_id=%s",(ap_id,))
         conn.commit()
-        cursor.execute("delete from AP where ap_id=%s",(ap_id,))
+        cursor.execute("delete from ap where ap_id=%s",(ap_id,))
         conn.commit()
 
         return jsonify({
