@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Accept Rules & Regulations</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='accept_rules.css') }}">
+</head>
+
+<body class="ruckus-theme">
+
+  <div class="container">
+    <div class="container-two">
+      <h1 class="header">📜 Please Accept Our Rules & Regulations</h1>
+      <form method="POST" action="{{ url_for('rules.accept_rules') }}">
+        <ul class="rules-list">
+          {% for rule in rules %}
+          <li>
+            <label>
+              <input type="checkbox" name="accepted_rules" value="{{ rule.id }}" required>
+              {{ rule.content }}
+            </label>
+          </li>
+          {% endfor %}
+        </ul>
+        <div class="agreement-section">
+          <label>
+            I have read and agree to all the rules listed above.
+          </label>
+        </div>
+        <button type="submit" class="submit-btn">Agree & Continue</button>
+      </form>
+    </div>
+  </div>
+</body>
+
+</html>

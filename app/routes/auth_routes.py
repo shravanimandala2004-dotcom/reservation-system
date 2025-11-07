@@ -105,11 +105,3 @@ def login():
     #         return jsonify(status='error', message="❌ Invalid login credentials"), 401
     # else:
     #     return redirect(url_for('auth.index'))
-    
-@auth_bp.route('/user')
-def user_dashboard():
-    return render_template('user_dashboard.html')
-
-@auth_bp.route('/admin')
-def admin_dashboard():
-    return render_template('admin_dashboard.html')

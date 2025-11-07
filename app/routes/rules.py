@@ -1,6 +1,6 @@
 
 import mysql.connector
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for,jsonify
 from flask_login import login_required, current_user
 from app.models import db, Rule
 from flask import session
@@ -43,3 +43,28 @@ def delete_rule(rule_id):
     cursor.close()
     conn.close()
     return redirect(url_for('rules.rules'))
+
+@rules_bp.route('/accept_rules')
+def accept_rules():
+    print("Accept Rules route called")
+    try:
+        print("here")
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM rules")
+        rules = cursor.fetchall()
+        print("rules:", rules) 
+        return render_template('accept_rules.html', rules=rules)
+    except Exception as e:
+        return jsonify({'message':"Error fetching rules: {str(e)}",'status':"error"}),500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+    
+
+@rules_bp.route('/accept_rules', methods=['POST'])
+def accept_rules_post():
+    # Logic to record acceptance of rules can be added here
+    return redirect(url_for('inventory.inventory'))

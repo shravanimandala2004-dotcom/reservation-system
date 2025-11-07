@@ -1,0 +1,49 @@
+body.ruckus-theme {
+  font-family: 'Helvetica Neue', sans-serif;
+  /* background-color: #f9f9f9; */
+  color: white;
+  background: linear-gradient(to bottom, #333333, #000000);
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 800px;
+  /* margin: auto; */
+  padding: 20px;
+  margin-left: 220px;
+  
+}
+
+.container-two{
+    padding: 0px 40px 30px 40px;
+    margin-top: 30px;
+}
+
+.header {
+  color: #ff6600;
+  font-size: 2em;
+  margin-bottom: 20px;
+}
+
+.rules-list {
+  list-style-type: decimal;
+  padding-left: 20px;
+}
+
+.rules-list li {
+  margin-bottom: 12px; /* Adjust this value for more or less spacing */
+  line-height: 1.6;
+}
+
+.submit-btn {
+    margin: 15px 10px;
+    padding: 11px;
+    background-color: #ff6600;
+    border: none;
+    border-radius: 5px;
+}
+
+.submit-btn:hover {
+    background-color: #fd8e45;
+    cursor: pointer;
+}
