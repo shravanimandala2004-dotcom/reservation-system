@@ -187,13 +187,13 @@
                     <li>
                         {% if r.resource_name != None %}
 
-                        <strong>{{ r.resource_name }}</strong> reserved on <strong>{{ r.controller_name }}</strong> from
-                        {{ r.start_datetime_formatted}} to {{ r.end_datetime_formatted }}
+                        <strong>{{ r.resource_name }}</strong> Reserved on <strong>{{ r.controller_name }}</strong> from
+                        {{ r.start_datetime_formatted}} → {{ r.end_datetime_formatted }}
 
                         {% else %}
 
-                        <strong>{{ r.controller_name }}</strong> reserved from
-                        {{ r.start_datetime_formatted }} to {{ r.end_datetime_formatted }}
+                        <strong>{{ r.controller_name }}</strong> Reserved from
+                        {{ r.start_datetime_formatted }} → {{ r.end_datetime_formatted }}
                         <!-- {% if r.link %}
                             | <a href="{{ r.link }}" target="_blank">🔗 Open Resource</a> 
                             {% endif %} -->
@@ -1327,11 +1327,11 @@ statusSelect.innerHTML = `
                                 <li>`;
 
                     if (nr.resource_name) {
-                        reservationHTML += `<strong>${nr.resource_name}</strong> reserved on <strong>${nr.controller_name}</strong> from
-                                ${nr.start_datetime_formatted} to ${nr.end_datetime_formatted}`;
+                        reservationHTML += `<strong>${nr.resource_name}</strong> Reserved on <strong>${nr.controller_name}</strong> from
+                                ${nr.start_datetime_formatted} → ${nr.end_datetime_formatted}`;
                     } else {
-                        reservationHTML += `<strong>${nr.controller_name}</strong> reserved from
-                            ${nr.start_datetime_formatted} to ${nr.end_datetime_formatted}`;
+                        reservationHTML += `<strong>${nr.controller_name}</strong> Reserved from
+                            ${nr.start_datetime_formatted} → ${nr.end_datetime_formatted}`;
                     }
 
                     reservationHTML += ` | <a href="#" data-id=${nr.id}
@@ -1347,11 +1347,11 @@ statusSelect.innerHTML = `
                     const li = document.createElement('li');
                     let liHTML = ``;
                     if (nr.resource_name) {
-                        liHTML += `<strong>${nr.resource_name}</strong> reserved on <strong>${nr.controller_name}</strong> from
-                                ${nr.start_datetime_formatted} to ${nr.end_datetime_formatted}`;
+                        liHTML += `<strong>${nr.resource_name}</strong> Reserved on <strong>${nr.controller_name}</strong> from
+                                ${nr.start_datetime_formatted} → ${nr.end_datetime_formatted}`;
                     } else {
-                        liHTML += `<strong>${nr.controller_name}</strong> reserved from
-                            ${nr.start_datetime_formatted} to ${nr.end_datetime_formatted}`;
+                        liHTML += `<strong>${nr.controller_name}</strong> Reserved from
+                            ${nr.start_datetime_formatted} → ${nr.end_datetime_formatted}`;
                     }
 
                     liHTML += ` | <a href="#" data-id=${nr.id}
