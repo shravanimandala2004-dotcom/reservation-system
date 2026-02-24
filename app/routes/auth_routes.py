@@ -2,11 +2,18 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from app.utils.db import get_db_connection
 from flask import jsonify
 from ldap3 import Server, Connection, ALL, NTLM, SIMPLE
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 auth_bp = Blueprint('auth', __name__)
 
 # LDAP Configuration
-LDAP_SERVER = 'ldap://your-ad-server.com'
+LDAP_SERVER = os.environ.get('LDAP_SERVER')
+SERVICE_ACCOUNT_DN = os.environ.get('SERVICE_ACCOUNT_DN')
+SERVICE_ACCOUNT_PASSWORD = os.environ.get('SERVICE_ACCOUNT_PASSWORD')
+
 TME_GROUP_DN = 'CN=tme,OU=Groups,DC=commscope,DC=com'
 SE_GROUP_DN = 'CN=se,OU=Groups,DC=commscope,DC=com'
 
@@ -37,6 +44,34 @@ def signup():
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
+    # if request.method == 'POST':
+    #     data=request.get_json()
+    #     username =data.get('username')
+    #     password =data.get('password')
+    #     role =data.get('role')
+
+    #     if not username or not password or not role:
+    #         return jsonify(status='error',message="Missing username, password, or role.")
+
+    #     conn = get_db_connection()
+    #     cursor = conn.cursor(dictionary=True)
+    #     cursor.execute("SELECT * FROM users WHERE username=%s AND password=%s AND role=%s",
+    #                    (username, password, role))
+    #     user = cursor.fetchone()
+    #     conn.close()
+
+    #     if user:
+    #         session['user_id'] = user['id']     
+    #         session['username'] = username
+    #         session['role'] = role
+    #         return jsonify(status='success',message="Login successful"),200
+    #         # return redirect(url_for('inventory.inventory'))
+    #     else:
+    #         return jsonify(status='error',message="❌ Invalid login credentials"),401
+    # else:
+    #     return redirect(url_for('auth.index'))
+    
+
     if request.method == 'POST':
         data=request.get_json()
         username =data.get('username')
@@ -46,62 +81,36 @@ def login():
         if not username or not password or not role:
             return jsonify(status='error',message="Missing username, password, or role.")
 
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM users WHERE username=%s AND password=%s AND role=%s",
-                       (username, password, role))
-        user = cursor.fetchone()
-        conn.close()
+        server = Server(LDAP_SERVER, get_info=ALL)
+        service_conn = Connection(server, user=SERVICE_ACCOUNT_DN,
+                                password=SERVICE_ACCOUNT_PASSWORD,
+                                authentication=SIMPLE, auto_bind=True)
 
-        if user:
-            session['user_id'] = user['id']     
-            session['username'] = username
-            session['role'] = role
-            return jsonify(status='success',message="Login successful"),200
-            # return redirect(url_for('inventory.inventory'))
-        else:
-            return jsonify(status='error',message="❌ Invalid login credentials"),401
+        service_conn.search(
+            search_base="DC=vistancenetworks,DC=com",
+            search_filter=f"(mail={username})",
+            attributes=["distinguishedName", "memberOf"]
+        )
+
+        if not service_conn.entries:
+            return jsonify(status='error', message="❌ Invalid login credentials"), 401
+
+        user_entry = service_conn.entries[0]
+        user_dn = user_entry.distinguishedName.value
+        groups = user_entry.memberOf.values if 'memberOf' in user_entry else []
+
+        user_conn = Connection(server, user=user_dn, password=password, authentication=SIMPLE)
+        if not user_conn.bind():
+            return jsonify(status='error', message="❌ Invalid login credentials"), 401
+        
+        # if role == 'admin' and TME_GROUP_DN not in groups:
+        #     return jsonify(status='error', message="❌ Invalid login credentials"), 401
+        # elif role == 'user' and not any(group in groups for group in [TME_GROUP_DN, SE_GROUP_DN]):
+        #     return jsonify(status='error', message="❌ Invalid login credentials"), 401
+            
+
+        session['username'] = username
+        session['role'] = role        
+        return jsonify(status='success', message="Login successful"), 200
     else:
         return redirect(url_for('auth.index'))
-    
-    # LDAP code 
-    # if request.method == 'POST':
-    #     data = request.get_json()
-    #     username = data.get('username')   
-    #     password = data.get('password')
-    #     role = data.get('role')
-
-    #     if not username or not password or not role:
-    #         return jsonify(status='error', message="Missing username, password, or role.")
-
-    #     # Use email directly as the bind user
-    #     server = Server(LDAP_SERVER, get_info=ALL)
-    #     conn = Connection(server, user=username, password=password, authentication=SIMPLE)
-
-    #     if conn.bind():
-    #         # Search for user's DN and group memberships
-    #         conn.search(search_base='DC=commscope,DC=com',
-    #                     search_filter=f'(mail={username})',
-    #                     attributes=['memberOf'])
-
-    #         if not conn.entries:
-    #             return jsonify(status='error', message="User not found in LDAP."), 404
-
-    #         user_entry = conn.entries[0]
-    #         groups = user_entry.memberOf.values if 'memberOf' in user_entry else []
-
-    #         # Role-based group access check
-    #         if role == 'admin':
-    #             if TME_GROUP_DN not in groups:
-    #                 return jsonify(status='error', message="Access denied: Please try logging in as user."), 403
-    #         elif role == 'user':
-    #             if not any(group in groups for group in [TME_GROUP_DN, SE_GROUP_DN]):
-    #                 return jsonify(status='error', message="Access denied."), 403
-
-    #         session['username'] = username
-    #         session['role'] = role
-    #         return jsonify(status='success', message="Login successful"), 200
-    #     else:
-    #         return jsonify(status='error', message="❌ Invalid login credentials"), 401
-    # else:
-    #     return redirect(url_for('auth.index'))
