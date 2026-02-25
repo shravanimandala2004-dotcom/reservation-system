@@ -4,6 +4,8 @@ from flask import jsonify
 from ldap3 import Server, Connection, ALL, NTLM, SIMPLE
 from dotenv import load_dotenv
 import os
+from flask import jsonify, session, request
+from ldap3 import Server, Connection, ALL, SIMPLE
 
 load_dotenv()
 
@@ -107,7 +109,28 @@ def login():
         #     return jsonify(status='error', message="❌ Invalid login credentials"), 401
         # elif role == 'user' and not any(group in groups for group in [TME_GROUP_DN, SE_GROUP_DN]):
         #     return jsonify(status='error', message="❌ Invalid login credentials"), 401
-            
+
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM users WHERE username=%s AND role=%s",
+                       (username, role))
+        user = cursor.fetchone()
+
+        if user:
+            session['user_id'] = user['id']     
+        else:
+            try:
+                password ="**"
+                cursor.execute("INSERT INTO users (username, password, role) VALUES ( %s, %s, %s)",
+                            ( username, password, role))
+                user_id = cursor.lastrowid
+                session['user_id'] = user_id
+                print("New user created with ID:", user_id)
+                conn.commit()
+                conn.close()
+            except Exception as e:
+                print(f"Error creating user: {str(e)}")
+                return jsonify(status='error', message="❌ Something went wrong"), 401
 
         session['username'] = username
         session['role'] = role        
