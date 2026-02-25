@@ -139,3 +139,24 @@ a:hover {
 .error{
     background-color: #E12726;
 }
+
+/* Password wrapper */
+.password-wrapper {
+    position: relative;
+}
+ 
+/* Adjust input padding to make space for icon */
+.password-wrapper input {
+    padding-right: 40px;
+}
+ 
+/* Toggle icon styling */
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 18px;
+    color: white;
+}
