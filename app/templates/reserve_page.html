@@ -77,8 +77,8 @@
                 <strong>{{ r.resource_name }}</strong> reserved on <strong>{{ r.controller_name }}</strong> from
                 {{ r.start_datetime_formatted}} to {{ r.end_datetime_formatted }}
                 {% else %}
-                <strong>{{ r.controller_name }}</strong> reserved from
-                {{ r.start_datetime_formatted }} to {{ r.end_datetime_formatted }}
+                <strong>{{ r.controller_name }}</strong> Reserved
+                {{ r.start_datetime_formatted }} → {{ r.end_datetime_formatted }}
                 <!-- {% if r.link %}
                 {% endif %} -->
                 <!-- | <a href="{{ r.link }}" target="_blank">🔗 Open Resource</a> -->
