@@ -74,8 +74,8 @@
             <ul class="reservation-list">
                 {% for r in active_reservations %}
                 <li>
-                    <strong>{{ r.resource_name }}</strong> reserved from
-                    {{ r.start_datetime }} to {{ r.end_datetime }}
+                    <strong>{{ r.resource_name }}</strong> Reserved
+                    {{ r.start_datetime }}  →  {{ r.end_datetime }}
                     {% if r.link %}
                     | <a href="{{ r.link }}" target="_blank">🔗 Open Resource</a>
                     {% endif %}
