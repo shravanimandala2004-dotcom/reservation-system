@@ -11,13 +11,28 @@ load_dotenv()
 
 auth_bp = Blueprint('auth', __name__)
 
+from ldap3 import BASE
+
+def extract_cn(dn):
+    """Extracts CN from a distinguished name"""
+    for part in dn.split(','):
+        if part.startswith('CN='):
+            return part.replace('CN=', '')
+    return None
+
 # LDAP Configuration
 LDAP_SERVER = os.environ.get('LDAP_SERVER')
 SERVICE_ACCOUNT_DN = os.environ.get('SERVICE_ACCOUNT_DN')
 SERVICE_ACCOUNT_PASSWORD = os.environ.get('SERVICE_ACCOUNT_PASSWORD')
 
-TME_GROUP_DN = 'CN=tme,OU=Groups,DC=commscope,DC=com'
-SE_GROUP_DN = 'CN=se,OU=Groups,DC=commscope,DC=com'
+ADMIN_GROUPS = {
+    "#PLM-PMM-TME ALL",
+}
+
+USER_GROUPS = {
+    "#PLM-PMM-TME ALL",
+    "SE"
+}
 
 @auth_bp.route('/')
 def index():
@@ -91,7 +106,7 @@ def login():
         service_conn.search(
             search_base="DC=vistancenetworks,DC=com",
             search_filter=f"(mail={username})",
-            attributes=["distinguishedName", "memberOf"]
+            attributes=["distinguishedName", "memberOf", "department","employeeID","company","title"]
         )
 
         if not service_conn.entries:
@@ -100,15 +115,46 @@ def login():
         user_entry = service_conn.entries[0]
         user_dn = user_entry.distinguishedName.value
         groups = user_entry.memberOf.values if 'memberOf' in user_entry else []
+        group_cns = [extract_cn(dn) for dn in groups]
+        print("Direct groups (DNs):", groups)
+        print("Direct groups (CNs):", group_cns)
+        print("")
+
+        # service_conn.search(
+        #     search_base="DC=vistancenetworks,DC=com",
+        #     search_filter=f"(mail={username})",
+        #     attributes="*"
+        # )
+
+        
+        # entry = service_conn.entries[0]
+        # print(entry)
+
 
         user_conn = Connection(server, user=user_dn, password=password, authentication=SIMPLE)
         if not user_conn.bind():
             return jsonify(status='error', message="❌ Invalid login credentials"), 401
         
-        # if role == 'admin' and TME_GROUP_DN not in groups:
-        #     return jsonify(status='error', message="❌ Invalid login credentials"), 401
-        # elif role == 'user' and not any(group in groups for group in [TME_GROUP_DN, SE_GROUP_DN]):
-        #     return jsonify(status='error', message="❌ Invalid login credentials"), 401
+        # ---- ROLE AUTHORIZATION ----
+
+        if role == "admin":
+            # if not ADMIN_GROUPS.intersection(group_cns):
+            #     return jsonify(
+            #         status="error",
+            #         message="❌ Access denied: admin group membership required"
+            #     ), 403
+            if user_entry.department.value != "Ruckus-Business Development":
+                return jsonify(
+                    status="error",
+                    message="❌ Access denied: admin group membership required"
+                ), 403
+
+        elif role == "user":
+            if not USER_GROUPS.intersection(group_cns):
+                return jsonify(
+                    status="error",
+                    message="❌ Access denied: user group membership required"
+                ), 403
 
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
