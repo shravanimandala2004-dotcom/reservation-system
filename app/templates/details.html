@@ -24,8 +24,22 @@
         <div class="sidebar-logout-separator"></div>
         <a href="{{ url_for('auth.login') }}" class="logout-btn">Logout</a>
     </div>
-    <div class="container">
+
+    <div class="container"> 
     <h1>User & Admin Details</h1>
+    
+<form method="GET" action="{{ url_for('details.details') }}">
+    <input type="text" name="search" placeholder="Search username">
+
+    <select name="role">
+        <option value="">All</option>
+        <option value="admin">Admin</option>
+        <option value="user">User</option>
+    </select>
+
+    <button type="submit">Search</button>
+</form>
+
     <table border="1" cellpadding="8">
         <thead>
             <tr>
@@ -62,7 +76,52 @@
     <button style="background-color: #f57c00; color: white; margin-bottom: 10px;">ADD</button>
 </a>
 {% endif %}
+
+<hr>
+<h2>Departments with Admin Access</h2>
+
+<!-- Add Department -->
+<form method="POST" action="{{ url_for('details.add_department') }}" style="margin-bottom: 15px;">
+    <input
+        type="text"
+        name="department_name"
+        placeholder="New Department Name"
+        required
+    >
+    <button type="submit" style="background-color:#4caf50;color:white;">
+        Add Department
+    </button>
+</form>
+
+<!-- Departments List -->
+<table border="1" cellpadding="8">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Department Name</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for dept in departments %}
+        <tr>
+            <td>{{ dept.id }}</td>
+            <td>{{ dept.department_name }}</td>
+            <td>
+                <a href="{{ url_for('details.delete_department', dept_id=dept.id) }}"
+                   onclick="return confirm('Delete this department?');">
+                    <button style="background-color:#f57c00;color:white;">
+                        Delete
+                    </button>
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 </div>
+
+
 
 </body>
 </html>

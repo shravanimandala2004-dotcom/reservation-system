@@ -19,6 +19,21 @@ def extract_cn(dn):
         if part.startswith('CN='):
             return part.replace('CN=', '')
     return None
+
+def is_admin_department(user_department):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute(
+        "SELECT 1 FROM admin_departments WHERE department_name = %s",
+        (user_department,)
+    )
+    result = cursor.fetchone()
+
+    conn.close()
+
+    return result is not None
+
 # LDAP Configuration
 LDAP_SERVER = os.environ.get('LDAP_SERVER')
 SERVICE_ACCOUNT_DN = os.environ.get('SERVICE_ACCOUNT_DN')
@@ -144,14 +159,14 @@ def login():
             return jsonify(status='error', message="❌ Invalid login credentials"), 401
         
         # ---- ROLE AUTHORIZATION ----
-
+        user_department = user_entry.department.value if 'department' in user_entry else None
         if role == "admin":
             # if not ADMIN_GROUPS.intersection(group_cns):
             #     return jsonify(
             #         status="error",
             #         message="❌ Access denied: admin group membership required"
             #     ), 403
-            if user_entry.department.value != "Ruckus-Business Development":
+            if not is_admin_department(user_department):
                 return jsonify(
                     status="error",
                     message="❌ Access denied: admin group membership required"
