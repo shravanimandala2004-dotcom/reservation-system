@@ -190,3 +190,44 @@ a:hover {
   border-radius: 50%;
   flex-shrink: 0;
 }
+
+.card {
+    background: #2a2a2a;
+    padding: 20px;
+    margin-top: 15px;
+    border-radius: 8px;
+    border: 1px solid #4e4741;
+}
+
+.card h3 {
+    color: #f57c00;
+    margin-bottom: 10px;
+}
+
+.card label {
+    display: block;
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+.btn-primary {
+    background: #f57c00;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-save {
+    background: #4caf50;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-save:hover {
+    background: #66bb6a;
+}
