@@ -33,27 +33,28 @@ input[type="password"],
 input[type="number"],
 select {
     width: 100%;
-    padding: 12px;
+    padding: 8px 10px;
     margin: 10px 0;
-    border-radius: 6px;
+    border-radius: 17px;
     border: none;
     box-sizing: border-box;
-    font-size: 16px;
+    /* font-size: 16px; */
     background-color: #2a2a2a;
     color: white;
 }
 
 /* Button styling */
 button {
-    padding: 12px 20px;
+    padding: 2px 5px;
     background-color: #f57c00;
     color: white;
     border: none;
     border-radius: 6px;
-    font-size: 16px;
-    margin-top: 10px;
+    /* font-size: 16px; */
+    /* margin-top: 10px; */
     cursor: pointer;
     transition: background-color 0.3s;
+    margin: 0px 10px;
 }
 
 button:hover {
@@ -69,7 +70,7 @@ table {
 }
 
 th, td {
-    padding: 12px;
+    /* padding: 12px; */
     border: 1px solid #555;
     text-align: center;
 }
@@ -115,3 +116,125 @@ a:hover {
     background-color: #ff9800; /* Orange */
 }
 
+#search-container {
+    display: flex;
+    flex-direction: row;
+    gap: 150px;
+}
+
+#addUser-btn {
+    flex: 2 12 0;
+    align-self: center;
+    background-color: #4caf50;
+    color: white;
+    padding: 5px 10px;
+    text-decoration: none;
+    border-radius: 6px;
+}
+
+#search-form {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    /* margin-bottom: 20px; */
+    gap : 15px;
+    flex: 10 12 0;
+}
+
+#search-form input[type="text"] {
+    flex: 6 10 0;
+}
+
+#search-form select {
+    flex: 3 10 0;
+}
+
+#search-form button {
+    flex: 1 10 0;
+    height: 25px;
+    align-self: center;
+    border-radius: 12px;
+    background-color: #2A2A2A;
+    border: 1px solid #FF8C1A;
+    color: #FF8C1A;
+
+}
+
+#search-form button:hover {
+    background-color: #FF8C1A;
+    color: #111;
+
+}
+
+#add-form {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap : 15px;
+}
+
+#add-form button {
+    height: 25px;
+    align-self: center;
+    border-radius: 12px;
+    width: 140px;
+}
+
+.edit-btn {
+    
+background: transparent;
+border: 1px solid #FF8C1A;
+color: #FF8C1A;
+
+}
+
+.edit-btn:hover {
+    background: #FF8C1A;
+    color: #111;
+
+}
+
+.delete-btn {
+    background-color: red;
+    /* border: 1px solid red;
+    color: red; */
+}
+
+/* .delete-btn:hover {
+    background-color: red;
+    color: white;
+} */
+
+.pagination {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.pagination a,
+.pagination span {
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: #2a2a2a;
+    color: #ff8c1a;
+    text-decoration: none;
+    font-size: 0.8em;
+}
+
+.pagination .current {
+    background: #ff8c1a;
+    color: #111;
+}
+
+.pagination .disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+hr {
+    border: 0;
+    height: 1px;
+    background-color: #555;
+    margin: 30px 0;
+}

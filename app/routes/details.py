@@ -103,42 +103,57 @@ def edit_user(user_id):
         cursor.close()   # ✅ always close cursor
         conn.close()     # ✅ always close conn
 
-
-
 @details_bp.route('/details')
 def details():
     # Admin-only access
     if session.get("role") != "admin":
         return "Unauthorized", 403
 
+    # ---- Pagination params ----
+    page = request.args.get("page", 1, type=int)
+    per_page = 10
+    offset = (page - 1) * per_page
+
+    # ---- Filters ----
     search = request.args.get("search", "").strip()
     role_filter = request.args.get("role", "").strip()
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Base query
-    query = "SELECT id, username, role FROM users WHERE 1=1"
+    # ---- Base query ----
+    base_query = "FROM users WHERE 1=1"
     params = []
 
-    # Search by username (partial, case-insensitive)
     if search:
-        query += " AND username LIKE %s"
+        base_query += " AND username LIKE %s"
         params.append(f"%{search}%")
 
-    # Filter by role
     if role_filter in ("admin", "user"):
-        query += " AND role = %s"
+        base_query += " AND role = %s"
         params.append(role_filter)
 
-    cursor.execute(query, params)
+    # ---- Total count (for pagination) ----
+    count_query = "SELECT COUNT(*) AS total " + base_query
+    cursor.execute(count_query, params)
+    total_users = cursor.fetchone()["total"]
+
+    total_pages = (total_users + per_page - 1) // per_page
+
+    # ---- Paginated data query ----
+    data_query = (
+        "SELECT id, username, role "
+        + base_query +
+        " ORDER BY id "
+        " LIMIT %s OFFSET %s"
+    )
+
+    cursor.execute(data_query, params + [per_page, offset])
     users = cursor.fetchall()
 
-    
-    # Fetch admin departments
+    # ---- Admin departments ----
     cursor.execute("SELECT id, department_name FROM admin_departments")
     departments = cursor.fetchall()
-
 
     conn.close()
 
@@ -146,7 +161,12 @@ def details():
         "details.html",
         users=users,
         departments=departments,
-        role=session.get('role')
+        page=page,
+        per_page=per_page,
+        total_pages=total_pages,
+        search=search,
+        role_filter=role_filter,
+        role=session.get("role")
     )
 
 @details_bp.route('/departments/add', methods=['POST'])
