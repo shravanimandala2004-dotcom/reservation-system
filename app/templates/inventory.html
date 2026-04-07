@@ -47,10 +47,10 @@
             <h1>Network Devices Reservation</h1>
 
             <!-- Search Box -->
-            <div class="search-bar">
+            <!-- <div class="search-bar">
                 <input type="text" id="searchInput" placeholder="Search resource..." onkeyup="filterTable()"
                     style="padding: 10px; width: 100%; border-radius: 5px;">
-            </div>
+            </div> -->
 
             <div class="drop-down-container">
                 <!-- Manufacturer dropdown -->
@@ -1634,7 +1634,7 @@ statusSelect.innerHTML = `
             const ap_id = apSelect.value;
 
             if (manufacturer_id === "" || (controller_id === "" && ap_id === "") || start === "" || end === "") {
-                alert("Select a manufacturer,AP or controller before reserving");
+                alert("Select a manufacturer,AP or controller,start date,end date before reserving");
                 return;
             }
 
