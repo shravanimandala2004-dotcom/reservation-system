@@ -163,14 +163,14 @@ def reserve():
     """, (user_id,))
     active = cursor.fetchall() # active reservations of the user
     active_count = active[0]['count'] # number of active reservations
-    
+
     
     data = request.get_json()
     ap_id = data.get('ap_id') or None
     controller_id = data.get('controller_id')
     start_time = data.get('start_time')
     end_time = data.get('end_time')
-    ap=None
+    ap=None    
 
     # get AP details 
     if(ap_id):
@@ -212,6 +212,31 @@ def reserve():
             "status": "error",
             "message": f"⚠️ You already have {max_reservations} active reservations."
         }), 400
+    
+    # Fetch active controllers for the user
+    cursor.execute("""
+        SELECT DISTINCT controller_id
+        FROM reservations
+        WHERE user_id = %s
+        AND end_datetime >= NOW()
+    """, (user_id,))
+
+    active_controllers = cursor.fetchall() 
+
+    
+    # If user has active reservations
+    if active_controllers:
+        existing_controller_id = active_controllers[0]['controller_id']
+        print("existing_controller_id:",existing_controller_id)
+        print("controller_id:",controller_id)
+
+        # If trying to reserve a different controller → BLOCK
+        if int(existing_controller_id) != int(controller_id):
+            return jsonify({
+                "status": "error",
+                "message": "You already have an active reservation on another cloud controller. "
+                "Please release it before reserving a different controller."
+            }),409
     
     # Check for overlapping reservations
     cursor.execute("""
