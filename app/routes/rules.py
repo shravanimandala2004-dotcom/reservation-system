@@ -46,14 +46,13 @@ def delete_rule(rule_id):
 
 @rules_bp.route('/accept_rules')
 def accept_rules():
-    print("Accept Rules route called")
+    # print("Accept Rules route called")
     try:
-        print("here")
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM rules")
         rules = cursor.fetchall()
-        print("rules:", rules) 
+        # print("rules:", rules) 
         return render_template('accept_rules.html', rules=rules)
     except Exception as e:
         return jsonify({'message':"Error fetching rules: {str(e)}",'status':"error"}),500

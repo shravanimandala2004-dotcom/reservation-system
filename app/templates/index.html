@@ -67,7 +67,10 @@
                 if (response.ok && result.status === 'success') {
                     // Redirect to inventory page
                     // window.location.href = '/inventory';
-                    window.location.href = '/rules/accept_rules';
+                    if(result.rules_accepted)
+                        window.location.href = '/inventory';
+                    else 
+                        window.location.href = '/rules/accept_rules';
                 } else {
                     // Show error alert
                     showAlert(result.message || 'Invalid login credentials',result.status);

@@ -139,9 +139,9 @@ def login():
         user_dn = user_entry.distinguishedName.value
         groups = user_entry.memberOf.values if 'memberOf' in user_entry else []
         group_cns = [extract_cn(dn) for dn in groups]
-        print("Direct groups (DNs):", groups)
-        print("Direct groups (CNs):", group_cns)
-        print("")
+        # print("Direct groups (DNs):", groups)
+        # print("Direct groups (CNs):", group_cns)
+        # print("")
 
         # service_conn.search(
         #     search_base="DC=vistancenetworks,DC=com",
@@ -194,9 +194,11 @@ def login():
         cursor.execute("SELECT * FROM users WHERE username=%s AND role=%s",
                        (username, role))
         user = cursor.fetchone()
+        rules_accepted = False
  
         if user:
-            session['user_id'] = user['id']    
+            session['user_id'] = user['id']
+            rules_accepted = True    
         else:
             try:
                 password ="**"
@@ -213,6 +215,6 @@ def login():
  
         session['username'] = username
         session['role'] = role        
-        return jsonify(status='success', message="Login successful"), 200
+        return jsonify(status='success', message="Login successful", rules_accepted=rules_accepted), 200
     else:
         return redirect(url_for('auth.index'))
