@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Admin Contacts</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='ruckus.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='sidebar.css') }}">
+</head>
+<body class="ruckus-theme">
+  <div class="sidebar">
+    <img src="{{ url_for('static', filename='RUCKUS-Networks-Logos-artwork_white-orange.png') }}" alt="Logo" class="logo">
+    <nav>
+      <a href="{{ url_for('inventory.inventory') }}" {% if request.path.startswith('/inventory') %}class="active"{% endif %}>Inventory</a>
+      <a href="{{ url_for('rules.rules') }}" {% if request.path.startswith('/rules') %}class="active"{% endif %}>Rules Page</a>
+      <a href="{{ url_for('inventory.contacts') }}" {% if request.path.startswith('/inventory/contact') %}class="active"{% endif %}>Contacts</a>
+
+      {% if role == 'admin' %}
+        <a href="{{ url_for('inventory.admin_page') }}" {% if request.path.startswith('/admin') %}class="active"{% endif %}>Admin Page</a>
+        <a href="{{ url_for('details.details') }}" {% if request.path.startswith('/details') %}class="active"{% endif %}>User Details</a>
+      {% endif %}
+    </nav>
+
+    <div class="sidebar-logout-separator"></div>
+    <a href="{{ url_for('auth.login') }}" class="logout-btn">Logout</a>
+  </div>
+
+  <div class="container">
+    <div class="container-two">
+      <h1 class="header">📧 Admin Contacts</h1>
+
+      <ul class="contacts-list">
+        {% for contact in contacts %}
+          <li>
+            {{ contact.email }}
+            {% if role == 'admin' %}
+              <form method="POST" action="{{ url_for('inventory.delete_contact', contact_id=contact.id) }}" style="display:inline;">
+                <button type="submit">Delete</button>
+              </form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+
+      {% if role == 'admin' %}
+        <div class="add-contact-form">
+          <h2>Add a New Contact</h2>
+          <form method="POST" action="{{ url_for('inventory.add_contact') }}">
+            <input type="email" name="email" placeholder="Enter admin email" required>
+            <button type="submit">➕ Add Contact</button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>

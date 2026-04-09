@@ -22,6 +22,8 @@
 
                <a href="{{ url_for('rules.rules') }}" {% if request.path.startswith('/rules') %}class="active"{% endif %}>Rules Page</a>
 
+               <a href="{{ url_for('inventory.contacts') }}" {% if request.path.startswith('/inventory/contact') %}class="active"{% endif %}>Contacts</a>
+
 
 
             {% if role == 'admin' %}
@@ -30,14 +32,17 @@
             <a href="{{ url_for('details.details') }}" {% if request.path.startswith('/details') %}class="active" {%
                 endif %}>User Details</a>
             
-            <a href="{{ url_for('permission.access_page') }}"{% if request.path.startswith('/access') %}class="active" {%
-                endif %}>Access Page</a>
+            <!-- <a href="{{ url_for('permission.access_page') }}"{% if request.path.startswith('/access') %}class="active" {%
+                endif %}>Access Page</a> -->
      
             {% endif %}
 
             
         </nav>
+       
+
         <div class="sidebar-logout-separator"></div>
+       
         <a href="{{ url_for('auth.login') }}" class="logout-btn">Logout</a>
     </div>
 

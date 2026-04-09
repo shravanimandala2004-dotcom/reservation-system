@@ -19,6 +19,7 @@
       <a href="{{ url_for('rules.rules') }}" {% if request.path.startswith('/rules') %}class="active" {% endif %}>Rules
         Page</a>
 
+        <a href="{{ url_for('inventory.contacts') }}" {% if request.path.startswith('/inventory/contact') %}class="active"{% endif %}>Contacts</a>
 
 
       {% if role == 'admin' %}
@@ -28,6 +29,7 @@
         %}>User Details</a>
       {% endif %}
 
+       
 
     </nav>
     <div class="sidebar-logout-separator"></div>

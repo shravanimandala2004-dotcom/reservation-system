@@ -18,6 +18,8 @@
                 {% endif %}>Inventory</a>
             <a href="{{ url_for('rules.rules') }}" {% if request.path.startswith('/rules') %}class="active" {% endif
                 %}>Rules Page</a>
+                 <a href="{{ url_for('inventory.contacts') }}" {% if request.path.startswith('/inventory/contact') %}class="active"{% endif %}>Contacts</a>
+
             {% if role == 'admin' %}
             <a href="{{ url_for('inventory.admin_page') }}" {% if request.path.startswith('/admin') %}class="active" {%
                 endif %}>Admin Page</a>
@@ -142,7 +144,7 @@
         <!-- Add Department -->
         <form id="add-form" method="POST" action="{{ url_for('details.add_department') }}" style="margin-bottom: 15px;">
             <input type="text" name="department_name" placeholder="New Department Name" required>
-            <button type="submit" style="background-color:#4caf50;color:white;">
+            <button type="submit" style="background-color:#f57c00;color:white;">
                 Add Department
             </button>
         </form>
@@ -174,8 +176,6 @@
             </tbody>
         </table>
     </div>
-
-
 
 </body>
 

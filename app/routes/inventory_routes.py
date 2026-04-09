@@ -827,3 +827,43 @@ def change_ap_status():
         cursor.close()
         conn.close()
     
+
+
+
+
+@inventory_bp.route('/contact', methods=['GET'])
+def contacts():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM contacts")   # contacts table with id, email
+    contacts = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return render_template('contact.html', contacts=contacts, role=session.get('role'))
+
+@inventory_bp.route('/contact/add', methods=['POST'])
+def add_contact():
+    if session.get('role') == 'admin':   # only admins can add
+        email = request.form.get('email')
+        if email:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO contacts (email) VALUES (%s)", (email,))
+            conn.commit()
+            cursor.close()
+            conn.close()
+    return redirect(url_for('inventory.contacts'))
+
+@inventory_bp.route('/contact/delete/<int:contact_id>', methods=['POST'])
+def delete_contact(contact_id):
+    if session.get('role') == 'admin':   # only admins can delete
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM contacts WHERE id = %s", (contact_id,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+    return redirect(url_for('inventory.contacts'))
+
+
+    
