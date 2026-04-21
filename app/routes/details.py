@@ -142,7 +142,7 @@ def details():
 
     # ---- Paginated data query ----
     data_query = (
-        "SELECT id, username, role,expires_at "
+        "SELECT id, username, role,expires_at,status "
         + base_query +
         " ORDER BY id "
         " LIMIT %s OFFSET %s"
@@ -153,7 +153,7 @@ def details():
 
     for u in users:
         if u['expires_at']:
-            u['expires_at'] = u['expires_at'].strftime(" %d %B %Y at %I:%M %p")
+            u['expires_at'] = u['expires_at'].strftime(" %d %B %Y, %I:%M %p")
         else:
             u['expires_at']="-"
 

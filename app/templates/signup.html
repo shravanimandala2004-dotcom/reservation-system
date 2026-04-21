@@ -45,13 +45,14 @@
     </style>
 </head>
 <body>
+    <div class="alert">This is a alert</div>
     <div class="container">
         <!-- Logo -->
         <img src="{{ url_for('static', filename='RUCKUS-Networks-Logos-artwork_white-orange.png') }}" alt="Ruckus Logo" class="logo">
  
         <h1 style="text-align:center;">Individual Access</h1>
  
-        <form method="POST" action="/signup">
+        <form id="signupForm" method="POST" action="/signup">
          
             <input type="text" name="username" placeholder="Username" required>
             <!-- <input type="password" name="password" placeholder="Password" required> -->
@@ -76,5 +77,65 @@
             </div> -->
         </form>
     </div>
+
+    <script>
+        const form=document.getElementById("signupForm");
+
+        const addButton = form.querySelector('button[type="submit"]');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Prevent default form submission
+            addButton.disabled = true;
+            addButton.textContent = "Loading...";
+
+            const formData = new FormData(form);
+            const data = {
+                role: formData.get('role'),
+                username: formData.get('username'),
+                access_type: formData.get('access_type')
+            };
+
+            try {
+                const response = await fetch('/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    // Redirect to inventory page
+                    window.location.href = '/details';
+                    
+                } else {
+                    // Show error alert
+                    showAlert(result.message || 'Invalid login credentials',result.status);
+                }
+            } catch (error) {
+                // console.error('Login error:', error);
+                alert('Something went wrong. Please try again.');
+            }finally {
+                // Re-enable button and reset text
+                addButton.disabled = false;
+                addButton.textContent = "Add";
+            }
+    
+        });
+
+        function showAlert(message, type) {
+            const alert = document.getElementsByClassName('alert')[0];
+            console.log(alert)
+            alert.innerText = message;
+            alert.classList.remove('success', 'error', 'warning')
+            alert.classList.add(type)
+            alert.style.display = "block";
+            setTimeout(() => {
+                alert.style.display = "none";
+            }, 5000)
+        }
+    </script>
 </body>
 </html>

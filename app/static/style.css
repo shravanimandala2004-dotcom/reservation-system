@@ -231,3 +231,22 @@ a:hover {
 .btn-save:hover {
     background: #66bb6a;
 }
+
+.alert{
+    display: none;
+    color: white;
+    padding: 5px 20px;
+    /* background-color: #E12726; */
+    text-align: left;
+    position: fixed;
+    top: 0;
+    width: -webkit-fill-available;
+}
+
+.success{
+    background-color: green;
+}
+
+.error{
+    background-color: #E12726;
+}

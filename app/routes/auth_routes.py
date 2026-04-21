@@ -94,19 +94,21 @@ def index():
 @auth_bp.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        username = request.form['username']
+        data=request.get_json()
+        username =data.get('username')
         password = "**"  # placeholder
-        role = request.form['role']
-        access_type = request.form['access_type']
+        role = data.get('role')
+        access_type = data.get('access_type')
 
         if not username or not role or not access_type:
-            return jsonify(status="error", message="Enter username,role and access_type")
+            return jsonify(status="error", message="Missing username or role or access_type")
 
         try:
             conn = get_db_connection()
-            cursor = conn.cursor()
+            cursor = conn.cursor(dictionary=True)
 
             cursor.execute("Select * from users where username=%s and role=%s", (username,role))
+            user=cursor.fetchone()
 
             status = 'pending' if access_type == 'temporary' else 'active'
             if access_type == "temporary":
@@ -114,13 +116,23 @@ def signup():
             else:
                 expires_at = None
 
-            # Insert user with pending status
-            cursor.execute(
-                "INSERT INTO users (username, password, role, access_type, status, expires_at) VALUES (%s, %s, %s, %s, %s,%s)",
-                (username, password, role, access_type, status, expires_at)
-            )
-            conn.commit()
-            user_id = cursor.lastrowid
+            if user:
+                now=datetime.datetime.now()
+                if not user['expires_at'] or (user['expires_at'] and user['expires_at']>now):
+                    return jsonify(status="error",message="Account already present."), 400
+                
+                cursor.execute("UPDATE users SET expires_at=%s, status=%s WHERE id=%s",
+                            (expires_at,status, user['id']))
+                conn.commit()
+                user_id=user['id']
+            else:                
+                # Insert user with pending status
+                cursor.execute(
+                    "INSERT INTO users (username, password, role, access_type, status, expires_at) VALUES (%s, %s, %s, %s, %s,%s)",
+                    (username, password, role, access_type, status, expires_at)
+                )
+                conn.commit()
+                user_id = cursor.lastrowid
 
             # set status to pending for temporary users until they confirm via email
             if access_type == 'temporary':
@@ -137,11 +149,15 @@ def signup():
                 # use notification_routes.py's notify_user function to send email
                 notify_user(username, subject, body)
 
-            return redirect(url_for('details.details'))
+            # return redirect(url_for('details.details'))
+            return jsonify(status="success", message="Successful"), 200
         except Exception as e:
-             return f"Signup failed: {str(e)}"
-
-    return render_template('signup.html')
+             return jsonify(status="error", message=f"Signup failed: {str(e)}"), 400
+        finally:
+            conn.close()
+        
+    else:
+        return render_template('signup.html')
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -221,8 +237,8 @@ def register():
         else:
             # Insert new user
             cursor.execute(
-                "INSERT INTO users (username, role, password, expires_at) "
-                "VALUES (%s, %s, %s, %s)",
+                "INSERT INTO users (username, role, password, expires_at,status) "
+                "VALUES (%s, %s, %s, %s,'active')",
                 (username, 'user', "**", expires_at)
             )
             conn.commit()
@@ -236,7 +252,7 @@ def register():
 Your temporary access to the Reservation Portal has been activated!
 
 📧 Please log in using:
-• Email: {username}
+• Email: {username}\n
 • Password: (the same password you use for your email account)
 
 ⏰ Valid until: {formatted_expiry}
