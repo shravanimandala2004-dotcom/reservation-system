@@ -340,6 +340,7 @@ def reserve():
     if(ap):
         row['resource_name']=ap['model_name']
     row['controller_name']=controller['name']
+    row['controller_url'] =controller['url']
 
 
     conn.close()
