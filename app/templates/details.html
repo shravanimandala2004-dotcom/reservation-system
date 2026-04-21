@@ -36,7 +36,7 @@
 
         <div id="search-container">
             <form id="search-form" method="GET" action="{{ url_for('details.details') }}">
-                <input type="text" name="search" placeholder="Search Users by Username">
+                <input type="text" name="search" placeholder="Search Users by Email">
 
                 <select name="role">
                     <option value="">All</option>
@@ -59,9 +59,10 @@
             <thead>
                 <tr>
                     <th>S. No.</th>
-                    <th>Username </th>
+                    <th>Email </th>
 
                     <th>Role</th>
+                    <th>Expires at</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -72,6 +73,7 @@
                     <td>{{ u.username }}</td>
 
                     <td>{{ u.role }}</td>
+                    <td>{{ u.expires_at }}</td>
                     <td>
                         <a href="{{ url_for('details.edit_user', user_id=u.id) }}" style="text-decoration: none;">
                             <button class="edit-btn">Edit</button>
@@ -139,7 +141,7 @@
 
 
         <hr style="margin: 30px 0;">
-        <h2>Departments with Admin Access</h2>
+        <h2>Departments with User Access</h2>
 
         <!-- Add Department -->
         <form id="add-form" method="POST" action="{{ url_for('details.add_department') }}" style="margin-bottom: 15px;">
@@ -175,6 +177,45 @@
                 {% endfor %}
             </tbody>
         </table>
+
+
+        <!-- <hr style="margin: 30px 0;">
+        <h2>Departments with Admin Access</h2>
+
+        <!-- Add Department --
+        <form id="add-form" method="POST" action="{{ url_for('details.add_department') }}" style="margin-bottom: 15px;">
+            <input type="text" name="department_name" placeholder="New Department Name" required>
+            <button type="submit" style="background-color:#f57c00;color:white;">
+                Add Department
+            </button>
+        </form>
+
+        <!-- Departments List --
+        <table border="1" cellpadding="8">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Department Name</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dept in departments %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ dept.department_name }}</td>
+                    <td>
+                        <a href="{{ url_for('details.delete_department', dept_id=dept.id) }}"
+                            onclick="return confirm('Delete this department?');">
+                            <button class="delete-btn">
+                                Delete
+                            </button>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table> -->
     </div>
 
 </body>

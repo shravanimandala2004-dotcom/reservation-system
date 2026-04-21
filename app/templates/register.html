@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='register.css') }}">
+    <style>
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+            background-color: #1f1f1f;
+            padding: 30px;
+            border-radius: 8px;
+        }
+ 
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background-color: #2a2a2a;
+            color: white;
+            border: none;
+            border-radius: 6px;
+        }
+ 
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #ff9800;
+            color: black;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+ 
+        .link {
+            text-align: center;
+            margin-top: 15px;
+        }
+ 
+        .link a {
+            color: #ff9800;
+            text-decoration: none;
+        }
+
+        
+    </style>
+</head>
+<body>
+    <div class="alert">This is a alert</div>
+    <div class="container">
+        <!-- Logo -->
+        <img src="{{ url_for('static', filename='RUCKUS-Networks-Logos-artwork_white-orange.png') }}" alt="Ruckus Logo" class="logo">
+ 
+        <h1 style="text-align:center;">Register</h1>
+ 
+        <form method="POST" action="/register" id="registerForm">
+         
+            <input type="text" name="username" placeholder="Email" required>
+            <!-- <input type="password" name="password" placeholder="Password" required> -->
+ 
+ 
+         
+            <button type="submit">Register</button>
+ 
+            <div class="link">
+                Already have an account? <a href="/">Log in</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('registerForm');
+        const regBtn= form.querySelector('button[type="submit"]');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Prevent default form submission
+            regBtn.disabled=true;
+            regBtn.innerHTML="Loading..."
+
+            const formData = new FormData(form);
+            const data = {
+                
+                username: formData.get('username'),
+                
+            };
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                    
+                showAlert(result.message || 'Invalid login credentials',result.status);
+                
+            } catch (error) {
+                console.error('error:', error);
+                alert('Something went wrong. Please try again.');
+            }finally{
+                regBtn.disabled=false;
+                regBtn.innerHTML="Register";
+            }
+        });
+
+        function showAlert(message, type) {
+            const alert = document.getElementsByClassName('alert')[0];
+            console.log(alert)
+            alert.innerText = message;
+            alert.classList.remove('success', 'error', 'warning')
+            alert.classList.add(type)
+            alert.style.display = "block";
+            setTimeout(() => {
+                alert.style.display = "none";
+            }, 5000)
+        }
+
+    </script>
+</body>
+</html>

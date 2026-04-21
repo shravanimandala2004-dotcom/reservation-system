@@ -37,14 +37,19 @@
             <button type="submit">Login</button>
 
         </form>
+
+        <a href="/register" >Register</a>
     </div>
 
     <!-- JavaScript to handle login -->
     <script>
         const form = document.getElementById('loginForm');
+        const loginButton = form.querySelector('button[type="submit"]');
 
         form.addEventListener('submit', async (event) => {
             event.preventDefault(); // Prevent default form submission
+            loginButton.disabled = true;
+            loginButton.textContent = "Loading...";
 
             const formData = new FormData(form);
             const data = {
@@ -76,9 +81,14 @@
                     showAlert(result.message || 'Invalid login credentials',result.status);
                 }
             } catch (error) {
-                console.error('Login error:', error);
+                // console.error('Login error:', error);
                 alert('Something went wrong. Please try again.');
+            }finally {
+                // Re-enable button and reset text
+                loginButton.disabled = false;
+                loginButton.textContent = "Login";
             }
+    
         });
 
         function showAlert(message, type) {

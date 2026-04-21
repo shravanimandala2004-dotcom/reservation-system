@@ -142,7 +142,7 @@ def details():
 
     # ---- Paginated data query ----
     data_query = (
-        "SELECT id, username, role "
+        "SELECT id, username, role,expires_at "
         + base_query +
         " ORDER BY id "
         " LIMIT %s OFFSET %s"
@@ -151,8 +151,15 @@ def details():
     cursor.execute(data_query, params + [per_page, offset])
     users = cursor.fetchall()
 
+    for u in users:
+        if u['expires_at']:
+            u['expires_at'] = u['expires_at'].strftime(" %d %B %Y at %I:%M %p")
+        else:
+            u['expires_at']="-"
+
+
     # ---- Admin departments ----
-    cursor.execute("SELECT id, department_name FROM admin_departments")
+    cursor.execute("SELECT id, department_name FROM user_departments")
     departments = cursor.fetchall()
 
     conn.close()
@@ -180,7 +187,7 @@ def add_department():
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT IGNORE INTO admin_departments (department_name) VALUES (%s)",
+            "INSERT IGNORE INTO user_departments (department_name) VALUES (%s)",
             (department,)
         )
         conn.commit()
@@ -195,7 +202,7 @@ def delete_department(dept_id):
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM admin_departments WHERE id = %s", (dept_id,))
+    cursor.execute("DELETE FROM user_departments WHERE id = %s", (dept_id,))
     conn.commit()
     conn.close()
 

@@ -9,6 +9,9 @@ from ldap3 import Server, Connection, ALL, SIMPLE
 import uuid
 from .notification_routes import notify_user
 import datetime
+# import random
+# import string
+# import bcrypt
  
 load_dotenv()
  
@@ -30,6 +33,34 @@ def is_admin_department(user_department):
     cursor.execute(
         "SELECT 1 FROM admin_departments WHERE department_name = %s",
         (user_department,)
+    )
+    result = cursor.fetchone()
+
+    conn.close()
+
+    return result is not None
+
+def is_user_department(user_department):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute(
+        "SELECT 1 FROM user_departments WHERE department_name = %s",
+        (user_department,)
+    )
+    result = cursor.fetchone()
+
+    conn.close()
+
+    return result is not None
+
+def is_admin(email):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute(
+        "SELECT 1 FROM users WHERE username = %s AND role = 'admin'",
+        (email,)
     )
     result = cursor.fetchone()
 
@@ -68,9 +99,14 @@ def signup():
         role = request.form['role']
         access_type = request.form['access_type']
 
+        if not username or not role or not access_type:
+            return jsonify(status="error", message="Enter username,role and access_type")
+
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
+
+            cursor.execute("Select * from users where username=%s and role=%s", (username,role))
 
             status = 'pending' if access_type == 'temporary' else 'active'
             if access_type == "temporary":
@@ -106,6 +142,113 @@ def signup():
              return f"Signup failed: {str(e)}"
 
     return render_template('signup.html')
+
+@auth_bp.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        data=request.get_json()
+        username =data.get('username')
+
+        if not username:
+            return jsonify(status='error', message='Enter email')
+        
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM users WHERE username=%s AND role=%s",
+                       (username, 'user'))
+        user = cursor.fetchone()
+
+        now = datetime.datetime.now()
+
+        if user and user['expires_at']>now:
+            # Check if expiry is within next 24 hours
+            if user['expires_at'] - now < datetime.timedelta(hours=24):
+                return jsonify(
+                    status='error',
+                    message='❌ You cannot re-register within 24 hours of expiry. Please try again later.'
+                ), 403
+            else:
+                return jsonify(
+                    status='error',
+                    message='You already have an active account'
+                ), 403
+        
+        server = Server(LDAP_SERVER, get_info=ALL)
+        service_conn = Connection(server, user=SERVICE_ACCOUNT_DN,
+                                password=SERVICE_ACCOUNT_PASSWORD,
+                                authentication=SIMPLE, auto_bind=True)
+ 
+        service_conn.search(
+            search_base="DC=vistancenetworks,DC=com",
+            search_filter=f"(mail={username})",
+            attributes=["distinguishedName", "memberOf", "department","employeeID","company","title"]
+        )
+
+        if not service_conn.entries:
+            return jsonify(status='error', message="❌ Invalid email"), 401
+ 
+        user_entry = service_conn.entries[0]
+
+        if not is_user_department(user_entry.department.value):
+            return jsonify(status='error', message='❌ Registration failed. User does not belong to valid department'), 401
+        
+        # Generate random password
+        # random_password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+        expires_at = datetime.datetime.now() + datetime.timedelta(hours=48)
+
+        # Hash the password before storing
+        # hashed_password = bcrypt.hashpw(random_password.encode('utf-8'), bcrypt.gensalt())
+        
+        # if user:
+        #     # Update existing user with new password and expiry
+        #     cursor.execute("UPDATE users SET password=%s, expires_at=%s WHERE id=%s",
+        #                    (hashed_password.decode('utf-8'), expires_at, user['id']))
+        #     conn.commit()
+        # else:
+        #     # Insert new user
+        #     cursor.execute(
+        #         "INSERT INTO users (username, role, password, expires_at) "
+        #         "VALUES (%s, %s, %s, %s)",
+        #         (username, 'user', hashed_password.decode('utf-8'), expires_at)
+        #     )
+        #     conn.commit()
+
+        if user:
+            # Update existing user with new password and expiry
+            cursor.execute("UPDATE users SET password=%s, expires_at=%s WHERE id=%s",
+                           ("**", expires_at, user['id']))
+            conn.commit()
+        else:
+            # Insert new user
+            cursor.execute(
+                "INSERT INTO users (username, role, password, expires_at) "
+                "VALUES (%s, %s, %s, %s)",
+                (username, 'user', "**", expires_at)
+            )
+            conn.commit()
+
+        formatted_expiry = expires_at.strftime("%A, %d %B %Y at %I:%M %p")
+        notify_user(
+            username,
+            "Your Resource Scheduler Access",
+            f"""Hello,
+
+Your temporary access to the Reservation Portal has been activated!
+
+📧 Please log in using:
+• Email: {username}
+• Password: (the same password you use for your email account)
+
+⏰ Valid until: {formatted_expiry}
+
+Simply use your email credentials to sign in before the expiry time. After that, you’ll need to request new access.
+
+Best regards,
+Resource Scheduler Team"""
+        )
+        return jsonify(status='success',message='Registration successful. Temporary access granted for 48 hours.'), 200
+    else:
+        return render_template('register.html')
 
 @auth_bp.route('/confirm')
 def confirm():
@@ -169,11 +312,6 @@ def login():
         # )        
         # entry = service_conn.entries[0]
         # print(entry)
-
-        # verify user credentials 
-        user_conn = Connection(server, user=user_dn, password=password, authentication=SIMPLE)
-        if not user_conn.bind():
-            return jsonify(status='error', message="❌ Invalid login credentials"), 401
         
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
@@ -183,93 +321,201 @@ def login():
         rules_accepted = False
 
         # check if user exists in database 
-        if user:
+        if user:            
+            # status=user['status']
+            expires_at = user['expires_at']
+
+            # verify user credentials 
+            user_conn = Connection(server, user=user_dn, password=password, authentication=SIMPLE)
+            if not user_conn.bind():
+                return jsonify(status='error', message="❌ Invalid login credentials"), 401
             
-            # Temporary user check
-            if user['access_type'] == 'temporary':
-                status=user['status']
-                expires_at = user['expires_at']
-                if status != 'active':
-                    return jsonify(
-                        status='error', 
-                        message="❌ Your account is not active. Please check your email to activate."
-                        ), 403
-                
-                if expires_at and expires_at < datetime.datetime.now():
-                    # Expired → delete account
-                    # cursor.execute("DELETE FROM users WHERE id=%s", (user['id'],))
-                    conn.commit()
-                    conn.close()
-                    return jsonify(
-                        status='error', 
-                        message="❌ Your account has expired."
-                        ), 403
-            
-                # session['user_id'] = user['id']
-                # session['username'] = username
-                # session['role'] = role        
-                # return jsonify(status='success', message="Login successful", rules_accepted=rules_accepted), 200
-            elif user['access_type'] == 'ldap':
-                user_department = user_entry.department.value if 'department' in user_entry else None
-                if role == "admin":
-                    if not is_admin_department(user_department):
-                        return jsonify(
-                            status="error",
-                            message="❌ Access denied: admin group membership required"
-                        ), 403
-                elif role == "user":
-                    if not USER_GROUPS.intersection(group_cns):
-                        return jsonify(
-                            status="error",
-                            message="❌ Access denied: user group membership required"
-                        ), 403
-        else:        
+            if expires_at and expires_at < datetime.datetime.now():
+                # Expired → delete account
+                # cursor.execute("DELETE FROM users WHERE id=%s", (user['id'],))
+                # conn.commit()
+                # conn.close()
+                return jsonify(
+                    status='error', 
+                    message="❌ Your account has expired. Register again to get access"
+                    ), 403
+           
             # ---- ROLE AUTHORIZATION ----
             
             user_department = user_entry.department.value if 'department' in user_entry else None
             if role == "admin":
-                if not is_admin_department(user_department):
+                rules_accepted=True                
+                if user['role']!='admin':
                     return jsonify(
                         status="error",
                         message="❌ Access denied: admin group membership required"
                     ), 403
             elif role == "user":
-                if not USER_GROUPS.intersection(group_cns):
+                # if not bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
+                #     return jsonify(status='error', message="❌ Invalid login credentials"), 401
+                
+                if not is_user_department(user_department):
                     return jsonify(
                         status="error",
                         message="❌ Access denied: user group membership required"
                     ), 403
-            
-        
-            # ---- ROLE AUTHORIZATION ----
-    
-            # if role == "admin":
-            #  if username.lower() not in {u.lower() for u in ADMIN_USERS}:
-            #    return jsonify(
-            #     status="error",
-            #     message="❌ Access denied: You are not authorized as admin"
-            # ), 403
+                
+            session['user_id'] = user['id']
+            session['username'] = username
+            session['role'] = role        
+            return jsonify(status='success', message="Login successful", rules_accepted=rules_accepted), 200
+                
+        else:
+            return jsonify(status='error', message="❌ Please register for access"), 401
          
  
-        if user:
-            session['user_id'] = user['id']
-            rules_accepted = True    
-        else:
-            try:
-                password ="**"
-                cursor.execute("INSERT INTO users (username, password, role, access_type) VALUES ( %s, %s, %s, %s)",
-                            ( username, password, role, 'ldap'))
-                user_id = cursor.lastrowid
-                session['user_id'] = user_id
-                print("New user created with ID:", user_id)
-                conn.commit()
-                conn.close()
-            except Exception as e:
-                print(f"Error creating user: {str(e)}")
-                return jsonify(status='error', message="❌ Something went wrong"), 401
- 
-        session['username'] = username
-        session['role'] = role        
-        return jsonify(status='success', message="Login successful", rules_accepted=rules_accepted), 200
     else:
         return redirect(url_for('auth.index'))
+    
+
+# @auth_bp.route('/login', methods=['GET', 'POST'])
+# def login():
+#     if request.method == 'POST':
+#         data=request.get_json()
+#         username =data.get('username')
+#         password =data.get('password')
+#         role =data.get('role')
+ 
+#         if not username or not password or not role:
+#             return jsonify(status='error',message="Missing username, password, or role.")
+        
+ 
+#         server = Server(LDAP_SERVER, get_info=ALL)
+#         service_conn = Connection(server, user=SERVICE_ACCOUNT_DN,
+#                                 password=SERVICE_ACCOUNT_PASSWORD,
+#                                 authentication=SIMPLE, auto_bind=True)
+ 
+#         service_conn.search(
+#             search_base="DC=vistancenetworks,DC=com",
+#             search_filter=f"(mail={username})",
+#             attributes=["distinguishedName", "memberOf", "department","employeeID","company","title"]
+#         )
+ 
+#         if not service_conn.entries:
+#             return jsonify(status='error', message="❌ Invalid login credentials"), 401
+ 
+#         user_entry = service_conn.entries[0]
+#         user_dn = user_entry.distinguishedName.value
+#         groups = user_entry.memberOf.values if 'memberOf' in user_entry else []
+#         group_cns = [extract_cn(dn) for dn in groups]
+
+#         # print("Direct groups (DNs):", groups)
+#         # print("Direct groups (CNs):", group_cns)
+#         # print("")
+
+#         # service_conn.search(
+#         #     search_base="DC=vistancenetworks,DC=com",
+#         #     search_filter=f"(mail={username})",
+#         #     attributes="*"
+#         # )        
+#         # entry = service_conn.entries[0]
+#         # print(entry)
+
+#         # verify user credentials 
+#         user_conn = Connection(server, user=user_dn, password=password, authentication=SIMPLE)
+#         if not user_conn.bind():
+#             return jsonify(status='error', message="❌ Invalid login credentials"), 401
+        
+#         conn = get_db_connection()
+#         cursor = conn.cursor(dictionary=True)
+#         cursor.execute("SELECT * FROM users WHERE username=%s AND role=%s",
+#                        (username, role))
+#         user = cursor.fetchone()
+#         rules_accepted = False
+
+#         # check if user exists in database 
+#         if user:
+            
+#             # Temporary user check
+#             if user['access_type'] == 'temporary':
+#                 status=user['status']
+#                 expires_at = user['expires_at']
+#                 if status != 'active':
+#                     return jsonify(
+#                         status='error', 
+#                         message="❌ Your account is not active. Please check your email to activate."
+#                         ), 403
+                
+#                 if expires_at and expires_at < datetime.datetime.now():
+#                     # Expired → delete account
+#                     # cursor.execute("DELETE FROM users WHERE id=%s", (user['id'],))
+#                     conn.commit()
+#                     conn.close()
+#                     return jsonify(
+#                         status='error', 
+#                         message="❌ Your account has expired."
+#                         ), 403
+            
+#                 # session['user_id'] = user['id']
+#                 # session['username'] = username
+#                 # session['role'] = role        
+#                 # return jsonify(status='success', message="Login successful", rules_accepted=rules_accepted), 200
+#             elif user['access_type'] == 'ldap':
+#                 user_department = user_entry.department.value if 'department' in user_entry else None
+#                 if role == "admin":
+#                     if not is_admin_department(user_department):
+#                         return jsonify(
+#                             status="error",
+#                             message="❌ Access denied: admin group membership required"
+#                         ), 403
+#                 elif role == "user":
+#                     if not USER_GROUPS.intersection(group_cns):
+#                         return jsonify(
+#                             status="error",
+#                             message="❌ Access denied: user group membership required"
+#                         ), 403
+#         else:        
+#             # ---- ROLE AUTHORIZATION ----
+            
+#             user_department = user_entry.department.value if 'department' in user_entry else None
+#             if role == "admin":
+#                 if not is_admin_department(user_department):
+#                     return jsonify(
+#                         status="error",
+#                         message="❌ Access denied: admin group membership required"
+#                     ), 403
+#             elif role == "user":
+#                 if not USER_GROUPS.intersection(group_cns):
+#                     return jsonify(
+#                         status="error",
+#                         message="❌ Access denied: user group membership required"
+#                     ), 403
+            
+        
+#             # ---- ROLE AUTHORIZATION ----
+    
+#             # if role == "admin":
+#             #  if username.lower() not in {u.lower() for u in ADMIN_USERS}:
+#             #    return jsonify(
+#             #     status="error",
+#             #     message="❌ Access denied: You are not authorized as admin"
+#             # ), 403
+         
+ 
+#         if user:
+#             session['user_id'] = user['id']
+#             rules_accepted = True    
+#         else:
+#             try:
+#                 password ="**"
+#                 cursor.execute("INSERT INTO users (username, password, role, access_type) VALUES ( %s, %s, %s, %s)",
+#                             ( username, password, role, 'ldap'))
+#                 user_id = cursor.lastrowid
+#                 session['user_id'] = user_id
+#                 print("New user created with ID:", user_id)
+#                 conn.commit()
+#                 conn.close()
+#             except Exception as e:
+#                 print(f"Error creating user: {str(e)}")
+#                 return jsonify(status='error', message="❌ Something went wrong"), 401
+ 
+#         session['username'] = username
+#         session['role'] = role        
+#         return jsonify(status='success', message="Login successful", rules_accepted=rules_accepted), 200
+#     else:
+#         return redirect(url_for('auth.index'))
