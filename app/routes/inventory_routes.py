@@ -82,7 +82,7 @@ def inventory():
 
         # Fetch active reservations
         cursor.execute("""
-            SELECT r.*, res.model_name AS resource_name, c.name AS controller_name
+            SELECT r.*, res.model_name AS resource_name, c.name AS controller_name, c.url AS controller_url
             FROM reservations r
             LEFT JOIN ap res ON r.ap_id = res.ap_id
             LEFT JOIN controllers c ON r.controller_id = c.controller_id

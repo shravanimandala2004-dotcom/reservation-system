@@ -301,9 +301,9 @@ def login():
         groups = user_entry.memberOf.values if 'memberOf' in user_entry else []
         group_cns = [extract_cn(dn) for dn in groups]
 
-        # print("Direct groups (DNs):", groups)
-        # print("Direct groups (CNs):", group_cns)
-        # print("")
+        print("Direct groups (DNs):", groups)
+        print("Direct groups (CNs):", group_cns)
+        print("")
 
         # service_conn.search(
         #     search_base="DC=vistancenetworks,DC=com",

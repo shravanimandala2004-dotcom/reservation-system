@@ -14,8 +14,8 @@
 
     <!-- Sidebar Navigation -->
     <div class="sidebar">
-        <img src="{{ url_for('static', filename='RUCKUS-Networks-Logos-artwork_white-orange.png') }}" alt="Logo"
-            class="logo">
+         <img src="{{ url_for('static', filename='RUCKUS-Networks-Logos-artwork_white-orange.png') }}" alt="Logo"
+            class="logo"> 
         <nav>
             <a href="{{ url_for('inventory.inventory') }}" {% if request.path.startswith('/inventory') %}class="active"
                 {% endif %}>Inventory</a>
@@ -199,15 +199,18 @@
                         <strong>{{ r.resource_name }}</strong> Reserved on <strong>{{ r.controller_name }}</strong> from
                         {{ r.start_datetime_formatted}} → {{ r.end_datetime_formatted }}
 
+ 
                         {% else %}
 
                         <strong>{{ r.controller_name }}</strong> Reserved from
                         {{ r.start_datetime_formatted }} → {{ r.end_datetime_formatted }}
-                        <!-- {% if r.link %}
-                            | <a href="{{ r.link }}" target="_blank">🔗 Open Resource</a> 
-                            {% endif %} -->
-
-                        {% endif %}
+                       
+                       {% if r.controller_url %}
+    <a href="{{ r.controller_url }}" target="_blank">
+        <button type="button">Open Resource</button>
+    </a>
+{% endif %}
+{% endif %}
                         | <a href="#" data-id="{{ r.id }}"
                             onclick="return confirmAndCancel(event,this);"
                             style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a>
