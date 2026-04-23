@@ -204,13 +204,14 @@
 
                         <strong>{{ r.controller_name }}</strong> Reserved from
                         {{ r.start_datetime_formatted }} → {{ r.end_datetime_formatted }}
+                        {% endif %}
                        
                        {% if r.controller_url %}
-    <a href="{{ r.controller_url }}" target="_blank">
-        <button type="button">Open Resource</button>
-    </a>
-{% endif %}
-{% endif %}
+                            <a href="{{ r.controller_url }}" target="_blank">
+                                <button type="button">Open Resource</button>
+                            </a>
+                        {% endif %}
+
                         | <a href="#" data-id="{{ r.id }}"
                             onclick="return confirmAndCancel(event,this);"
                             style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a>
@@ -688,15 +689,31 @@ statusSelect.innerHTML = `
                     edit_url.type = "url";
                     edit_url.name = "edit_url";
                     edit_url.required = true;
+                    edit_url.placeholder="url"
+
+                    const edit_username=document.createElement('input');
+                    edit_username.type='text';
+                    edit_username.name="cloud_username";
+                    edit_username.required=true;
+                    edit_username.placeholder="cloud username";
+
+                    const edit_password=document.createElement('input');
+                    edit_password.type='password';
+                    edit_password.name="cloud_password";
+                    edit_password.required=true;  
+                    edit_password.placeholder="cloud password";                  
 
                     selectController.onchange = () => {
                         controller_id = selectController.value;
                         if (controller_id !== "") {
-                            fetch(`/get_controller_url?controller_id=${controller_id}`)
+                            fetch(`/get_controller_details?controller_id=${controller_id}`)
                                 .then(response => response.json())
                                 .then(data => {
-                                    current_url = data;
+                                    // console.log(data)
+                                    current_url = data['url'];
                                     edit_url.value = current_url;
+                                    edit_username.value=data['cloud_username'];
+                                    edit_password.value=data['cloud_password'];
                                 })
                         } else {
                             edit_url.value = "";
@@ -706,6 +723,8 @@ statusSelect.innerHTML = `
                     left.appendChild(selectController)
                     left.appendChild(newName);
                     left.appendChild(edit_url);
+                    left.appendChild(edit_username);
+                    left.appendChild(edit_password);
 
                 } else if (this.value == "delete") {
                     const left = document.getElementsByClassName('row-left')[2]
@@ -759,9 +778,23 @@ statusSelect.innerHTML = `
                     url.name = "url";
                     url.placeholder = "https://example.com"
 
+                    const cloud_username = document.createElement('input');
+                    cloud_username.type = "text";
+                    cloud_username.required = true;
+                    cloud_username.name = "cloud_username";
+                    cloud_username.placeholder = "cloud username"
+
+                    const cloud_password = document.createElement('input');
+                    cloud_password.type = "password";
+                    cloud_password.required = true;
+                    cloud_password.name = "cloud_password";
+                    cloud_password.placeholder = "cloud password"
+
                     left.appendChild(selectMan);
                     left.appendChild(newInput)
                     left.appendChild(url);
+                    left.appendChild(cloud_username);
+                    left.appendChild(cloud_password);
                 }
             });
         });
@@ -1069,6 +1102,8 @@ statusSelect.innerHTML = `
                     const controller_manufacturer = document.querySelector("select[name='select_controller_manu']").value;
                     const new_name = document.querySelector("input[name='new_controller']").value.trim();
                     const url = document.querySelector("input[name='url']").value.trim();
+                    const cloud_username = document.querySelector("input[name='cloud_username']").value.trim();
+                    const cloud_password = document.querySelector("input[name='cloud_password']").value.trim();
                     if (controller_manufacturer !== "" && new_name !== "") {
                         fetch('/add_controller', {
                             method: 'POST',
@@ -1078,7 +1113,9 @@ statusSelect.innerHTML = `
                             body: JSON.stringify({
                                 manu_id: controller_manufacturer,
                                 controller_name: new_name,
-                                url: url
+                                url: url,
+                                cloud_username: cloud_username,
+                                cloud_password: cloud_password
                             })
                         }).then(response => {
                             if (!response.ok) {
@@ -1098,6 +1135,8 @@ statusSelect.innerHTML = `
                     const edit_controller = document.querySelector("select[name='select_edit_controller']").value;
                     const new_name = document.querySelector("input[name='new-controller-name']").value.trim();
                     const new_url = document.querySelector("input[name='edit_url']").value.trim();
+                    const cloud_username = document.querySelector("input[name='cloud_username']").value.trim();
+                    const cloud_password = document.querySelector("input[name='cloud_password']").value.trim();
                     if (edit_controller !== "" && (new_name !== "" || new_url !== "")) {
                         fetch('/edit_controller', {
                             method: 'POST',
@@ -1107,7 +1146,9 @@ statusSelect.innerHTML = `
                             body: JSON.stringify({
                                 controller_id: edit_controller,
                                 controller_name: new_name,
-                                new_url: new_url
+                                new_url: new_url,
+                                cloud_username: cloud_username,
+                                cloud_password: cloud_password
                             })
                         }).then(response => {
                             if (!response.ok) {
@@ -1346,7 +1387,15 @@ statusSelect.innerHTML = `
                             ${nr.start_datetime_formatted} → ${nr.end_datetime_formatted}`;
                     }
 
-                    reservationHTML += ` | <a href="#" data-id=${nr.id}
+                    if(nr.controller_url){
+                        reservationHTML+= `
+                        <a href="${ nr.controller_url }" target="_blank">
+                                <button type="button">Open Resource</button>
+                            </a>`
+                    }
+
+                    reservationHTML += `
+                     | <a href="#" data-id=${nr.id}
                             onclick="return confirmAndCancel(event,this);"
                             style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a>
                             </li>

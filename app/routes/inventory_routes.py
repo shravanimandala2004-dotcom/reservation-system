@@ -123,13 +123,15 @@ def add_controller():
     manufacturer = data.get('manu_id')
     name = data.get('controller_name')
     url=data.get('url')
-    print("url:",url)
+    cloud_username=data.get('cloud_username')
+    cloud_password=data.get('cloud_password')
+    # print("url:",url)
 
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO controllers (manufacturer_id, name,url) VALUES (%s, %s, %s)",
-                    (manufacturer, name, url))
+        cursor.execute("INSERT INTO controllers (manufacturer_id, name,url,cloud_username,cloud_password) VALUES (%s, %s, %s)",
+                    (manufacturer, name, url,cloud_username,cloud_password))
         conn.commit()
 
         cursor.close()
@@ -418,22 +420,24 @@ def edit_controller():
     controller_id = data.get('controller_id')
     name = data.get('controller_name')
     new_url=data.get('new_url')
+    cloud_username=data.get('cloud_username')
+    cloud_password=data.get('cloud_password')
 
     conn = get_db_connection()
     cursor = conn.cursor()
     if name != "":
         cursor.execute("""
             UPDATE controllers 
-            SET name = %s, url=%s
+            SET name = %s, url=%s, cloud_username=%s, cloud_password=%s
             WHERE controller_id = %s
-        """, (name,new_url, controller_id))
+        """, (name,new_url,cloud_username,cloud_password, controller_id))
         conn.commit()
     else:
         cursor.execute("""
             UPDATE controllers 
-            SET url=%s
+            SET url=%s, cloud_username=%s, cloud_password=%s
             WHERE controller_id = %s
-        """, (new_url, controller_id))
+        """, (new_url,cloud_username,cloud_password, controller_id))
         conn.commit()
 
     # Notify all admins
@@ -565,6 +569,25 @@ def get_controller_url():
         controller=cursor.fetchone()
         controller_url=controller['url']        
         return jsonify(controller_url)
+    except mysql.connector.Error as err:
+        conn.rollback()
+        print(f"Database error: {err}")
+        return "Database error", 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+@inventory_bp.route('/get_controller_details',methods=['GET'])
+def get_controller_details():
+    controller_id = request.args.get('controller_id')
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("select * from controllers where controller_id=%s",(controller_id,))
+        controller=cursor.fetchone()
+        # controller_url=controller['url']        
+        return jsonify(controller)
     except mysql.connector.Error as err:
         conn.rollback()
         print(f"Database error: {err}")
