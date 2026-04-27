@@ -272,7 +272,7 @@ def reserve():
             "status": "error",
             "message": "❌ The selected controller or AP is already reserved during the chosen time slot."
         }), 400
-
+    
     # reserve AP and controller 
     if ap_id:
         cursor.execute("""
@@ -344,7 +344,7 @@ def reserve():
 
 
     conn.close()
-    return jsonify(resource_id=ap_id, controller_id=controller_id,new_reservation=row)
+    return jsonify(resource_id=ap_id, controller_id=controller_id,new_reservation=row,now=datetime.now())
 
 
 # @reservation_bp.route('/delete_reservation/<int:id>')

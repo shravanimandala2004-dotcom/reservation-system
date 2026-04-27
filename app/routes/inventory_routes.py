@@ -112,7 +112,7 @@ def inventory():
     finally:
         cursor.close()
         conn.close()
-        return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers,active_reservations=active_reservations,min_str=min_str,max_str=max_str,preBooking=preBooking,maxDays=maxDays)
+        return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers,active_reservations=active_reservations,min_str=min_str,max_str=max_str,preBooking=preBooking,maxDays=maxDays,now=datetime.now())
 
 @inventory_bp.route('/add_controller', methods=['POST'])
 def add_controller():

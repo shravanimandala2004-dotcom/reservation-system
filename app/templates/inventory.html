@@ -206,10 +206,8 @@
                         {{ r.start_datetime_formatted }} → {{ r.end_datetime_formatted }}
                         {% endif %}
                        
-                       {% if r.controller_url %}
-                            <a href="{{ r.controller_url }}" target="_blank">
-                                <button type="button">Open Resource</button>
-                            </a>
+                       {% if r.controller_id and r.start_datetime < now %}
+                            <button type="button" class="openResourceBtn" data-resource-id="{{ r.controller_id }}">Open Resource</button>                            
                         {% endif %}
 
                         | <a href="#" data-id="{{ r.id }}"
@@ -1387,11 +1385,10 @@ statusSelect.innerHTML = `
                             ${nr.start_datetime_formatted} → ${nr.end_datetime_formatted}`;
                     }
 
-                    if(nr.controller_url){
+                    if(nr.controller_id && nr.start_datetime < result.now){
                         reservationHTML+= `
-                        <a href="${ nr.controller_url }" target="_blank">
-                                <button type="button">Open Resource</button>
-                            </a>`
+                        <button type="button" class="openResourceBtn" data-resource-id="${ nr.controller_id }">Open Resource</button>
+                        `
                     }
 
                     reservationHTML += `
@@ -1716,6 +1713,47 @@ statusSelect.innerHTML = `
 
             document.getElementById('reserveModal').style.display = 'block';
         }
+
+        document.querySelectorAll(".openResourceBtn").forEach(btn => {
+        btn.addEventListener("click", function() {
+            const resourceId = this.getAttribute("data-resource-id");
+
+            fetch("/smartzone?resource_id=" + encodeURIComponent(resourceId), {
+                method: "GET",
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Backend returned a redirect → follow it
+                    // window.location.href = response.url;
+                    result=response.json().then(data => {
+                        if(data.redirect_url){
+                    window.open(data.redirect_url,"_blank")
+                        } else {
+                            showAlert(data.message || "Failed to open resource", "error");
+                        }
+                    }).catch(() => {
+                        showAlert("Failed to open resource", "error");
+                    })
+                } else if (!response.ok) {
+                    // Error from backend
+                    return response.json().then(data => {
+                        showAlert(data.message || "Failed to open resource", "error");
+                    }).catch(() => {
+                        showAlert("Failed to open resource", "error");
+                    });
+                    
+                } else {
+                    // Normal response (like a message)
+                    return response.text().then(text => {
+                        showAlert(text, "info");
+                    });
+                }
+            })
+            .catch(error => {
+                showAlert("Request failed: " + error, "error");
+            });
+        });
+    });
     </script>
 
 </body>
