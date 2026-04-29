@@ -47,6 +47,30 @@
                 <input type="number" id="max_preBooking" name="max_preBooking" value="{{settings.max_preBooking}}" min="1" max="5" required>
             </div>
 
+            <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+    
+    <label style="margin: 0;"><b>Enable Resource Cooldown:</b></label>
+
+    <label style="display: flex; align-items: center; gap: 5px; margin: 0;">
+        <input type="radio" name="enable_cooldown" value="1"
+            {% if settings.enable_cooldown == 1 %}checked{% endif %}>
+        Enable
+    </label>
+
+    <label style="display: flex; align-items: center; gap: 5px; margin: 0;">
+        <input type="radio" name="enable_cooldown" value="0"
+            {% if settings.enable_cooldown == 0 %}checked{% endif %}>
+        Disable
+    </label>
+
+</div>
+
+<div style="margin-bottom: 20px;">
+    <label><b>Cooldown Time (in hours):</b></label>
+    <input type="number" name="cooldown_hours"
+           value="{{settings.cooldown_hours}}" min="1" max="72">
+</div>
+
             <button type="submit"
                 style="padding: 10px 20px; background: #f57c00; color: white; border: none; border-radius: 5px;">
                 Save Settings
