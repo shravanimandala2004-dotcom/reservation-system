@@ -9,9 +9,6 @@ from ldap3 import Server, Connection, ALL, SIMPLE
 import uuid
 from .notification_routes import notify_user
 import datetime
-# import random
-# import string
-# import bcrypt
  
 load_dotenv()
  
@@ -176,18 +173,25 @@ def register():
 
         now = datetime.datetime.now()
 
-        if user and user['expires_at']>now:
-            # Check if expiry is within next 24 hours
-            if user['expires_at'] - now < datetime.timedelta(hours=24):
-                return jsonify(
-                    status='error',
-                    message='❌ You cannot re-register within 24 hours of expiry. Please try again later.'
-                ), 403
-            else:
-                return jsonify(
-                    status='error',
-                    message='You already have an active account'
-                ), 403
+        if user:
+            
+            return jsonify(
+                status='error',
+                message='You already have an active account'
+            ), 403
+
+        # if user and user['expires_at']>now:
+        #     # Check if expiry is within next 24 hours
+        #     if user['expires_at'] - now < datetime.timedelta(hours=24):
+        #         return jsonify(
+        #             status='error',
+        #             message='❌ You cannot re-register within 24 hours of expiry. Please try again later.'
+        #         ), 403
+        #     else:
+        #         return jsonify(
+        #             status='error',
+        #             message='You already have an active account'
+        #         ), 403
         
         server = Server(LDAP_SERVER, get_info=ALL)
         service_conn = Connection(server, user=SERVICE_ACCOUNT_DN,
@@ -207,43 +211,22 @@ def register():
 
         if not is_user_department(user_entry.department.value):
             return jsonify(status='error', message='❌ Registration failed. User does not belong to valid department'), 401
-        
-        # Generate random password
-        # random_password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
-        expires_at = datetime.datetime.now() + datetime.timedelta(hours=48)
 
-        # Hash the password before storing
-        # hashed_password = bcrypt.hashpw(random_password.encode('utf-8'), bcrypt.gensalt())
-        
-        # if user:
-        #     # Update existing user with new password and expiry
-        #     cursor.execute("UPDATE users SET password=%s, expires_at=%s WHERE id=%s",
-        #                    (hashed_password.decode('utf-8'), expires_at, user['id']))
-        #     conn.commit()
-        # else:
-        #     # Insert new user
-        #     cursor.execute(
-        #         "INSERT INTO users (username, role, password, expires_at) "
-        #         "VALUES (%s, %s, %s, %s)",
-        #         (username, 'user', hashed_password.decode('utf-8'), expires_at)
-        #     )
-        #     conn.commit()
 
         if user:
             # Update existing user with new password and expiry
-            cursor.execute("UPDATE users SET password=%s, expires_at=%s WHERE id=%s",
-                           ("**", expires_at, user['id']))
+            cursor.execute("UPDATE users SET password=%s WHERE id=%s",
+                           ("**", user['id']))
             conn.commit()
         else:
             # Insert new user
             cursor.execute(
-                "INSERT INTO users (username, role, password, expires_at,status) "
-                "VALUES (%s, %s, %s, %s,'active')",
-                (username, 'user', "**", expires_at)
+                "INSERT INTO users (username, role, password, status) "
+                "VALUES (%s, %s, %s,'active')",
+                (username, 'user', "**")
             )
             conn.commit()
 
-        formatted_expiry = expires_at.strftime("%A, %d %B %Y at %I:%M %p")
         notify_user(
             username,
             "Your Resource Scheduler Access",
@@ -255,14 +238,12 @@ Your temporary access to the Reservation Portal has been activated!
 • Email: {username}\n
 • Password: (the same password you use for your email account)
 
-⏰ Valid until: {formatted_expiry}
-
 Simply use your email credentials to sign in before the expiry time. After that, you’ll need to request new access.
 
 Best regards,
 Resource Scheduler Team"""
         )
-        return jsonify(status='success',message='Registration successful. Temporary access granted for 48 hours.'), 200
+        return jsonify(status='success',message='Registration successful.'), 200
     else:
         return render_template('register.html')
 
@@ -317,9 +298,9 @@ def login():
         groups = user_entry.memberOf.values if 'memberOf' in user_entry else []
         group_cns = [extract_cn(dn) for dn in groups]
 
-        print("Direct groups (DNs):", groups)
-        print("Direct groups (CNs):", group_cns)
-        print("")
+        # print("Direct groups (DNs):", groups)
+        # print("Direct groups (CNs):", group_cns)
+        # print("")
 
         # service_conn.search(
         #     search_base="DC=vistancenetworks,DC=com",
@@ -338,23 +319,10 @@ def login():
 
         # check if user exists in database 
         if user:            
-            # status=user['status']
-            expires_at = user['expires_at']
-
             # verify user credentials 
             user_conn = Connection(server, user=user_dn, password=password, authentication=SIMPLE)
             if not user_conn.bind():
                 return jsonify(status='error', message="❌ Invalid login credentials"), 401
-            
-            if expires_at and expires_at < datetime.datetime.now():
-                # Expired → delete account
-                # cursor.execute("DELETE FROM users WHERE id=%s", (user['id'],))
-                # conn.commit()
-                # conn.close()
-                return jsonify(
-                    status='error', 
-                    message="❌ Your account has expired. Register again to get access"
-                    ), 403
            
             # ---- ROLE AUTHORIZATION ----
             
@@ -367,9 +335,6 @@ def login():
                         message="❌ Access denied: admin group membership required"
                     ), 403
             elif role == "user":
-                # if not bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
-                #     return jsonify(status='error', message="❌ Invalid login credentials"), 401
-                
                 if not is_user_department(user_department):
                     return jsonify(
                         status="error",

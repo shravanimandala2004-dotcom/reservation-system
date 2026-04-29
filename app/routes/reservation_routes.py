@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from app.utils.db import get_db_connection
 from .notification_routes import notify_user
 from .permission_routes import get_setting
-from datetime import datetime
+from datetime import datetime, timezone
 from flask import jsonify
 from .notification_routes import schedule_email
 
@@ -180,12 +180,18 @@ def reserve():
     cursor.execute("SELECT * FROM controllers WHERE controller_id = %s", (controller_id,))
     controller = cursor.fetchone()
 
-    start_dt = datetime.strptime(start_time, '%Y-%m-%dT%H:%M')
-    end_dt = datetime.strptime(end_time, '%Y-%m-%dT%H:%M')
+    
+    start_dt = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
+    end_dt   = datetime.fromisoformat(end_time.replace("Z", "+00:00"))
+
+    # Ensure both are UTC-aware
+    start_dt = start_dt.astimezone(timezone.utc)
+    end_dt   = end_dt.astimezone(timezone.utc)
+
     duration = end_dt - start_dt
 
     # check validity of start date 
-    if start_dt<datetime.now():
+    if start_dt<datetime.now(timezone.utc):
         conn.close()
         return jsonify({
             "status": "error",
@@ -286,7 +292,7 @@ def reserve():
         )
         # schedule email containing credentials to be sent 15 mins prior to start of reservation 
         reminder_time = start_dt - timedelta(minutes=15)
-        if reminder_time > datetime.now():
+        if reminder_time > datetime.now(timezone.utc):
             schedule_email(
                 to_email=session.get('username'),
                 subject="Reservation Credentials",
@@ -312,7 +318,7 @@ def reserve():
         )  
         # schedule email containing credentials to be sent 15 mins prior to start of reservation 
         reminder_time = start_dt - timedelta(minutes=15)
-        if reminder_time > datetime.now():
+        if reminder_time > datetime.now(timezone.utc):
             schedule_email(
                 to_email=session.get('username'),
                 subject="Reservation Credentials",
@@ -335,16 +341,20 @@ def reserve():
     cursor.execute("SELECT * FROM reservations WHERE id = %s", (inserted_id,))
     row = cursor.fetchone()
     
-    row['start_datetime_formatted'] = row['start_datetime'].strftime("%b %d, %Y %H:%M")
-    row['end_datetime_formatted'] = row['end_datetime'].strftime("%b %d, %Y %H:%M")
+    row['start_datetime'] = row['start_datetime'].replace(tzinfo=timezone.utc)
+    row['end_datetime']   = row['end_datetime'].replace(tzinfo=timezone.utc)
     if(ap):
         row['resource_name']=ap['model_name']
     row['controller_name']=controller['name']
     row['controller_url'] =controller['url']
 
+    if active_count+1 >= max_reservations:
+        reservation_limit_reached=True
+    else:
+        reservation_limit_reached=False
 
     conn.close()
-    return jsonify(resource_id=ap_id, controller_id=controller_id,new_reservation=row,now=datetime.now())
+    return jsonify(resource_id=ap_id, controller_id=controller_id,new_reservation=row,now=datetime.now(timezone.utc), reservation_limit_reached=reservation_limit_reached)
 
 
 # @reservation_bp.route('/delete_reservation/<int:id>')

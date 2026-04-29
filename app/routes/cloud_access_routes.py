@@ -26,7 +26,7 @@ def smartzone():
     cursor=conn.cursor(dictionary=True)
 
     # Check if user has permission to access cloud resources
-    cursor.execute("Select * from reservations where user_id = %s and controller_id = %s and end_datetime > NOW()", (current_user, controller_id))
+    cursor.execute("Select * from reservations where user_id = %s and controller_id = %s and end_datetime > UTC_TIMESTAMP()", (current_user, controller_id))
     reservation = cursor.fetchone()
 
     if not reservation:
@@ -58,7 +58,7 @@ def smartzone():
     execution = get_field("execution")
     event_id = get_field("_eventId")
 
-    print("lt:", lt, "execution:", execution, "event_id:", event_id)
+    # print("lt:", lt, "execution:", execution, "event_id:", event_id)
 
     payload = {
         "username": username,
@@ -75,14 +75,14 @@ def smartzone():
 
     post_resp = http_session.post(url, data=payload, headers=headers, verify=False, allow_redirects=False)
 
-    print("Status:", post_resp.status_code)
-    print("Location:", post_resp.headers.get("Location"))
-    print("Cookies:", http_session.cookies.get_dict())
+    # print("Status:", post_resp.status_code)
+    # print("Location:", post_resp.headers.get("Location"))
+    # print("Cookies:", http_session.cookies.get_dict())
 
     location = post_resp.headers.get("Location")
     if location:
         redirect_url = base_url + location
         # Instead of printing, send the browser there:
-        return jsonify(status="ok", redirect_url=redirect_url)
+        return jsonify(status="success", redirect_url=redirect_url),200
     else:
-        return "Login failed: no redirect location found"
+        return jsonify(status="error", message="Login failed: no redirect location found"),400

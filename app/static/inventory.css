@@ -362,6 +362,13 @@ h2{
     cursor: pointer;
 }
 
+#reserveBtn:disabled{
+    border: 2px solid #646161;
+    color: #646161;
+    cursor: not-allowed;
+    background: none;
+}
+
 /* new changes */
 .drop-down-container{
     display: flex;
@@ -459,14 +466,15 @@ h3{
 
 .reservation-list li {
     margin: 10px 0;
-    line-height: 1.6;
+    /* line-height: 1.6; */
     text-align: left;
+    color: #D9D9D6
 }
 
 .reservation-list a {
     color: #4fc3f7;
     text-decoration: none;
-    font-weight: bold;
+    /* font-weight: bold; */
 }
 
 .reservation-list a:hover {
@@ -499,4 +507,34 @@ h3{
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+.active_res_action{
+    float: right;
+}
+
+.openResourceBtn{
+    font-size: 15px;
+    padding: 0px;
+    margin: 0px;
+    background: none;
+    color: orange;
+}
+
+.openResourceBtn:hover{
+    text-decoration: underline;
+    cursor: pointer;
+    background:none;
+}
+
+.openResourceBtn:disabled{
+    color: #646161;
+    cursor: not-allowed;
+    text-decoration: none;
+}
+
+.reservation-list strong{
+    /* color:rgb(226, 85, 14) 
+    text-decoration: underline;*/
+    color: white;
 }

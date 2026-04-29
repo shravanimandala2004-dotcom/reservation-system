@@ -4,7 +4,7 @@ from .notification_routes import notify_user, get_emails_by_resource
 from flask import jsonify
 import mysql 
 from .permission_routes import get_setting
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,timezone
 
 inventory_bp = Blueprint('inventory', __name__)
 
@@ -91,15 +91,22 @@ def inventory():
         active_reservations = cursor.fetchall()
         
         for r in active_reservations:
-            r['start_datetime_formatted'] = r['start_datetime'].strftime("%b %d, %Y %H:%M")
-            r['end_datetime_formatted'] = r['end_datetime'].strftime("%b %d, %Y %H:%M")
+            r['start_datetime'] = r['start_datetime'].replace(tzinfo=timezone.utc)
+            r['end_datetime']   = r['end_datetime'].replace(tzinfo=timezone.utc)
 
         preBooking=get_setting('max_preBooking',4)
         maxDays=get_setting('max_days',2)
-        now=datetime.now()
+        now=datetime.now(timezone.utc)
         max_date = now + timedelta(days=preBooking)
-        min_str = now.strftime('%Y-%m-%dT%H:%M')
-        max_str = max_date.strftime('%Y-%m-%dT%H:%M')
+        
+        min_utc = now.isoformat().replace("+00:00", "Z")
+        max_utc = max_date.isoformat().replace("+00:00", "Z")
+
+        maxBooking=get_setting('max_reservations',1)
+        if len(active_reservations)>=maxBooking:
+            reservation_limit_reached=True
+        else:
+            reservation_limit_reached=False
 
         
         # return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers,active_reservations=active_reservations,min_str=min_str,max_str=max_str,preBooking=preBooking,maxDays=maxDays)
@@ -112,7 +119,7 @@ def inventory():
     finally:
         cursor.close()
         conn.close()
-        return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers,active_reservations=active_reservations,min_str=min_str,max_str=max_str,preBooking=preBooking,maxDays=maxDays,now=datetime.now())
+        return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers,active_reservations=active_reservations,min_utc=min_utc,max_utc=max_utc,preBooking=preBooking,maxDays=maxDays,now=now, reservation_limit_reached=reservation_limit_reached)
 
 @inventory_bp.route('/add_controller', methods=['POST'])
 def add_controller():

@@ -133,12 +133,12 @@
                 <!-- Start date select  -->
                 <div class="select-container">
                     <label for="start-date">Start date</label>
-                    <input type="datetime-local" name="start-date" id="start-date" min="{{min_str}}" max="{{ max_str}}">
+                    <input type="datetime-local" name="start-date" id="start-date" data-min-utc="{{ min_utc }}" data-max-utc="{{ max_utc }}">
                 </div>
                 <!-- End date select  -->
                 <div class="select-container">
                     <label for="end-date">End date</label>
-                    <input type="datetime-local" name="end-date" id="end-date" min="{{min_str}}" max="{{ max_str}}">
+                    <input type="datetime-local" name="end-date" id="end-date" data-min-utc="{{ min_utc }}" data-max-utc="{{ max_utc }}">
                 </div>
             </div>
 
@@ -185,7 +185,7 @@
             </tbody> -->
             </table>
 
-            <button id="reserveBtn" onclick="reserveSelection()">Reserve</button> <!-- Reserve button -->
+            <button id="reserveBtn" onclick="reserveSelection()" {% if reservation_limit_reached %}disabled{% endif %}>Reserve</button> <!-- Reserve button -->
 
             <!-- Show reservations container  -->
             <div class="reservations-container">
@@ -197,22 +197,36 @@
                         {% if r.resource_name != None %}
 
                         <strong>{{ r.resource_name }}</strong> Reserved on <strong>{{ r.controller_name }}</strong> from
-                        {{ r.start_datetime_formatted}} → {{ r.end_datetime_formatted }}
+                        <strong>
+                            <span class="utc-dt" data-utc="{{ r.start_datetime }}"></span>
+                            →
+                            <span class="utc-dt" data-utc="{{ r.end_datetime }}"></span>
+                        </strong>
 
  
                         {% else %}
 
                         <strong>{{ r.controller_name }}</strong> Reserved from
-                        {{ r.start_datetime_formatted }} → {{ r.end_datetime_formatted }}
+                        <strong>
+                            <span class="utc-dt" data-utc="{{ r.start_datetime }}"></span>
+                            →
+                            <span class="utc-dt" data-utc="{{ r.end_datetime }}"></span>
+                        </strong>
                         {% endif %}
+                       <div class="active_res_action">
                        
-                       {% if r.controller_id and r.start_datetime < now %}
-                            <button type="button" class="openResourceBtn" data-resource-id="{{ r.controller_id }}">Open Resource</button>                            
-                        {% endif %}
+                            <button type="button" class="openResourceBtn" data-resource-id="{{ r.controller_id }}" 
+                                data-start-time="{{ r.start_datetime }}"
+                                {% if now < r.start_datetime %}disabled{% endif %}
+                                >
+                                Open Resource
+                            </button>                            
+                        
 
                         | <a href="#" data-id="{{ r.id }}"
                             onclick="return confirmAndCancel(event,this);"
-                            style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a>
+                            style="color: #E12726">Cancel</a>
+                            </div>
                     </li>
                     {% endfor %}
 
@@ -1339,14 +1353,28 @@ statusSelect.innerHTML = `
             }, 5000)
         }
 
+        function toUTCISOString(localDateTime) {
+            // localDateTime: "2026-04-29T10:30"
+            return new Date(localDateTime).toISOString();
+        }
+
+        function utcToLocalInput(utcString) {
+            const d = new Date(utcString);
+            const offset = d.getTimezoneOffset() * 60000;
+            return new Date(d.getTime() - offset).toISOString().slice(0, 16);
+        }
+
         // reserve resources 
         document.getElementById('reserveForm').addEventListener('submit', async function (event) {
             event.preventDefault(); // Prevent default form submission
             showLoading()
             const ap_id = document.getElementById('ap_id').value;
             const controller_id = document.getElementById('controller_id').value;
-            const start_datetime = document.getElementById('start_datetime').value;
-            const end_datetime = document.getElementById('end_datetime').value;
+            const startLocal = document.getElementById('start_datetime').value;
+            const endLocal = document.getElementById('end_datetime').value;
+
+            const start_datetime=toUTCISOString(startLocal);
+            const end_datetime=toUTCISOString(endLocal);
 
             const response = await fetch('/reserve_page', {
                 method: 'POST',
@@ -1366,7 +1394,21 @@ statusSelect.innerHTML = `
                 showAlert("Reservation successful", "success");
                 const result = await response.json();
                 const nr = result.new_reservation;
-                // console.log("result:",result)
+                
+                nr.start_datetime = new Date(nr.start_datetime);
+                nr.end_datetime = new Date(nr.end_datetime);
+                const unedited_startTime=nr.start_datetime.toISOString();
+                
+                nr.start_datetime_formatted = new Intl.DateTimeFormat(undefined, {
+                dateStyle: "medium",
+                timeStyle: "short"
+                }).format(nr.start_datetime);
+
+                nr.end_datetime_formatted = new Intl.DateTimeFormat(undefined, {
+                dateStyle: "medium",
+                timeStyle: "short"
+                }).format(nr.end_datetime);
+
                 // fill the reservations container 
                 const reservation_container = document.getElementsByClassName('reservations-container')[0];
 
@@ -1379,26 +1421,36 @@ statusSelect.innerHTML = `
 
                     if (nr.resource_name) {
                         reservationHTML += `<strong>${nr.resource_name}</strong> Reserved on <strong>${nr.controller_name}</strong> from
-                                ${nr.start_datetime_formatted} → ${nr.end_datetime_formatted}`;
+                                <strong>${nr.start_datetime_formatted} → ${nr.end_datetime_formatted}</strong><div class="active_res_action">`;
                     } else {
                         reservationHTML += `<strong>${nr.controller_name}</strong> Reserved from
-                            ${nr.start_datetime_formatted} → ${nr.end_datetime_formatted}`;
+                            <strong>${nr.start_datetime_formatted} → ${nr.end_datetime_formatted}</strong> <div class="active_res_action">`;
                     }
 
-                    if(nr.controller_id && nr.start_datetime < result.now){
+                    const now = Date.now();
+
+                    if(nr.controller_id ){
                         reservationHTML+= `
-                        <button type="button" class="openResourceBtn" data-resource-id="${ nr.controller_id }">Open Resource</button>
+                        <button type="button" class="openResourceBtn" data-resource-id="${ nr.controller_id }" data-start-time="${ unedited_startTime }"
+                                ${now < nr.start_datetime ? "disabled" : ""}>Open Resource</button>
                         `
                     }
 
                     reservationHTML += `
                      | <a href="#" data-id=${nr.id}
                             onclick="return confirmAndCancel(event,this);"
-                            style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a>
+                            style="color: #E12726;">Cancel</a>
                             </li>
-                        </ul>`;
+                        </ul> </div>`;
 
                     reservation_container.innerHTML = reservationHTML;
+                    reservation_container
+                        .querySelectorAll(".openResourceBtn")
+                        .forEach((btn)=>{
+                            // const resourceId = btn.dataset.resourceId;
+                            openResource(btn);
+                            setupOpenResourceButton(btn);
+                        });
                 } else {
                     const ul = document.getElementsByClassName('reservation-list')[0];
                     console.log(ul);
@@ -1409,16 +1461,37 @@ statusSelect.innerHTML = `
                                 ${nr.start_datetime_formatted} → ${nr.end_datetime_formatted}`;
                     } else {
                         liHTML += `<strong>${nr.controller_name}</strong> Reserved from
-                            ${nr.start_datetime_formatted} → ${nr.end_datetime_formatted}`;
+                            ${nr.start_datetime_formatted} → ${nr.end_datetime_formatted} <div class="active_res_action">`;
+                    }
+
+                    const now = Date.now();
+
+
+                    if(nr.controller_id ){
+                        liHTML+= `
+                        <button type="button" class="openResourceBtn" data-resource-id="${ nr.controller_id }" data-start-time="${ unedited_startTime}"
+                                ${now < nr.start_datetime ? "disabled" : ""}>Open Resource</button>
+                        `
                     }
 
                     liHTML += ` | <a href="#" data-id=${nr.id}
                             onclick="return confirmAndCancel(event,this);"
-                            style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a>`;
+                            style="color: rgb(226, 85, 14); font-weight: bold;">Cancel</a> </div>`;
 
                     li.innerHTML = liHTML
                     ul.appendChild(li);
+                    ul
+                        .querySelectorAll(".openResourceBtn")
+                        .forEach((btn)=>{
+                            // const resourceId = btn.dataset.resourceId;
+                            openResource(btn);
+                            setupOpenResourceButton(btn);
+                        });
                 }
+                const reserveBtn = document.getElementById('reserveBtn');
+                reserveBtn.disabled = result.reservation_limit_reached;
+                
+                
             } else {
                 hideLoading()
                 const result = await response.json();
@@ -1714,46 +1787,111 @@ statusSelect.innerHTML = `
             document.getElementById('reserveModal').style.display = 'block';
         }
 
-        document.querySelectorAll(".openResourceBtn").forEach(btn => {
-        btn.addEventListener("click", function() {
+        function openResource(btn) {
+            btn.addEventListener("click", function() {
             const resourceId = this.getAttribute("data-resource-id");
-
+                    
+            // console.log("Opening resource with ID:", resourceId);
             fetch("/smartzone?resource_id=" + encodeURIComponent(resourceId), {
                 method: "GET",
             })
-            .then(response => {
-                if (response.ok) {
-                    // Backend returned a redirect → follow it
-                    // window.location.href = response.url;
-                    result=response.json().then(data => {
-                        if(data.redirect_url){
-                    window.open(data.redirect_url,"_blank")
-                        } else {
+                .then(response => {
+                    if (response.ok) {
+                        response.json().then(data => {
+                            if(data.redirect_url){
+                                window.open(data.redirect_url,"_blank")
+                            } else {
+                                showAlert(data.message || "Failed to open resource", "error");
+                            }
+                        }).catch(() => {
+                            showAlert("Failed to open resource", "error");
+                        })
+                    } else{
+                        // Error from backend
+                        return response.json().then(data => {
                             showAlert(data.message || "Failed to open resource", "error");
-                        }
-                    }).catch(() => {
-                        showAlert("Failed to open resource", "error");
-                    })
-                } else if (!response.ok) {
-                    // Error from backend
-                    return response.json().then(data => {
-                        showAlert(data.message || "Failed to open resource", "error");
-                    }).catch(() => {
-                        showAlert("Failed to open resource", "error");
-                    });
-                    
-                } else {
-                    // Normal response (like a message)
-                    return response.text().then(text => {
-                        showAlert(text, "info");
-                    });
-                }
-            })
-            .catch(error => {
-                showAlert("Request failed: " + error, "error");
+                        }).catch(() => {
+                            showAlert("Failed to open resource", "error");
+                        });
+                        
+                    }
+                })
+                .catch(error => {
+                    showAlert("Request failed: " + error, "error");
+                });
             });
+        }
+
+        document.querySelectorAll(".openResourceBtn").forEach(btn => {
+            openResource(btn);
+        
         });
-    });
+
+
+        function setupOpenResourceButton(button) {
+            // console.log("Setting up button:", button);
+            const startTimeStr = button.dataset.startTime;
+            if (!startTimeStr) return;
+
+            const startTime = new Date(startTimeStr).getTime();
+            const now = Date.now();
+            // console.log("Current time:", now, "Start time:", startTime);
+            // console.log("Button delay:", startTime - now);
+
+            if (now >= startTime) {
+                button.disabled = false;
+            } else {
+                const delay = startTime - now;
+                setTimeout(() => {
+                    // console.log("Enabling button after delay:", delay);
+                    button.disabled = false;
+                }, delay);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const startDateInput = document.getElementById("start-date");
+            const endDateInput = document.getElementById("end-date");
+
+            startDateInput.min = utcToLocalInputValue(startDateInput.dataset.minUtc);
+            startDateInput.max = utcToLocalInputValue(startDateInput.dataset.maxUtc);
+            endDateInput.min = utcToLocalInputValue(endDateInput.dataset.minUtc);
+            endDateInput.max = utcToLocalInputValue(endDateInput.dataset.maxUtc);
+
+            document.querySelectorAll(".utc-dt").forEach(el => {
+                const utc = el.dataset.utc;
+
+                if (!utc) return;
+
+                // Convert UTC → local
+                const date = new Date(utc);
+
+                // Format in user's locale & timezone
+                const localFormatted = new Intl.DateTimeFormat(undefined, {
+                dateStyle: "medium",
+                timeStyle: "short"
+                }).format(date);
+
+                el.textContent = localFormatted;
+            });
+
+            document.querySelectorAll(".openResourceBtn")
+                .forEach(setupOpenResourceButton);
+        });
+
+        
+        function utcToLocalInputValue(utc) {
+            const d = new Date(utc);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, "0");
+            const dd = String(d.getDate()).padStart(2, "0");
+            const hh = String(d.getHours()).padStart(2, "0");
+            const min = String(d.getMinutes()).padStart(2, "0");
+            return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+        }
+
+
+
     </script>
 
 </body>
