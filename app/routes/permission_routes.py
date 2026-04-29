@@ -16,8 +16,17 @@ def permission():
         max_days = request.form['max_days']
         max_preBooking=request.form['max_preBooking']
 
-        cursor.execute("UPDATE permissions SET max_reservations=%s, max_days=%s,max_preBooking=%s",
-                       (max_reservations, max_days,max_preBooking))
+        enable_cooldown = int(request.form.get('enable_cooldown', 0))
+        cooldown_hours = request.form.get('cooldown_hours', 24)
+
+        cursor.execute("""
+        UPDATE permissions 
+        SET max_reservations=%s, 
+            max_days=%s,
+            max_preBooking=%s,
+            enable_cooldown=%s,
+            cooldown_hours=%s
+    """,(max_reservations, max_days,max_preBooking,enable_cooldown, cooldown_hours))
         conn.commit()
 
     conn.close()

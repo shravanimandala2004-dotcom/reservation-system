@@ -176,9 +176,37 @@ def reserve():
     if(ap_id):
         cursor.execute("SELECT * FROM ap WHERE ap_id = %s", (ap_id,))
         ap = cursor.fetchone()
+
     # get controller details 
     cursor.execute("SELECT * FROM controllers WHERE controller_id = %s", (controller_id,))
     controller = cursor.fetchone()
+
+   # ✅ ADD COOLDOWN LOGIC HERE
+    enable_cooldown = get_setting('enable_cooldown', 0)
+    cooldown_hours = get_setting('cooldown_hours', 24)
+
+    if enable_cooldown:
+        cursor.execute("""
+        SELECT end_datetime 
+        FROM reservations
+        WHERE user_id = %s 
+        AND controller_id = %s
+        ORDER BY end_datetime DESC
+        LIMIT 1
+    """, (user_id, controller_id))
+
+    last_res = cursor.fetchone()
+    if last_res:
+        last_end = last_res['end_datetime']
+        cooldown_end = last_end + timedelta(hours=cooldown_hours)
+
+        if datetime.now() < cooldown_end:
+            remaining = cooldown_end - datetime.now()
+
+            return jsonify({
+                "status": "error",
+                "message": f"⛔ You must wait {int(remaining.total_seconds()//3600)} hours before reserving this resource again."
+            }), 403
 
     start_dt = datetime.strptime(start_time, '%Y-%m-%dT%H:%M')
     end_dt = datetime.strptime(end_time, '%Y-%m-%dT%H:%M')
