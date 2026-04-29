@@ -306,6 +306,15 @@ def reserve():
             "message": "❌ The selected controller or AP is already reserved during the chosen time slot."
         }), 400
     
+    rules= """Important usage instructions:
+- Do not change the existing username or password, and do not create new credentials 
+for the reserved portal.
+
+Please adhere to these guidelines to avoid cancellation of your reservation."""
+
+    start_str = start_dt.strftime("%b %d, %Y %I:%M %p UTC")
+    end_str   = end_dt.strftime("%b %d, %Y %I:%M %p UTC")
+
     # reserve AP and controller 
     if ap_id:
         cursor.execute("""
@@ -315,7 +324,7 @@ def reserve():
         notify_user(
             to_email=session.get('username'),
             subject="Reservation Confirmed",
-            email_body=f"Your reservation for resource ID {ap['model_name']} and {controller['name']} from {start_dt} to {end_dt} has been confirmed.",
+            email_body=f"Your reservation for resource ID {ap['model_name']} and {controller['name']} from {start_str} to {end_str} has been confirmed.\n\n{rules}",
         )
         # schedule email containing credentials to be sent 15 mins prior to start of reservation 
         reminder_time = start_dt - timedelta(minutes=15)
@@ -323,14 +332,14 @@ def reserve():
             schedule_email(
                 to_email=session.get('username'),
                 subject="Reservation Credentials",
-                email_body=f"Your reservation for resource ID {ap['model_name']} and {controller['name']} from {start_dt} to {end_dt} has been confirmed.\n\n Credentials to access resource:\n Email:\nPassword:",
+                email_body=f"Your reservation for resource ID {ap['model_name']} and {controller['name']} from {start_str} to {end_str} has been confirmed.\n\n{rules}",
                 run_datetime=reminder_time
             )
         else:
             notify_user(
                 to_email=session.get('username'),
                 subject="Reservation Credentials",
-                email_body=f"Your reservation for resource ID {ap['model_name']} and {controller['name']} from {start_dt} to {end_dt} has been confirmed.\n\n Credentials to access resource:\n Email:\nPassword:",
+                email_body=f"Your reservation for resource ID {ap['model_name']} and {controller['name']} from {start_str} to {end_str} has been confirmed.\n\n{rules}",
             )
     # reserve cloud/controller 
     else:
@@ -341,7 +350,7 @@ def reserve():
         notify_user(
             to_email=session.get('username'),
             subject="Reservation Confirmed",
-            email_body=f"Your reservation for {controller['name']} from {start_dt} to {end_dt} has been confirmed.",
+            email_body=f"Your reservation for {controller['name']} from {start_str} to {end_str} has been confirmed.\n\n{rules}",
         )  
         # schedule email containing credentials to be sent 15 mins prior to start of reservation 
         reminder_time = start_dt - timedelta(minutes=15)
@@ -349,7 +358,7 @@ def reserve():
             schedule_email(
                 to_email=session.get('username'),
                 subject="Reservation Credentials",
-                email_body=f"Your reservation for {controller['name']} from {start_dt} to {end_dt} has been confirmed.\n\nCredentials to access resource:\nEmail:\nPassword:",
+                email_body=f"Your reservation for {controller['name']} from {start_str} to {end_str} has been confirmed.\n\n{rules}",
                 run_datetime=reminder_time
             )  
 
@@ -357,7 +366,7 @@ def reserve():
             notify_user(
                 to_email=session.get('username'),
                 subject="Reservation Credentials",
-                email_body=f"Your reservation for {controller['name']} from {start_dt} to {end_dt} has been confirmed.\n\nCredentials to access resource:\nEmail:\nPassword:",
+                email_body=f"Your reservation for {controller['name']} from {start_str} to {end_str} has been confirmed.\n\n{rules}",
             )  
 
     conn.commit()

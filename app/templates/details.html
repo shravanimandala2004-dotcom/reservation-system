@@ -62,8 +62,8 @@
                     <th>Email </th>
 
                     <th>Role</th>
-                    <th>Status</th>
-                    <th>Expires at</th>
+                    <!-- <th>Status</th>
+                    <th>Expires at</th> -->
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -74,8 +74,8 @@
                     <td>{{ u.username }}</td>
 
                     <td>{{ u.role }}</td>
-                    <td>{{ u.status }}</td>
-                    <td>{{ u.expires_at }}</td>
+                    <!-- <td>{{ u.status }}</td>
+                    <td>{{ u.expires_at }}</td> -->
                     <td>
                         <a href="{{ url_for('details.edit_user', user_id=u.id) }}" style="text-decoration: none;">
                             <button class="edit-btn">Edit</button>
