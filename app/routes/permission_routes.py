@@ -19,6 +19,9 @@ def permission():
         enable_cooldown = int(request.form.get('enable_cooldown', 0))
         cooldown_hours = request.form.get('cooldown_hours', 24)
 
+        if not cooldown_hours:
+         cooldown_hours = 0
+
         cursor.execute("""
         UPDATE permissions 
         SET max_reservations=%s, 

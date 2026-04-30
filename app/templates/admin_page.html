@@ -52,14 +52,12 @@
     <label style="margin: 0;"><b>Enable Resource Cooldown:</b></label>
 
     <label style="display: flex; align-items: center; gap: 5px; margin: 0;">
-        <input type="radio" name="enable_cooldown" value="1"
-            {% if settings.enable_cooldown == 1 %}checked{% endif %}>
+        <input type="radio" name="enable_cooldown" value="1" {% if settings.enable_cooldown == 1 %}checked{% endif %} onclick="toggleCooldown()">
         Enable
     </label>
 
     <label style="display: flex; align-items: center; gap: 5px; margin: 0;">
-        <input type="radio" name="enable_cooldown" value="0"
-            {% if settings.enable_cooldown == 0 %}checked{% endif %}>
+        <input type="radio" name="enable_cooldown" value="0" {% if settings.enable_cooldown == 0 %}checked{% endif %} onclick="toggleCooldown()">
         Disable
     </label>
 
@@ -68,7 +66,7 @@
 <div style="margin-bottom: 20px;">
     <label><b>Cooldown Time (in hours):</b></label>
     <input type="number" name="cooldown_hours"
-           value="{{settings.cooldown_hours}}" min="1" max="72">
+           value="{{settings.cooldown_hours or 0}}" min="0" max="4">
 </div>
 
             <button type="submit"
@@ -77,6 +75,24 @@
             </button>
         </form>
     </div>
+    <script>
+function toggleCooldown() {
+    const selected = document.querySelector('input[name="enable_cooldown"]:checked');
+    const field = document.getElementById('cooldown_hours');
+
+    if (!selected) return;
+
+    if (selected.value === "1") {
+        field.disabled = false;
+    } else {
+        field.disabled = true;
+        field.value = 0;  // 🔥 prevents MySQL error
+    }
+}
+
+// Run on page load
+window.onload = toggleCooldown;
+</script>
 </body>
 
 </html>
