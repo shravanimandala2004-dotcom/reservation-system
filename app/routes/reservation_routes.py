@@ -461,8 +461,7 @@ def check_cooldown():
 
     return jsonify({
         "cooldown_active": now < cooldown_end,
-        "cooldown_ends_at_local":
-            cooldown_end.strftime("%b %d, %Y %I:%M %p")
+        "cooldown_ends": cooldown_end.isoformat()
     })
 
 @reservation_bp.route("/admin/override_reservation", methods=["POST"])

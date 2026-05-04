@@ -188,7 +188,7 @@
             <button id="reserveBtn" onclick="reserveSelection()" {% if reservation_limit_reached %}disabled{% endif %}>Reserve</button> <!-- Reserve button -->
             
             {% if role == 'admin' %}
-            <button id="overrideBtn" onclick="openOverrideModal()" class="override-btn">
+            <button id="overrideBtn" onclick="openOverrideModal()" class="override-btn" disabled>
             Override
             </button>
             {% endif %}
@@ -1441,7 +1441,12 @@ statusSelect.innerHTML = `
             .then(data => {
                 if (data.cooldown_active) {
                 const warn = document.getElementById("cooldownWarning");
-                warn.textContent = `Cooldown for this user is active until ${data.cooldown_ends_at_local}`;
+                const endLocal = new Date(data.cooldown_ends);
+                const formattedEnd = new Intl.DateTimeFormat(undefined, {
+                    dateStyle: "medium",
+                    timeStyle: "short"
+                }).format(endLocal);
+                warn.textContent = `Cooldown for this user is active until ${formattedEnd}`;
                 warn.classList.remove("hidden");
                 }
             });
@@ -1815,6 +1820,9 @@ statusSelect.innerHTML = `
 
                     })
                     .catch(error => console.error('Error fetching resources:', error));
+
+                const overrideBtn = document.getElementById('overrideBtn');
+                overrideBtn.disabled = true;
                 return;
             }
 
@@ -1847,7 +1855,10 @@ statusSelect.innerHTML = `
             const controllerSelect = document.getElementById('controller');
             const controller = controllerSelect.options[controllerSelect.selectedIndex].text;
             const controller_id = controllerSelect.value;
+
+            const overrideBtn = document.getElementById('overrideBtn');
             if (controller == "Select Cloud/on-prem Controllers") {
+                overrideBtn.disabled = true;
                 return;
             }
 
@@ -1943,6 +1954,7 @@ statusSelect.innerHTML = `
                     })
                     .catch(error => { console.error("Some error occurred:", error) })
             }
+            overrideBtn.disabled = false;
         }
 
         // change the status: only for admin 
