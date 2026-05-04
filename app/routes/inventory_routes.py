@@ -108,7 +108,9 @@ def inventory():
         else:
             reservation_limit_reached=False
 
-        
+        cursor.execute("SELECT * FROM users where role='user'")
+        users = cursor.fetchall()
+
         # return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers,active_reservations=active_reservations,min_str=min_str,max_str=max_str,preBooking=preBooking,maxDays=maxDays)
     
     except mysql.connector.Error as err:
@@ -119,7 +121,7 @@ def inventory():
     finally:
         cursor.close()
         conn.close()
-        return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers,active_reservations=active_reservations,min_utc=min_utc,max_utc=max_utc,preBooking=preBooking,maxDays=maxDays,now=now, reservation_limit_reached=reservation_limit_reached)
+        return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers,active_reservations=active_reservations,min_utc=min_utc,max_utc=max_utc,preBooking=preBooking,maxDays=maxDays,now=now, reservation_limit_reached=reservation_limit_reached,users=users)
 
 @inventory_bp.route('/add_controller', methods=['POST'])
 def add_controller():
@@ -321,8 +323,7 @@ def admin_page():
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         # Fetch current settings for display
-        cursor.execute("SELECT max_reservations, max_days,max_preBooking FROM permissions ")
-        # settings = {row['key_name']: row['value'] for row in cursor.fetchall()}
+        cursor.execute("SELECT max_reservations, max_days,max_preBooking,enable_cooldown,cooldown_hours FROM permissions ")
         settings=cursor.fetchone()
         conn.close()
         print("settings:", settings)
@@ -340,30 +341,6 @@ def admin_page():
     finally:
         cursor.close()
         conn.close()
-
-
-# @inventory_bp.route('/get_resources_by_manufacturer',methods=['GET'])
-# def get_resources_by_manufacturer():
-#     manufacturer = request.args.get('manufacturer')
-#     conn = get_db_connection()
-#     cursor = conn.cursor(dictionary=True)
-#     cursor.execute("SELECT r.* from resources as r join manufacturers as m on r.manufacturer_id=m.manufacturer_id where m.name=%s",(manufacturer,))
-#     resources=cursor.fetchall()
-#     cursor.execute("""
-#         SELECT 
-#             distinct c.*, 
-#             CASE 
-#                 WHEN r.controller_id IS NOT NULL THEN 'Reserved'
-#                 ELSE 'Available'
-#             END AS reservation_status
-#         FROM controllers c
-#         JOIN manufacturers m ON c.manufacturer_id = m.manufacturer_id
-#         LEFT JOIN reservations r ON c.controller_id = r.controller_id
-#         WHERE m.name = %s;""",(manufacturer,)
-#         )
-#     controllers=cursor.fetchall()
-#     conn.close()
-#     return jsonify(resources,controllers)
 
 
 @inventory_bp.route('/delete_controller',methods=['POST'])

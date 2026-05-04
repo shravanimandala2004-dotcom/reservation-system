@@ -6,140 +6,10 @@ from .permission_routes import get_setting
 from datetime import datetime, timezone
 from flask import jsonify
 from .notification_routes import schedule_email
+import mysql.connector
 
 reservation_bp = Blueprint('reservation', __name__)
 
-# @reservation_bp.route('/reserve', methods=['GET', 'POST'])
-# def reserve():
-#     if 'user_id' not in session:
-#         return redirect(url_for('auth.index'))
-
-#     user_id = session['user_id']
-#     conn = get_db_connection()
-#     cursor = conn.cursor(dictionary=True)
-
-#     if request.method == 'POST':
-#         resource_id = request.form['resource_id']
-#         start_dt = datetime.strptime(request.form['start_datetime'], '%Y-%m-%dT%H:%M')
-#         end_dt = datetime.strptime(request.form['end_datetime'], '%Y-%m-%dT%H:%M')
-#         duration = end_dt - start_dt
-
-#         # Validation checks
-#         if duration <= timedelta(0):
-#             conn.close()
-#             return "⛔ End time must be after start time"
-
-#         elif duration > timedelta(days=15):
-#             conn.close()
-#             return "⛔ Reservation cannot be longer than 15 days"
-
-#         # Check active reservations
-#         cursor.execute("""
-#             SELECT r.id, r.resource_id, r.start_datetime, r.end_datetime,
-#                    res.name AS resource_name, res.link
-#             FROM reservations r
-#             JOIN resources res ON r.resource_id = res.id
-#             WHERE r.user_id = %s AND r.end_datetime >= NOW()
-#         """, (user_id,))
-#         active_reservations = cursor.fetchall()
-
-#         if len(active_reservations) >= 2:
-#             conn.close()
-#             return "⚠️ You already have 2 active reservations."
-
-#         # Insert new reservation
-#         cursor.execute("""
-#             INSERT INTO reservations (user_id, resource_id, start_datetime, end_datetime)
-#             VALUES (%s, %s, %s, %s)
-#         """, (user_id, resource_id, start_dt, end_dt))
-
-#         notify_user(
-#             to_email=session.get('username'),
-#             subject="Reservation Confirmed",
-#             email_body=f"Your reservation for resource ID {resource_id} from {start_dt} to {end_dt} has been confirmed.",
-#         )
-
-#         conn.commit()
-#         conn.close()
-#         return redirect(url_for('reservation.reserve'))
-
-#     # -------------------------------
-#     # GET method: Show resources & active reservations
-#     # -------------------------------
-#     cursor.execute("SELECT * FROM resources")
-#     resources = cursor.fetchall()
-
-#     cursor.execute("""
-#         SELECT r.*, res.name AS resource_name, res.link
-#         FROM reservations r
-#         JOIN resources res ON r.resource_id = res.id
-#         WHERE r.user_id = %s AND r.end_datetime >= NOW()
-#     """, (user_id,))
-#     active_reservations = cursor.fetchall()
-
-#     max_reservations = get_setting('max_reservations', 2)
-#     max_days = get_setting('max_days', 15)
-
-#     conn.close()
-#     return render_template(
-#         'reserve.html',
-#         resources=resources,
-#         active_reservations=active_reservations,
-#         active_count=len(active_reservations),
-#         max_reservations=max_reservations,
-#         max_days=max_days,
-#         role=session.get('role')
-#     )
-
-# @reservation_bp.route('/reserve_page')
-# def reserve_page():
-#     if 'user_id' not in session:
-#         return redirect(url_for('auth.index'))
-
-#     user_id = session['user_id']
-#     resource_id = request.args.get('resource_id')
-#     controller_id = request.args.get('controller_id')
-
-#     resource = None
-#     controller = None
-
-#     conn=get_db_connection()
-#     cursor=conn.cursor(dictionary=True)
-
-#     if resource_id:
-#         cursor.execute("SELECT * FROM resources WHERE id = %s", (resource_id,))
-#         resource = cursor.fetchone()
-
-#     if controller_id:
-#         cursor.execute("SELECT * FROM controllers WHERE controller_id = %s", (controller_id,))
-#         controller = cursor.fetchone()
-
-#     cursor.execute("""
-#         SELECT r.*, res.model_name AS resource_name, c.name AS controller_name
-#         FROM reservations r
-#         LEFT JOIN ap res ON r.ap_id = res.ap_id
-#         LEFT JOIN controllers c ON r.controller_id = c.controller_id
-#         WHERE r.user_id = %s AND r.end_datetime >= NOW()
-#     """, (user_id,))
-#     active_reservations = cursor.fetchall()
-    
-#     for r in active_reservations:
-#         r['start_datetime_formatted'] = r['start_datetime'].strftime("%b %d, %Y %H:%M")
-#         r['end_datetime_formatted'] = r['end_datetime'].strftime("%b %d, %Y %H:%M")
-
-#     max_reservations = get_setting('max_reservations', 2)
-#     max_days = get_setting('max_days', 15)
-
-#     conn.close()
-
-#     return render_template('reserve_page.html', 
-#         resource=resource, 
-#         controller=controller,
-#         active_reservations=active_reservations,
-#         active_count=len(active_reservations),
-#         max_reservations=max_reservations,
-#         max_days=max_days,
-#         role=session.get('role'))
 
 # reserve resources
 @reservation_bp.route('/reserve_page', methods=['POST'])
@@ -260,8 +130,8 @@ def reserve():
     # If user has active reservations
     if active_controllers:
         existing_controller_id = active_controllers[0]['controller_id']
-        print("existing_controller_id:",existing_controller_id)
-        print("controller_id:",controller_id)
+        # print("existing_controller_id:",existing_controller_id)
+        # print("controller_id:",controller_id)
 
         # If trying to reserve a different controller → BLOCK
         if int(existing_controller_id) != int(controller_id):
@@ -393,32 +263,6 @@ Please adhere to these guidelines to avoid cancellation of your reservation."""
     return jsonify(resource_id=ap_id, controller_id=controller_id,new_reservation=row,now=datetime.now(timezone.utc), reservation_limit_reached=reservation_limit_reached)
 
 
-# @reservation_bp.route('/delete_reservation/<int:id>')
-# def delete_reservation(id):
-#     if 'user_id' not in session:
-#         return redirect(url_for('auth.index'))
-
-#     user_id = session['user_id']
-
-#     conn = get_db_connection()
-#     cursor = conn.cursor()
-
-#     # Make sure the reservation belongs to the current user
-#     cursor.execute("SELECT * FROM reservations WHERE id = %s AND user_id = %s", (id, user_id))
-#     reservation = cursor.fetchone()
-
-#     if reservation:
-#         cursor.execute("DELETE FROM reservations WHERE id = %s", (id,))
-#         conn.commit()
-#         notify_user(
-#             to_email=session.get('username'),
-#             subject="Reservation Cancelled",
-#             email_body=f"Your reservation ID {id} has been cancelled.",
-#         )
-
-#     conn.close()
-#     return redirect(url_for('reservation.reserve'))
-
 @reservation_bp.route('/cancel_reservation',methods=['POST'])
 def cancel_reservation():
     if 'user_id' not in session:
@@ -458,3 +302,325 @@ def cancel_reservation():
 
     conn.close()
     return jsonify(response)
+
+# override reservation 
+def get_active_reservation(controller_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT r.id, r.user_id, u.username,
+                r.start_datetime, r.end_datetime
+            FROM reservations r
+            JOIN users u ON u.id = r.user_id
+            WHERE r.controller_id = %s
+            AND r.end_datetime >  UTC_TIMESTAMP()
+            ORDER BY r.start_datetime DESC
+        """, (controller_id,))
+        return cursor.fetchone()
+    finally:
+        conn.close()
+
+def get_user_by_email(email):
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            SELECT *
+            FROM users
+            WHERE username = %s
+            AND role = 'user'
+            """,
+            (email,)
+        )
+
+        user = cursor.fetchone()
+
+        if not user:
+            raise ValueError(f"User with email '{email}' not found")
+
+        return user
+
+    except mysql.connector.Error as db_err:
+        # Database-level issues
+        print(f"Database error in get_user_by_email: {db_err}")
+        raise
+
+    except ValueError:
+        # Business logic error (user not found)
+        raise
+
+    except Exception as err:
+        # Catch-all safety net
+        print(f"Unexpected error in get_user_by_email: {err}")
+        raise
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+def get_last_reservation(user_id, controller_id):
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            SELECT id, start_datetime, end_datetime
+            FROM reservations
+            WHERE user_id = %s
+              AND controller_id = %s
+            ORDER BY end_datetime DESC
+            LIMIT 1
+            """,
+            (user_id, controller_id)
+        )
+
+        reservation = cursor.fetchone()
+
+        if not reservation:
+            return None
+
+        # ✅ Explicitly mark DB DATETIME values as UTC
+        reservation["start_datetime"] = reservation["start_datetime"].replace(
+            tzinfo=timezone.utc
+        )
+        reservation["end_datetime"] = reservation["end_datetime"].replace(
+            tzinfo=timezone.utc
+        )
+
+        return reservation
+
+    except mysql.connector.Error as db_err:
+        print(f"Database error in get_last_reservation: {db_err}")
+        raise
+
+    except Exception as err:
+        print(f"Unexpected error in get_last_reservation: {err}")
+        raise
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+@reservation_bp.route("/admin/reservation_context")
+def reservation_context():
+    if 'user_id' not in session:
+        return redirect(url_for('auth.index'))
+    if session.get('role') != 'admin':
+        return redirect(url_for('auth.index'))
+    
+    controller_id = request.args["controller_id"]
+
+    res = get_active_reservation(controller_id)
+    if not res:
+        return jsonify({"current_reservations": None})
+    
+    for r in [res]:  # wrap in list for consistent frontend handling
+        r["start"] = r["start_datetime"].replace(tzinfo=timezone.utc)
+        r["end"] = r["end_datetime"].replace(tzinfo=timezone.utc)
+        r["user_email"] = r.pop("username")  # rename for clarity
+
+    return jsonify({
+        "current_reservations": [res]
+    })
+
+@reservation_bp.route("/admin/check_cooldown", methods=["POST"])
+def check_cooldown():
+    if 'user_id' not in session:
+        return redirect(url_for('auth.index'))
+    if session.get('role') != 'admin':
+        return redirect(url_for('auth.index'))
+    
+    cooldown_enabled = get_setting('enable_cooldown', 0)
+    if not cooldown_enabled:
+        return jsonify({"cooldown_active": False})
+    
+    data = request.json
+    user = get_user_by_email(data["email"])
+    print("user:",user)
+    last = get_last_reservation(user["id"], data["controller_id"])
+
+    if not last:
+        return jsonify({"cooldown_active": False})
+    
+    cooldown_period_hours = get_setting('cooldown_hours', 24)
+
+    cooldown_end = last["end_datetime"] + timedelta(hours=cooldown_period_hours)
+    now = datetime.now(timezone.utc)
+
+    return jsonify({
+        "cooldown_active": now < cooldown_end,
+        "cooldown_ends_at_local":
+            cooldown_end.strftime("%b %d, %Y %I:%M %p")
+    })
+
+@reservation_bp.route("/admin/override_reservation", methods=["POST"])
+def override_reservation():
+    # ---- Auth checks ----
+    if 'user_id' not in session:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
+    if session.get('role') != 'admin':
+        return jsonify({"status": "error", "message": "Forbidden"}), 403
+
+    data = request.json
+
+    # ---- Parse input ----
+    user = get_user_by_email(data["user_email"])
+
+    start = datetime.fromisoformat(
+        data["start"].replace("Z", "+00:00")
+    ).astimezone(timezone.utc)
+
+    end = datetime.fromisoformat(
+        data["end"].replace("Z", "+00:00")
+    ).astimezone(timezone.utc)
+
+    controller_id = data["controller_id"]
+    reason = data.get("reason", "Admin override")
+
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # ---------------------------------------------------
+        # 1️⃣ Find overlapping reservations (any user)
+        # ---------------------------------------------------
+        cursor.execute(
+            """
+            SELECT r.id, r.user_id, u.username,
+                   r.start_datetime, r.end_datetime
+            FROM reservations r
+            JOIN users u ON u.id = r.user_id
+            WHERE r.controller_id = %s
+              AND r.start_datetime < %s
+              AND r.end_datetime   > %s
+            """,
+            (controller_id, end, start)
+        )
+        overlapping_reservations = cursor.fetchall()
+
+        # ---------------------------------------------------
+        # 2️⃣ Check cooldown for target user (informational)
+        # ---------------------------------------------------
+        cursor.execute(
+            """
+            SELECT end_datetime
+            FROM reservations
+            WHERE user_id = %s
+              AND controller_id = %s
+            ORDER BY end_datetime DESC
+            LIMIT 1
+            """,
+            (user["id"], controller_id)
+        )
+        last_res = cursor.fetchone()
+
+        cooldown_active = False
+        cooldown_enable = get_setting('enable_cooldown', 0)
+        cooldown_period = get_setting('cooldown_hours', 24)
+
+        if last_res and cooldown_enable:
+            last_end = last_res["end_datetime"].replace(tzinfo=timezone.utc)
+            cooldown_end = last_end + timedelta(hours=cooldown_period)
+            cooldown_active = start < cooldown_end
+
+        # ---------------------------------------------------
+        # 3️⃣ Delete overlapping reservations (admin override)
+        # ---------------------------------------------------
+        for r in overlapping_reservations:
+            cursor.execute(
+                "DELETE FROM reservations WHERE id = %s",
+                (r["id"],)
+            )
+
+            # ---- Email user whose reservation was deleted ----
+            schedule_email(
+                to_email=r["username"],
+                subject="Reservation Cancelled Due to Admin Override",
+                email_body=(
+                    f"Your reservation from {r['start_datetime']} to {r['end_datetime']} "
+                    f"was cancelled by an administrator.\n\n"
+                    f"Reason: {reason}\n\n"
+                    "Please contact support if you have questions."
+                ),
+                run_datetime=datetime.now(timezone.utc)
+            )
+
+        # ---------------------------------------------------
+        # 4️⃣ Create the override reservation
+        # ---------------------------------------------------
+        cursor.execute(
+            """
+            INSERT INTO reservations (
+                user_id,
+                controller_id,
+                start_datetime,
+                end_datetime
+            ) VALUES (%s, %s, %s, %s)
+            """,
+            (
+                user["id"],
+                controller_id,
+                start,
+                end
+            )
+        )
+
+        conn.commit()
+
+        # ---------------------------------------------------
+        # 5️⃣ Email the user who received the override
+        # ---------------------------------------------------
+        cooldown_note = (
+            f"\n\nNote: This reservation was granted even though the {cooldown_period}‑hour cooldown "
+            f"period was active until {cooldown_end}."
+            if cooldown_active else ""
+        )
+
+        schedule_email(
+            to_email=user["username"],
+            subject="Reservation Granted via Admin Override",
+            email_body=(
+                f"An administrator has granted you access to the resource.\n\n"
+                f"Reservation window:\n"
+                f"Start: {start} (UTC)\n"
+                f"End:   {end} (UTC)\n\n"
+                f"Reason: {reason}"
+                f"{cooldown_note}"
+            ),
+            run_datetime=datetime.now(timezone.utc)
+        )
+
+        return jsonify({
+            "status": "success",
+            "message": "Reservation overridden successfully",
+            "overlaps_removed": len(overlapping_reservations),
+            "cooldown_overridden": cooldown_active
+        }), 200
+
+    except Exception as err:
+        if conn:
+            conn.rollback()
+        print(f"Error in override_reservation: {err}")
+        return jsonify({"status": "error", "message": f"An error occurred: {err}"}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()

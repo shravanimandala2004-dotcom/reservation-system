@@ -186,6 +186,13 @@
             </table>
 
             <button id="reserveBtn" onclick="reserveSelection()" {% if reservation_limit_reached %}disabled{% endif %}>Reserve</button> <!-- Reserve button -->
+            
+            {% if role == 'admin' %}
+            <button id="overrideBtn" onclick="openOverrideModal()" class="override-btn">
+            Override
+            </button>
+            {% endif %}
+
 
             <!-- Show reservations container  -->
             <div class="reservations-container">
@@ -238,6 +245,72 @@
 
             <!-- Admin controls  -->
             {% if role == 'admin' %}
+
+            <!-- override modal -->
+            <div id="overrideModal" class="modal hidden">
+            <div class="modal-content">
+                <h3>Override Reservation</h3>
+
+                <!-- Current reservation info -->
+                <div id="currentReservationInfo" class="info-box hidden">
+                    <h4 style="margin-bottom: 10px; color: #F37021;">Current Reservations</h4>
+
+                    <ul id="currentReservationList" class="reservation-preview-list">
+                        <!-- JS will inject <li> items here -->
+                    </ul>
+                </div>
+
+                <!-- Target user -->
+                <div class="override-container">
+                    <label for="overrideUserEmail" class="override-label">User Email (grant access to)</label>
+                    <input
+                    type="email"
+                    id="overrideUserEmail"
+                    list="userEmails"
+                    placeholder="Type or select user email"
+                    required
+                    class="override-input">
+    
+                    <datalist id="userEmails">
+                    {% for user in users %}
+                    <option value="{{ user.username }}"></option>
+                    {% endfor %}
+                    </datalist>
+
+                </div>
+
+                <!-- Cooldown info -->
+                <p id="cooldownWarning" class="warning hidden"></p>
+
+                <!-- Time selection -->
+                <div class="override-container">
+                    <label class="override-label">Start Date</label>
+                    <input type="datetime-local" id="overrideStart" min="" class="override-input"/>
+
+                </div>
+
+                <div class="override-container">
+                    <label class="override-label">End Date</label>
+                    <input type="datetime-local" id="overrideEnd" class="override-input"/>
+
+                </div>
+
+                <!-- Reason -->
+                <div class="override-container">
+                    <label class="override-label">Reason for override</label>
+                    <textarea id="overrideReason" required class="override-input"></textarea>
+
+                </div>
+
+                <div class="modal-actions">
+                <button onclick="closeOverrideModal()" style="background-color: red; font-size: 14px;">Cancel</button>
+                <button onclick="submitOverride()" style="font-size: 14px;">Confirm Override</button>
+                </div>
+            </div>
+            </div>
+
+
+
             <!-- Collapsible Add Resource Form -->
             <div class="add-resource-box">
                 <!-- toggle button  -->
@@ -1266,6 +1339,160 @@ statusSelect.innerHTML = `
             document.getElementById('addResourceForm').firstElementChild.reset();
             document.getElementById('addResourceForm').style.display = 'none';
         }
+
+        // override modal script 
+        const startInput = document.getElementById("overrideStart");
+        const endInput = document.getElementById("overrideEnd");
+
+        
+        function toLocalDateTimeInputValue(date) {
+            const pad = n => String(n).padStart(2, "0");
+
+            return (
+                date.getFullYear() + "-" +
+                pad(date.getMonth() + 1) + "-" +
+                pad(date.getDate()) + "T" +
+                pad(date.getHours()) + ":" +
+                pad(date.getMinutes())
+            );
+        }
+
+        const now = new Date();
+        startInput.min = toLocalDateTimeInputValue(now);
+
+        startInput.addEventListener("change", () => {
+            if (!startInput.value) return;
+
+            // Set end min = selected start datetime
+            endInput.min = startInput.value;
+
+            // Optional: auto-correct end if it is before start
+            if (endInput.value && endInput.value < startInput.value) {
+                endInput.value = startInput.value;
+            }
+        });
+
+        // Open modal and fetch context
+        function openOverrideModal() {
+            document.getElementById("overrideModal").classList.remove("hidden");
+            const controller=document.getElementById("controller");
+
+            fetch(`/admin/reservation_context?controller_id=${controller.value}`)
+                .then(r => r.json())
+                .then(data => {
+                    // console.log(data)
+                if (data.current_reservations) {                    
+                    const container = document.getElementById("currentReservationInfo");
+                    container.style.display = "block";
+                    const list = document.getElementById("currentReservationList");
+                    const reservations = data.current_reservations;
+
+                    list.innerHTML = ""; // clear previous entries
+
+                    if (!reservations || reservations.length === 0) {
+                        container.style.display = "none";
+                        return;
+                    }
+
+                    container.classList.remove("hidden");
+
+                    reservations.forEach(res => {
+                        const li = document.createElement("li");
+                        const startLocal = new Date(res.start);                   
+                        const formattedStart = new Intl.DateTimeFormat(undefined, {
+                        dateStyle: "medium",
+                        timeStyle: "short"
+                        }).format(startLocal);
+
+                        const endLocal = new Date(res.end);
+                        const formattedEnd = new Intl.DateTimeFormat(undefined, {
+                        dateStyle: "medium",
+                        timeStyle: "short"
+                        }).format(endLocal);
+
+                        li.innerHTML = `
+                        <span>${res.user_email}</span><br>
+                        <span class="utc-dt" data-utc="${res.start}">${formattedStart}</span>
+                        →
+                        <span class="utc-dt" data-utc="${res.end}">${formattedEnd}</span>
+                        `;
+                        
+                        list.appendChild(li);
+                    });
+
+                }else{
+                    document.getElementById("currentReservationInfo").style.display = "none";
+                }
+            });
+        }
+
+        // Check cooldown when admin enters user email
+        document.getElementById("overrideUserEmail").addEventListener("blur", () => {
+            const controller = document.getElementById("controller");
+            fetch("/admin/check_cooldown", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                email: document.getElementById("overrideUserEmail").value,
+                controller_id: controller.value
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.cooldown_active) {
+                const warn = document.getElementById("cooldownWarning");
+                warn.textContent = `Cooldown for this user is active until ${data.cooldown_ends_at_local}`;
+                warn.classList.remove("hidden");
+                }
+            });
+        });
+
+        function submitOverride() {
+            fetch("/admin/override_reservation", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                controller_id: controller.value,
+                user_email: overrideUserEmail.value,
+                start: overrideStart.value,
+                end: overrideEnd.value,
+                reason: overrideReason.value
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === "success") {                    
+                    closeOverrideModal();
+                    showAlert(data.message,data.status);
+                } else {
+                    closeOverrideModal();
+                    showAlert(data.message,data.status);
+                }
+            });
+        }
+
+
+        function closeOverrideModal() {
+            const modal = document.getElementById("overrideModal");
+
+            // Hide modal
+            modal.classList.add("hidden");
+
+            // Reset inputs
+            document.getElementById("overrideUserEmail").value = "";
+            document.getElementById("overrideStart").value = "";
+            document.getElementById("overrideEnd").value = "";
+            document.getElementById("overrideReason").value = "";
+
+            // Hide dynamic sections
+            document.getElementById("currentReservationInfo").style.display = "none";
+            document.getElementById("cooldownWarning").textContent = "";
+            document.getElementById("cooldownWarning").classList.add("hidden");
+
+            // Clear dynamic text
+            document.getElementById("currentReservationList").innerHTML = "";
+        }
+
 
     </script>
     {% endif %}
