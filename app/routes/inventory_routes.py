@@ -139,7 +139,7 @@ def add_controller():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO controllers (manufacturer_id, name,url,cloud_username,cloud_password) VALUES (%s, %s, %s)",
+        cursor.execute("INSERT INTO controllers (manufacturer_id, name,url,cloud_username,cloud_password) VALUES (%s, %s, %s,%s,%s)",
                     (manufacturer, name, url,cloud_username,cloud_password))
         conn.commit()
 

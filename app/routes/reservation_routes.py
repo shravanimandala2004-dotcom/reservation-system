@@ -177,8 +177,8 @@ def reserve():
         }), 400
     
     rules= """Important usage instructions:
-- Do not change the existing username or password, and do not create new credentials 
-for the reserved portal.
+- Do not change the existing username or password
+- Do not create new credentials for the reserved portal.
 
 Please adhere to these guidelines to avoid cancellation of your reservation."""
 
@@ -194,22 +194,32 @@ Please adhere to these guidelines to avoid cancellation of your reservation."""
         notify_user(
             to_email=session.get('username'),
             subject="Reservation Confirmed",
-            email_body=f"Your reservation for resource ID {ap['model_name']} and {controller['name']} from {start_str} to {end_str} has been confirmed.\n\n{rules}",
+            email_body=f"Your reservation for resource {ap['model_name']} and {controller['name']} from {start_str} to {end_str} has been confirmed.\n\n{rules}",
         )
         # schedule email containing credentials to be sent 15 mins prior to start of reservation 
         reminder_time = start_dt - timedelta(minutes=15)
         if reminder_time > datetime.now(timezone.utc):
             schedule_email(
                 to_email=session.get('username'),
-                subject="Reservation Credentials",
-                email_body=f"Your reservation for resource ID {ap['model_name']} and {controller['name']} from {start_str} to {end_str} has been confirmed.\n\n{rules}",
-                run_datetime=reminder_time
+                subject="Reservation Reminder",
+                email_body=f"""⏰ Reminder: Your reservation is about to start.\n
+The reservation for resource {ap['model_name']} on {controller['name']} will begin in 15 minutes.
+Reservation window:
+Start: {start_str}
+End:   {end_str}\n
+{rules}""" ,
+            run_datetime=reminder_time
             )
         else:
             notify_user(
                 to_email=session.get('username'),
-                subject="Reservation Credentials",
-                email_body=f"Your reservation for resource ID {ap['model_name']} and {controller['name']} from {start_str} to {end_str} has been confirmed.\n\n{rules}",
+                subject="Reservation Reminder",
+                email_body=f"""⏰ Reminder: Your reservation is about to start.\n
+The reservation for resource {ap['model_name']} on {controller['name']} will start soon.
+Reservation window:
+Start: {start_str}
+End:   {end_str}\n
+{rules}""" ,
             )
     # reserve cloud/controller 
     else:
@@ -227,16 +237,26 @@ Please adhere to these guidelines to avoid cancellation of your reservation."""
         if reminder_time > datetime.now(timezone.utc):
             schedule_email(
                 to_email=session.get('username'),
-                subject="Reservation Credentials",
-                email_body=f"Your reservation for {controller['name']} from {start_str} to {end_str} has been confirmed.\n\n{rules}",
+                subject="Reservation Reminder",
+                email_body=f"""⏰ Reminder: Your reservation is about to start.\n
+Your reservation for {controller['name']} will begin in 15 minutes.
+Reservation window:
+Start: {start_str}
+End:   {end_str}\n
+{rules}""",
                 run_datetime=reminder_time
             )  
 
         else:
             notify_user(
                 to_email=session.get('username'),
-                subject="Reservation Credentials",
-                email_body=f"Your reservation for {controller['name']} from {start_str} to {end_str} has been confirmed.\n\n{rules}",
+                subject="Reservation Reminder",
+                email_body=f"""⏰ Reminder: Your reservation is about to start.\n
+Your reservation for {controller['name']} will start soon.
+Reservation window:
+Start: {start_str}
+End:   {end_str}\n
+{rules}""",
             )  
 
     conn.commit()

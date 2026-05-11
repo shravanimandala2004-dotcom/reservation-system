@@ -2030,11 +2030,13 @@ statusSelect.innerHTML = `
             btn.addEventListener("click", function() {
             const resourceId = this.getAttribute("data-resource-id");
                     
+            showLoading();
             // console.log("Opening resource with ID:", resourceId);
             fetch("/smartzone?resource_id=" + encodeURIComponent(resourceId), {
                 method: "GET",
             })
                 .then(response => {
+                    hideLoading();
                     if (response.ok) {
                         response.json().then(data => {
                             if(data.redirect_url){
@@ -2056,6 +2058,7 @@ statusSelect.innerHTML = `
                     }
                 })
                 .catch(error => {
+                    hideLoading();
                     showAlert("Request failed: " + error, "error");
                 });
             });

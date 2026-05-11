@@ -211,7 +211,7 @@ def register():
         user_entry = service_conn.entries[0]
 
         if not is_user_department(user_entry.department.value):
-            return jsonify(status='error', message='❌ Registration failed. User does not belong to valid department'), 401
+            return jsonify(status='error', message='❌ Registration failed. User does not belong to valid department. Contact administrator for assistance.'), 401
 
 
         # if user:
@@ -409,7 +409,11 @@ def login():
         cursor.execute("SELECT * FROM users WHERE username=%s AND role=%s",
                        (username, role))
         user = cursor.fetchone()
-        rules_accepted = False
+
+        if role == "admin":
+            rules_accepted=True
+        else:
+            rules_accepted = False
 
         # check if user exists in database 
         if user:
