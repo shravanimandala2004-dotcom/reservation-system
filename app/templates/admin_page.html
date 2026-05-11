@@ -48,10 +48,9 @@
             </div>
 
             <div style="margin-bottom: 20px;">
-                <label for="max_preBooking"><b>Maximum Number of Days Before which the user can reserve a
-                        resource:</b></label>
+                <label for="max_preBooking" title="Limits advance reservations to prevent long‑term blocking of resources."><b>Advance Booking Days:</b></label>
                 <input type="number" id="max_preBooking" name="max_preBooking" value="{{settings.max_preBooking}}"
-                    min="1" max="5" required>
+                    min="1" max="5" title="Limits advance reservations to prevent long‑term blocking of resources." required>
             </div>
 
             <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
