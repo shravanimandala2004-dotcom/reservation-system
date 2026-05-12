@@ -25,7 +25,8 @@
 
   <div class="container">
     <div class="container-two">
-      <h1 class="header">📧 Admin Contacts</h1>
+      <h1 class="header">Admin Contacts</h1>
+      <p style="color: #ffb74d;">Listed below are administrator contacts whom users can reach for help with reservations or access issues.</p>
 
       <ul class="contacts-list">
         {% for contact in contacts %}
@@ -41,8 +42,8 @@
       </ul>
 
       {% if role == 'admin' %}
-        <div class="add-contact-form">
-          <h2>Add a New Contact</h2>
+        <div style="border-top: 1px solid #ccc;" class="add-contact-form">
+          <h4 style="color:#F37021; ">Add an administrator email that users can contact for support.</h4>
           <form method="POST" action="{{ url_for('contact.add_contact') }}">
             <input type="email" name="email" placeholder="Enter admin email" required>
             <button type="submit">➕ Add Contact</button>
