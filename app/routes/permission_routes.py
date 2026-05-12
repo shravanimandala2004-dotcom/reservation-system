@@ -3,6 +3,7 @@ from app.utils.db import get_db_connection
 
 permission_bp = Blueprint('permission', __name__)
 
+# redirect to admin page 
 @permission_bp.route('/permission', methods=['GET', 'POST'])
 def permission():
     if 'role' not in session or session['role'] != 'admin':
@@ -35,7 +36,8 @@ def permission():
     conn.close()
 
     return redirect(url_for('inventory.admin_page'))
- 
+
+# get permission setting 
 def get_setting(key, default):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -44,42 +46,43 @@ def get_setting(key, default):
     conn.close()
     return int(row[key]) if row else default
 
-@permission_bp.route('/access', methods=['GET', 'POST'])
-def access_page():
-    if session.get("role") != "admin":
-        return "Unauthorized", 403
 
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+# @permission_bp.route('/access', methods=['GET', 'POST'])
+# def access_page():
+#     if session.get("role") != "admin":
+#         return "Unauthorized", 403
 
-    users = []
+#     conn = get_db_connection()
+#     cursor = conn.cursor(dictionary=True)
 
-    if request.method == 'POST':
-        access_type = request.form.get('access_type')   # department / individual
-        role_type = request.form.get('role_type')       # admin / user
-        search = request.form.get('search')
+#     users = []
 
-        # 🔍 SEARCH LOGIC
-        query = "SELECT id, username, role FROM users WHERE 1=1"
-        values = []
+#     if request.method == 'POST':
+#         access_type = request.form.get('access_type')   # department / individual
+#         role_type = request.form.get('role_type')       # admin / user
+#         search = request.form.get('search')
 
-        if role_type:
-            query += " AND role = %s"
-            values.append(role_type)
+#         # 🔍 SEARCH LOGIC
+#         query = "SELECT id, username, role FROM users WHERE 1=1"
+#         values = []
 
-        if search:
-            query += " AND username LIKE %s"
-            values.append(f"%{search}%")
+#         if role_type:
+#             query += " AND role = %s"
+#             values.append(role_type)
 
-        cursor.execute(query, tuple(values))
-        users = cursor.fetchall()
+#         if search:
+#             query += " AND username LIKE %s"
+#             values.append(f"%{search}%")
 
-        # 💾 SAVE (optional future logic)
-        if 'save' in request.form:
-            selected_users = request.form.getlist('selected_users')
-            # You can store/update permissions here later
-            print("Selected Users:", selected_users)
+#         cursor.execute(query, tuple(values))
+#         users = cursor.fetchall()
 
-    conn.close()
+#         # 💾 SAVE (optional future logic)
+#         if 'save' in request.form:
+#             selected_users = request.form.getlist('selected_users')
+#             # You can store/update permissions here later
+#             print("Selected Users:", selected_users)
 
-    return render_template('access.html', users=users)
+#     conn.close()
+
+#     return render_template('access.html', users=users)

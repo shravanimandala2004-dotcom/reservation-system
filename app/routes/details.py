@@ -4,45 +4,31 @@ from werkzeug.security import generate_password_hash
 
 details_bp = Blueprint('details', __name__)
 
-# @details_bp.route('/details')
-# def details():
+# @details_bp.route('/add_user', methods=['GET', 'POST'])
+# def add_user():
 #     if session.get("role") != "admin":
 #         return "Unauthorized", 403
 
-#     conn = get_db_connection()
-#     cursor = conn.cursor(dictionary=True)
-#     cursor.execute("SELECT id, username, role FROM users")  # adjust your users table columns
-#     users = cursor.fetchall()
-#     print("users u:",users)
-#     conn.close()
+#     if request.method == 'POST':
+#         username = request.form['username']
+#         role = request.form['role']
+#         password = request.form['password']
 
-#     return render_template('details.html', users=users , role=session.get('role'))
+#         hashed_pw = generate_password_hash(password)
 
-@details_bp.route('/add_user', methods=['GET', 'POST'])
-def add_user():
-    if session.get("role") != "admin":
-        return "Unauthorized", 403
+#         conn = get_db_connection()
+#         cursor = conn.cursor()
+#         cursor.execute(
+#             "INSERT INTO users (username, role, password) VALUES (%s, %s, %s)",
+#             (username, role, hashed_pw)
+#         )
+#         conn.commit()
+#         conn.close()
 
-    if request.method == 'POST':
-        username = request.form['username']
-        role = request.form['role']
-        password = request.form['password']
+#         return redirect(url_for('details.details'))
 
-        hashed_pw = generate_password_hash(password)
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO users (username, role, password) VALUES (%s, %s, %s)",
-            (username, role, hashed_pw)
-        )
-        conn.commit()
-        conn.close()
-
-        return redirect(url_for('details.details'))
-
-    # For GET request, show a simple add user form
-    return render_template('add_user.html') 
+#     # For GET request, show a simple add user form
+#     return render_template('add_user.html') 
 
 @details_bp.route('/delete/<int:user_id>', methods=['GET'])
 def delete_user(user_id):
@@ -74,18 +60,6 @@ def edit_user(user_id):
             username = request.form['username']
             role = request.form['role']
 
-            # password = request.form.get('password', "").strip()
-
-            # if password:
-            #     # 🔐 Hash before storing
-            #     # from werkzeug.security import generate_password_hash
-            #     # hashed_pw = generate_password_hash(password)
-
-            #     cursor.execute(
-            #         "UPDATE users SET username=%s, role=%s, password=%s WHERE id=%s",
-            #         (username, role, password, user_id)
-            #     )
-            # else:
             cursor.execute(
                 "UPDATE users SET username=%s, role=%s WHERE id=%s",
                 (username, role, user_id)

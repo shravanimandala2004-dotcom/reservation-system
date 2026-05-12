@@ -18,7 +18,7 @@
                 {% endif %}>Inventory</a>
             <a href="{{ url_for('rules.rules') }}" {% if request.path.startswith('/rules') %}class="active" {% endif
                 %}>Rules Page</a>
-                 <a href="{{ url_for('inventory.contacts') }}" {% if request.path.startswith('/inventory/contact') %}class="active"{% endif %}>Contacts</a>
+                 <a href="{{ url_for('contact.contacts') }}" {% if request.path.startswith('/inventory/contact') %}class="active"{% endif %}>Contacts</a>
 
             {% if role == 'admin' %}
             <a href="{{ url_for('inventory.admin_page') }}" {% if request.path.startswith('/admin') %}class="active" {%
@@ -34,6 +34,7 @@
     <div class="container">
         <h1>User & Admin Details</h1>
 
+        <!-- filter and search form for users with pagination and role-based access to add user feature for admin only -->
         <div id="search-container">
             <form id="search-form" method="GET" action="{{ url_for('details.details') }}">
                 <input type="text" name="search" placeholder="Search Users by Email">
@@ -49,7 +50,6 @@
 
             {% if session.get("role") == "admin" %}
             <a id="addUser-btn" href="{{ url_for('auth.signup') }}">
-                <!-- <button  style="background-color: #f57c00; color: white; margin-bottom: 10px; margin-top: 10px;">+ ADD USER</button> -->
                 + ADD USER
             </a>
             {% endif %}
@@ -60,7 +60,6 @@
                 <tr>
                     <th>S. No.</th>
                     <th>Email </th>
-
                     <th>Role</th>
                     <!-- <th>Status</th>
                     <th>Expires at</th> -->
@@ -72,7 +71,6 @@
                 <tr>
                     <td>{{ (page - 1) * per_page + loop.index }}</td>
                     <td>{{ u.username }}</td>
-
                     <td>{{ u.role }}</td>
                     <!-- <td>{{ u.status }}</td>
                     <td>{{ u.expires_at }}</td> -->
@@ -133,8 +131,8 @@
             {% endfor %}
 
             {% if page < total_pages %} 
-            <a href="{{ url_for('details.details', page=page+1, search=search, role=role_filter)
-                }}">Next</a>
+                <a href="{{ url_for('details.details', page=page+1, search=search, role=role_filter)
+                    }}">Next</a>
             {% else %}
                 <span class="disabled">Next</span>
             {% endif %}

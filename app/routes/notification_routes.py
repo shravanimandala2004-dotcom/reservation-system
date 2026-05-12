@@ -35,7 +35,7 @@ def notify_user(to_email, subject, email_body):
     except Exception as e:
         print(f"Email failed to send to {to_email}: {e}")
 
-# get emails of users who have reserved a particular resource 
+# get email addresses of users who have reserved a particular resource 
 def get_emails_by_resource(resource_id):
     conn = get_db_connection()
     cursor = conn.cursor()

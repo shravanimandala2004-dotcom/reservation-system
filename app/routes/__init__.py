@@ -3,6 +3,7 @@ from .reservation_routes import reservation_bp
 from .inventory_routes import inventory_bp
 from .permission_routes import permission_bp
 from .details import details_bp
+from .contact import contact_bp
 from .cloud_access_routes import cloud_access_bp
 
 from flask import Flask
@@ -29,4 +30,5 @@ def register_routes(app):
     app.register_blueprint(permission_bp)
     app.register_blueprint(details_bp)
     app.register_blueprint(rules_bp)
+    app.register_blueprint(contact_bp)
     app.register_blueprint(cloud_access_bp)

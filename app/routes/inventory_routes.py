@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
+from app.routes.details import details
 from app.utils.db import get_db_connection
 from .notification_routes import notify_user, get_emails_by_resource
 from flask import jsonify
@@ -8,6 +9,7 @@ from datetime import datetime, timedelta,timezone
 
 inventory_bp = Blueprint('inventory', __name__)
 
+# get inventory page 
 @inventory_bp.route('/inventory', methods=['GET', 'POST'])
 def inventory():
     if 'user_id' not in session:
@@ -17,63 +19,6 @@ def inventory():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-
-        # if request.method == 'POST' and session.get('role') == 'admin':
-        #     manufacturer = request.form['manufacturer']
-        #     name = request.form['resource_name']
-        #     ap_count = request.form['ap_count']
-        #     status = request.form['status']
-        #     link = request.form['link']
-        #     controllers=request.form.getlist('controllers_list')
-        #     action_type = request.form.get('action_type', 'add')  # from form hidden field
-
-        #     if action_type == 'edit':
-        #         resource_id = request.form['resource_id']
-        #         cursor.execute("UPDATE resources SET name=%s, ap_count=%s, status=%s, link=%s WHERE id=%s",
-        #                        (name, ap_count, status, link, resource_id))
-        #         conn.commit()
-
-                
-        #         emails = get_emails_by_resource(resource_id)
-        #         for email in emails:
-        #             subject=f"Resource Updated: {name}"
-        #             body=f"The resource '{name}' has been updated.\nAPs: {ap_count}\nStatus: {status}"
-        #             notify_user(
-        #                 to_email=email,
-        #                 subject=subject,
-        #                 email_body=body,
-        #             )
-
-        #     else:  # Add new resource
-        #         cursor.execute("INSERT INTO resources (manufacturer_id,name, ap_count, status, link) VALUES (%s,%s, %s, %s, %s)",
-        #                        (manufacturer,name, ap_count, status, link))
-        #         conn.commit()
-        #         print(controllers)
-        #         if len(controllers)!=0:
-        #             cursor.execute("Select id from resources where manufacturer_id=%s and name=%s and ap_count=%s and status=%s and link=%s",(manufacturer,name, ap_count, status, link))
-        #             resource_id=cursor.fetchone()['id']
-        #             for controller in controllers:
-        #                 cursor.execute("insert into resource_controller_map (controller_id,resource_id) values (%s,%s)",(controller,resource_id))
-        #                 conn.commit()
-
-
-        #         # Notify all admins
-        #         cursor.execute("SELECT username FROM users WHERE role = 'admin'")
-        #         admin_users = cursor.fetchall()
-        #         subject = "Resource Added"
-        #         body = f"""
-        #         Resource Name: {name}
-        #         AP Count: {ap_count}
-        #         Status: {status}
-        #         Link: {link}
-        #         Action: ADDED
-        #         """
-        #         for admin in admin_users:
-        #             notify_user(
-        #                 to_email=admin['username'],
-        #                 subject=subject,
-        #                 email_body=body,
-        #             )
 
         # Fetch manufacturers
         cursor.execute("SELECT distinct name,manufacturer_id as id from manufacturers")
@@ -123,6 +68,7 @@ def inventory():
         conn.close()
         return render_template('inventory.html', role=session.get('role'),manufacturers=manufacturers,active_reservations=active_reservations,min_utc=min_utc,max_utc=max_utc,preBooking=preBooking,maxDays=maxDays,now=now, reservation_limit_reached=reservation_limit_reached,users=users)
 
+# Admin:add new controller
 @inventory_bp.route('/add_controller', methods=['POST'])
 def add_controller():
     if session.get('role') != 'admin':
@@ -176,6 +122,7 @@ def add_controller():
         cursor.close()
         conn.close()
 
+# Admin: add new manufacturer 
 @inventory_bp.route('/inventory/add_manufacturer', methods=['POST'])
 def add_manufacturer():
     if session.get('role') != 'admin':
@@ -214,78 +161,7 @@ def add_manufacturer():
         cursor.close()
         conn.close()
 
-# @inventory_bp.route('/delete_resource/<int:id>')
-# def delete_resource(id):
-#     if session.get('role') == 'admin':
-#         conn = get_db_connection()
-#         cursor = conn.cursor(dictionary=True)
-
-#         # Get resource details first
-#         cursor.execute("SELECT * FROM resources WHERE id = %s", (id,))
-#         resource = cursor.fetchone()
-
-#         if resource:
-#             # Get all user emails for this resource
-#             emails = get_emails_by_resource(id)
-#             print(emails) 
-#             # Notify each user
-#             for email in emails:
-#                 notify_user(
-#                     to_email=email,
-#                     subject=f"Resource Deleted: {resource['name']}",
-#                     email_body=f"The resource '{resource['name']}' with {resource['ap_count']} APs has been deleted.",
-#                 )
-
-#             cursor.execute("DELETE FROM reservations WHERE resource_id = %s", (id,))
-#             cursor.execute("DELETE FROM resources WHERE id = %s", (id,))
-#             conn.commit()
-#         conn.close()
-#     return redirect(url_for('inventory.inventory'))
-
-# @inventory_bp.route('/edit_resource', methods=['POST'])
-# def edit_resource():
-#     if session.get('role') != 'admin':
-#         return "Unauthorized", 403
-
-#     resource_id = request.form['id']
-#     name = request.form['name']
-#     ap_count = request.form['ap_count']
-#     status = request.form['status']
-
-#     conn = get_db_connection()
-#     cursor = conn.cursor()
-#     cursor.execute("""
-#         UPDATE resources 
-#         SET name = %s, ap_count = %s, status = %s 
-#         WHERE id = %s
-#     """, (name, ap_count, status, resource_id))
-#     conn.commit()
-#     if session.get('role') == 'admin':
-#         subject = "Resource Edited"
-#         body = f"""
-#         Resource Name: {name}
-#         AP Count: {ap_count}
-#         Status: {status}
-#         Action: EDITED
-#         """
-#         notify_user(
-#             to_email=session.get('username'),
-#             subject=subject,
-#             email_body=body,
-#         )
-
-#     # Send notification to all users who reserved this resource
-#     emails = get_emails_by_resource(resource_id)
-#     for email in emails:
-#         notify_user(
-#             to_email=email,
-#             subject=f"Resource Updated: {name}",
-#             email_body=f"The resource '{name}' has been updated.\nAPs: {ap_count}\nStatus: {status}",
-#         )
-
-#     conn.close()
-#     return redirect(url_for('inventory.inventory'))
-
+# get controllers belonging to a particular manufacturer_id
 @inventory_bp.route('/get_controllers_by_manufacturer_id')
 def get_controllers_by_manufacturer_id():
     if session.get('role') == 'admin':
@@ -308,7 +184,7 @@ def get_controllers_by_manufacturer_id():
             cursor.close()
             conn.close()
 
-
+# Admin: render to admin page 
 @inventory_bp.route('/admin_page')
 def admin_page():
     # Check if logged in
@@ -342,7 +218,7 @@ def admin_page():
         cursor.close()
         conn.close()
 
-
+# Admin: delete a controller 
 @inventory_bp.route('/delete_controller',methods=['POST'])
 def delete_controller():
     if session.get('role') == 'admin':
@@ -394,7 +270,7 @@ def delete_controller():
             "message": "Some error occurred",
         }), 500
     
-
+# Admin: edit controller details 
 @inventory_bp.route('/edit_controller', methods=['POST'])
 def edit_controller():
     if session.get('role') != 'admin':
@@ -445,7 +321,7 @@ def edit_controller():
         }), 201
     # return redirect(url_for('inventory.inventory'))
 
-# new changes
+# get AP details belonging to a particular manufacturer name
 @inventory_bp.route('/get_ap_by_manufacturer',methods=['GET'])
 def get_ap_by_manufacturer():
     manufacturer = request.args.get('manufacturer')
@@ -464,7 +340,7 @@ def get_ap_by_manufacturer():
         cursor.close()
         conn.close()
     
-
+# get controller details belonging to a particular manufacturer
 @inventory_bp.route('/get_controllers_by_manufacturer',methods=['GET'])
 def get_controllers_by_manufacturer():
     manufacturer = request.args.get('manufacturer')
@@ -483,7 +359,7 @@ def get_controllers_by_manufacturer():
         cursor.close()
         conn.close()
     
-
+# get controller details belonging to a particular AP
 @inventory_bp.route('/get_controllers_by_AP',methods=['GET'])
 def get_controllers_by_AP():
     ap_id = request.args.get('ap_id')
@@ -502,7 +378,7 @@ def get_controllers_by_AP():
         cursor.close()
         conn.close()
     
-
+# get the status of AP
 @inventory_bp.route('/get_ap_status',methods=['GET'])
 def get_ap_status():
     ap_id = request.args.get('ap_id')
@@ -522,7 +398,7 @@ def get_ap_status():
         cursor.close()
         conn.close()
     
-
+# get the status of controller 
 @inventory_bp.route('/get_controller_status',methods=['GET'])
 def get_controller_status():
     controller_id = request.args.get('controller_id')
@@ -562,6 +438,7 @@ def get_controller_url():
         cursor.close()
         conn.close()
 
+# get details of a particular controller 
 @inventory_bp.route('/get_controller_details',methods=['GET'])
 def get_controller_details():
     controller_id = request.args.get('controller_id')
@@ -581,7 +458,7 @@ def get_controller_details():
         cursor.close()
         conn.close()
     
-
+# get all manufacturers 
 @inventory_bp.route('/get_manufacturers',methods=['GET'])
 def get_manufacturers():
     try:
@@ -599,7 +476,7 @@ def get_manufacturers():
         cursor.close()
         conn.close()
     
-
+# get all APs 
 @inventory_bp.route('/get_ap',methods=['GET'])
 def get_ap():
     try:
@@ -617,7 +494,7 @@ def get_ap():
         cursor.close()
         conn.close()
     
-
+# get all controllers 
 @inventory_bp.route('/get_controllers',methods=['GET'])
 def get_controllers():
     try:
@@ -635,7 +512,7 @@ def get_controllers():
         cursor.close()
         conn.close()
     
-
+# Admin: edit a particular manufacturer details
 @inventory_bp.route('/edit_manufacturer',methods=['POST'])
 def edit_manufacturer():
     if session.get('role') != 'admin':
@@ -661,6 +538,7 @@ def edit_manufacturer():
         cursor.close()
         conn.close()
 
+# Admin: delete a particular manufacturer
 @inventory_bp.route('/delete_manufacturer',methods=['POST'])
 def delete_manufacturer():
     if session.get('role') != 'admin':
@@ -686,6 +564,7 @@ def delete_manufacturer():
         cursor.close()
         conn.close()
 
+# Admin: add new AP 
 @inventory_bp.route('/add_ap',methods=['POST'])
 def add_ap():
     if session.get('role') != 'admin':
@@ -737,6 +616,7 @@ def add_ap():
         cursor.close()
         conn.close()
 
+# Admin: edit a particular AP details 
 @inventory_bp.route('/edit_ap',methods=['POST'])
 def edit_ap():
     if session.get('role') != 'admin':
@@ -786,6 +666,7 @@ def edit_ap():
         cursor.close()
         conn.close()
 
+# Admin: delete an AP
 @inventory_bp.route('/delete_ap',methods=['POST'])
 def delete_ap():
     if session.get('role') != 'admin':
@@ -814,6 +695,7 @@ def delete_ap():
         cursor.close()
         conn.close()
 
+# Admin: change AP status
 @inventory_bp.route('/change_ap_status',methods=['POST'])
 def change_ap_status():
     ap_id = request.args.get('ap_id')
@@ -833,44 +715,4 @@ def change_ap_status():
     finally:
         cursor.close()
         conn.close()
-    
-
-
-
-
-@inventory_bp.route('/contact', methods=['GET'])
-def contacts():
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM contacts")   # contacts table with id, email
-    contacts = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return render_template('contact.html', contacts=contacts, role=session.get('role'))
-
-@inventory_bp.route('/contact/add', methods=['POST'])
-def add_contact():
-    if session.get('role') == 'admin':   # only admins can add
-        email = request.form.get('email')
-        if email:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("INSERT INTO contacts (email) VALUES (%s)", (email,))
-            conn.commit()
-            cursor.close()
-            conn.close()
-    return redirect(url_for('inventory.contacts'))
-
-@inventory_bp.route('/contact/delete/<int:contact_id>', methods=['POST'])
-def delete_contact(contact_id):
-    if session.get('role') == 'admin':   # only admins can delete
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM contacts WHERE id = %s", (contact_id,))
-        conn.commit()
-        cursor.close()
-        conn.close()
-    return redirect(url_for('inventory.contacts'))
-
-
     

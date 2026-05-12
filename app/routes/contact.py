@@ -8,7 +8,7 @@ from werkzeug.security import generate_password_hash
 
 contact_bp = Blueprint('contact', __name__)
 
-@contact_bp.route('/', methods=['GET'])
+@contact_bp.route('/contacts', methods=['GET'])
 def contacts():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -20,6 +20,8 @@ def contacts():
 
 @contact_bp.route('/add', methods=['POST'])
 def add_contact():
+    if 'user_id' not in session:
+        return "Unauthorized", 401
     if session.get('role') == 'admin':   # only admins can add
         email = request.form.get('email')
         if email:

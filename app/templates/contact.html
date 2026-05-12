@@ -11,7 +11,7 @@
     <nav>
       <a href="{{ url_for('inventory.inventory') }}" {% if request.path.startswith('/inventory') %}class="active"{% endif %}>Inventory</a>
       <a href="{{ url_for('rules.rules') }}" {% if request.path.startswith('/rules') %}class="active"{% endif %}>Rules Page</a>
-      <a href="{{ url_for('inventory.contacts') }}" {% if request.path.startswith('/inventory/contact') %}class="active"{% endif %}>Contacts</a>
+      <a href="{{ url_for('contact.contacts') }}" {% if request.path.startswith('/contact') %}class="active"{% endif %}>Contacts</a>
 
       {% if role == 'admin' %}
         <a href="{{ url_for('inventory.admin_page') }}" {% if request.path.startswith('/admin') %}class="active"{% endif %}>Admin Page</a>
@@ -32,7 +32,7 @@
           <li>
             {{ contact.email }}
             {% if role == 'admin' %}
-              <form method="POST" action="{{ url_for('inventory.delete_contact', contact_id=contact.id) }}" style="display:inline;">
+              <form method="POST" action="{{ url_for('contact.delete_contact', contact_id=contact.id) }}" style="display:inline;">
                 <button type="submit">Delete</button>
               </form>
             {% endif %}
@@ -43,7 +43,7 @@
       {% if role == 'admin' %}
         <div class="add-contact-form">
           <h2>Add a New Contact</h2>
-          <form method="POST" action="{{ url_for('inventory.add_contact') }}">
+          <form method="POST" action="{{ url_for('contact.add_contact') }}">
             <input type="email" name="email" placeholder="Enter admin email" required>
             <button type="submit">➕ Add Contact</button>
           </form>
