@@ -181,6 +181,13 @@ def reserve():
     rules= """Important usage instructions:
 - Do not change the existing username or password
 - Do not create new credentials for the reserved portal.
+- Use the resource only for its intended purpose.
+- Avoid making unnecessary or disruptive configuration changes.
+- Ensure proper usage to prevent impact on other users.
+- Access the resource only during your reserved time window.
+- If the resource is no longer needed, cancel the reservation early to free it for others.
+- Misuse or inactivity may result in cancellation or restricted access.
+- Administrators may override reservations in case of misuse or to accommodate urgent needs.
 
 Please adhere to these guidelines to avoid cancellation of your reservation."""
 
@@ -204,24 +211,34 @@ Please adhere to these guidelines to avoid cancellation of your reservation."""
             schedule_email(
                 to_email=session.get('username'),
                 subject="Reservation Reminder",
-                email_body=f"""⏰ Reminder: Your reservation is about to start.\n
+                email_body=f"""Hello,
+                
+⏰ Reminder: Your reservation is about to start.\n
 The reservation for resource {ap['model_name']} on {controller['name']} will begin in 15 minutes.
 Reservation window:
 Start: {start_str}
 End:   {end_str}\n
-{rules}""" ,
+{rules}
+
+Best regards,
+Resource Scheduler Team""" ,
             run_datetime=reminder_time
             )
         else:
             notify_user(
                 to_email=session.get('username'),
                 subject="Reservation Reminder",
-                email_body=f"""⏰ Reminder: Your reservation is about to start.\n
+                email_body=f"""Hello,
+                
+⏰ Reminder: Your reservation is about to start.\n
 The reservation for resource {ap['model_name']} on {controller['name']} will start soon.
 Reservation window:
 Start: {start_str}
 End:   {end_str}\n
-{rules}""" ,
+{rules}
+
+Best regards,
+Resource Sheduler Team""" ,
             )
     # reserve cloud/controller 
     else:
@@ -232,7 +249,7 @@ End:   {end_str}\n
         notify_user(
             to_email=session.get('username'),
             subject="Reservation Confirmed",
-            email_body=f"Your reservation for {controller['name']} from {start_str} to {end_str} has been confirmed.\n\n{rules}",
+            email_body=f"Hello,\n\nYour reservation for {controller['name']} from {start_str} to {end_str} has been confirmed.\n\n{rules}\n\nBest regards,\nResource Scheduler Team",
         )  
         # schedule email containing credentials to be sent 15 mins prior to start of reservation 
         reminder_time = start_dt - timedelta(minutes=15)
@@ -240,12 +257,17 @@ End:   {end_str}\n
             schedule_email(
                 to_email=session.get('username'),
                 subject="Reservation Reminder",
-                email_body=f"""⏰ Reminder: Your reservation is about to start.\n
+                email_body=f"""Hello,
+                
+⏰ Reminder: Your reservation is about to start.\n
 Your reservation for {controller['name']} will begin in 15 minutes.
 Reservation window:
 Start: {start_str}
 End:   {end_str}\n
-{rules}""",
+{rules}
+
+Best regards,
+Resource Scheduler Team""" ,
                 run_datetime=reminder_time
             )  
 
@@ -253,12 +275,17 @@ End:   {end_str}\n
             notify_user(
                 to_email=session.get('username'),
                 subject="Reservation Reminder",
-                email_body=f"""⏰ Reminder: Your reservation is about to start.\n
+                email_body=f"""Hello,
+
+⏰ Reminder: Your reservation is about to start.\n
 Your reservation for {controller['name']} will start soon.
 Reservation window:
 Start: {start_str}
 End:   {end_str}\n
-{rules}""",
+{rules}
+
+Best regards,
+Resource Scheduler Team""" ,
             )  
 
     conn.commit()
@@ -302,7 +329,7 @@ def cancel_reservation():
     # print("id:",id)
 
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
 
     # Make sure the reservation belongs to the current user
     cursor.execute("SELECT * FROM reservations WHERE id = %s AND user_id = %s", (id, user_id))
@@ -310,13 +337,19 @@ def cancel_reservation():
     # print("reservation:",reservation)
 
     if reservation:
+        cursor.execute("""Select c.* from controllers c
+                    JOIN reservations r ON r.controller_id = c.controller_id
+                    WHERE r.id = %s""", (id,))
+        controller = cursor.fetchone()
+        start_str = reservation["start_datetime"].strftime("%b %d, %Y %I:%M %p UTC")
+        end_str = reservation["end_datetime"].strftime("%b %d, %Y %I:%M %p UTC")
         cursor.execute("DELETE FROM reservations WHERE id = %s", (id,))
         conn.commit()
         # print("deleted reservation")
         notify_user(
             to_email=session.get('username'),
             subject="Reservation Cancelled",
-            email_body=f"Your reservation ID {id} has been cancelled.",
+            email_body=f"Hello,\n\nYour reservation for {controller['name']} from {start_str} to {end_str} has been cancelled.\n\nBest regards,\nResource Scheduler Team",
         )
         response = {'status': 'success', 'cancelled_id': id}
     else:
@@ -560,6 +593,12 @@ def override_reservation():
             cooldown_end = last_end + timedelta(hours=cooldown_period)
             cooldown_active = start < cooldown_end
 
+        cursor.execute(
+            "SELECT name FROM controllers WHERE controller_id = %s",
+            (controller_id,)
+            )
+        controller_name = cursor.fetchone()
+
         # Delete overlapping reservations (admin override)
         for r in overlapping_reservations:
             cursor.execute(
@@ -571,11 +610,12 @@ def override_reservation():
             schedule_email(
                 to_email=r["username"],
                 subject="Reservation Cancelled Due to Admin Override",
-                email_body=(
-                    f"Your reservation from {r['start_datetime']} to {r['end_datetime']} "
+                email_body=(f"Hello,\n\n"
+                    f"Your reservation of {controller_name['name']} from {r['start_datetime']} (UTC) to {r['end_datetime']} (UTC) "
                     f"was cancelled by an administrator.\n\n"
                     f"Reason: {reason}\n\n"
                     "Please contact support if you have questions."
+                    "\n\nBest regards,\nResource Scheduler Team"
                 ),
                 run_datetime=datetime.now(timezone.utc)
             )
@@ -610,13 +650,15 @@ def override_reservation():
         schedule_email(
             to_email=user["username"],
             subject="Reservation Granted via Admin Override",
-            email_body=(
-                f"An administrator has granted you access to the resource.\n\n"
+            email_body=(f"Hello,\n\n"
+                f"An administrator has granted you access to the resource {controller_name['name']}.\n\n"
                 f"Reservation window:\n"
                 f"Start: {start} (UTC)\n"
                 f"End:   {end} (UTC)\n\n"
-                f"Reason: {reason}"
+                f"Reason: {reason}\n"
                 f"{cooldown_note}"
+                f"\nPlease contact support if you have questions."
+                "\n\nBest regards,\nResource Scheduler Team"
             ),
             run_datetime=datetime.now(timezone.utc)
         )
